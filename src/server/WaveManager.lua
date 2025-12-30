@@ -1,0 +1,53 @@
+--[[
+    WaveManager.lua
+    Handles spawning enemies during the Night Phase.
+]]
+
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local WaveManager = {}
+
+-- Config
+local SPAWN_RATE = 5 -- Spawn an enemy every X seconds
+
+function WaveManager.Init()
+    print("[WaveManager] Initialized.")
+end
+
+function WaveManager.StartWave(waveNumber)
+    print(string.format("[WaveManager] Starting Wave %d...", waveNumber))
+    
+    task.spawn(function()
+        local DayNightCycle = require(script.Parent.DayNightCycle)
+        
+        while DayNightCycle.Phase == "Night" do
+            task.wait(SPAWN_RATE)
+            if DayNightCycle.Phase ~= "Night" then break end
+            
+            WaveManager.SpawnEnemy(waveNumber)
+        end
+        
+        print("[WaveManager] Wave Ended.")
+    end)
+end
+
+function WaveManager.SpawnEnemy(difficulty)
+    -- Mock Enemy Spawing
+    -- In real impl, we'd clone a rig from ServerStorage and use PathfindingService
+    
+    print(string.format("[WaveManager] Spawning Enemy (Lvl %d)", difficulty))
+    
+    -- Visual Debug (Create a part)
+    local part = Instance.new("Part")
+    part.Name = "Enemy"
+    part.BrickColor = BrickColor.new("Really red")
+    part.Position = Vector3.new(math.random(-50, 50), 5, math.random(-50, 50))
+    part.Anchored = true -- Anchored for MVP so it doesn't fall
+    part.Parent = workspace
+    
+    -- Clean up after a few seconds mock death
+    task.delay(10, function()
+        if part then part:Destroy() end
+    end)
+end
+
+return WaveManager

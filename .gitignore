@@ -1,0 +1,13 @@
+# Roblox
+*.rbxl
+*.rbxlx
+*.rbxm
+*.rbxmx
+
+# Rojo
+*.lock.json
+/build/
+
+# System
+.DS_Store
+Thumbs.db
