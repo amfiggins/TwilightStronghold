@@ -13,8 +13,8 @@ Shared.MAX_SESSION_PLAYERS = 4 -- Survival squad size
 
 -- Place Configuration
 Shared.PLACE_IDS = {
-    Lobby = 00000000, -- Replace with actual Lobby Place ID
-    SurvivalZone = 11111111 -- Replace with actual Survival Place ID
+    Lobby = 140360553864312, -- Twilight Stronghold - Lobby
+    SurvivalZone = 114856846700519 -- Survival Zone
 }
 
 -- Rarity Definitions
