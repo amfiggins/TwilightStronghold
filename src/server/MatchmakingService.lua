@@ -44,6 +44,9 @@ function MatchmakingService.JoinQueue(player)
     table.insert(queue, player)
     print(string.format("[Matchmaking] %s joined queue. (%d/%d)", player.Name, #queue, REQUIRED_PLAYERS))
     
+    -- Try to process queue immediately
+    task.spawn(MatchmakingService.ProcessQueue)
+
     -- Optional: Fire client event to update UI
 end
 
@@ -56,7 +59,7 @@ function MatchmakingService.LeaveQueue(player)
 end
 
 function MatchmakingService.ProcessQueue()
-    if #queue >= REQUIRED_PLAYERS then
+    while #queue >= REQUIRED_PLAYERS do
         print("[Matchmaking] Found match! Teleporting...")
         
         -- Extract the squad
@@ -65,33 +68,35 @@ function MatchmakingService.ProcessQueue()
             table.insert(squad, table.remove(queue, 1))
         end
         
-        -- Prepare Teleport Options (Pass Data!)
-        local teleportOptions = Instance.new("TeleportOptions")
-        local teleportData = {
-            MatchId = game.HttpService:GenerateGUID(false),
-            SquadNames = {}
-        }
-        
-        -- Collect Squad Info
-        for _, p in ipairs(squad) do
-            table.insert(teleportData.SquadNames, p.Name)
-            -- Note: We rely on DataStores for main data, but we can pass Session ID here
-        end
-        
-        teleportOptions:SetTeleportData(teleportData)
-        
-        -- Teleport
-        local success, err = pcall(function()
-            TeleportService:TeleportAsync(GameConfig.PLACE_IDS.SurvivalZone, squad, teleportOptions)
-        end)
-        
-        if not success then
-            warn("[Matchmaking] Teleport Failed: " .. tostring(err))
-            -- Re-queue players (simplified logic)
+        task.spawn(function()
+            -- Prepare Teleport Options (Pass Data!)
+            local teleportOptions = Instance.new("TeleportOptions")
+            local teleportData = {
+                MatchId = game.HttpService:GenerateGUID(false),
+                SquadNames = {}
+            }
+
+            -- Collect Squad Info
             for _, p in ipairs(squad) do
-                table.insert(queue, p)
+                table.insert(teleportData.SquadNames, p.Name)
+                -- Note: We rely on DataStores for main data, but we can pass Session ID here
             end
-        end
+
+            teleportOptions:SetTeleportData(teleportData)
+
+            -- Teleport
+            local success, err = pcall(function()
+                TeleportService:TeleportAsync(GameConfig.PLACE_IDS.SurvivalZone, squad, teleportOptions)
+            end)
+
+            if not success then
+                warn("[Matchmaking] Teleport Failed: " .. tostring(err))
+                -- Re-queue players (simplified logic)
+                for _, p in ipairs(squad) do
+                    table.insert(queue, p)
+                end
+            end
+        end)
     end
 end
 
