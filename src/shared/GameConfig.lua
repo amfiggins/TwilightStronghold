@@ -27,6 +27,13 @@ Shared.Rarity = {
     Mythic = { Name = "Mythic", Color = Color3.fromRGB(255, 0, 0), Chance = 0.01 },
 }
 
+-- Resource Definitions (Loot Tables)
+Shared.Resources = {
+    ["Tree"] = { Item = "wood_log", Min = 1, Max = 3 },
+    ["Rock"] = { Item = "stone_ore", Min = 1, Max = 2 },
+    ["Lake"] = { Item = "raw_fish", Min = 1, Max = 1 }
+}
+
 -- Item Database (Mock-up)
 Shared.Items = {
     -- Tools

@@ -26,16 +26,9 @@ function ResourceManager.OnGatherRequest(player, resourceId)
     -- In a real game, we'd check distance between player and resourceId, cooldowns, and tool equipped.
     -- For this MVP Prototype, we trust the client's "Success" for now but log it.
     
-    -- Mock Resource Data for testing
-    local mockLoot = {
-        ["Tree"] = { Item = "wood_log", Min = 1, Max = 3 },
-        ["Rock"] = { Item = "stone_ore", Min = 1, Max = 2 },
-        ["Lake"] = { Item = "raw_fish", Min = 1, Max = 1 }
-    }
-    
     -- Determine what they got (Simulating logic)
     -- In reality, resourceId would map to a specific node type
-    local drop = mockLoot["Tree"] -- Defaulting to Tree for test
+    local drop = GameConfig.Resources["Tree"] -- Defaulting to Tree for test
     
     -- Logic: Roll for Rarity (The "Fisch" mechanic)
     local roll = math.random(1, 100)
