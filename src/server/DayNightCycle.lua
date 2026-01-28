@@ -20,8 +20,8 @@ DayNightCycle.DayCount = 1
 DayNightCycle.TimeRemaining = 0
 
 -- Config
-local DAY_LENGTH = 60 -- Seconds (Short for MVP, usually 300)
-local NIGHT_LENGTH = 30 -- Seconds (Short for MVP, usually 120)
+local DAY_LENGTH = 300 -- Seconds (Production)
+local NIGHT_LENGTH = 120 -- Seconds (Production)
 
 function DayNightCycle.Init()
     print("[DayNightCycle] Initialized.")
