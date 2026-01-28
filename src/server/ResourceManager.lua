@@ -53,7 +53,8 @@ function ResourceManager.OnGatherRequest(player, resourceId)
     
     if success then
         print(string.format("[ResourceManager] Awarded %s x%d to %s", itemAwarded, qty, player.Name))
-        -- Optional: Send feedback back to client
+        -- Notify client of successful gathering
+        GatherEvent:FireClient(player, itemAwarded, qty)
     end
 end
 

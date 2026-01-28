@@ -18,6 +18,11 @@ local MinigameController = require(script.Parent.MinigameController)
 print("[InteractionClient] Initialized. Listening for prompts.")
 MinigameController.Init()
 
+-- Listen for Gathering Feedback
+GatherEvent.OnClientEvent:Connect(function(item, qty)
+    print(string.format("[InteractionClient] Received: %s x%d", item, qty))
+end)
+
 ProximityPromptService.PromptTriggered:Connect(function(promptObject, triggerPlayer)
     if triggerPlayer ~= player then return end
     
