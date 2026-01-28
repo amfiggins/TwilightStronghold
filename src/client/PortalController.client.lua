@@ -10,8 +10,14 @@ local Players = game:GetService("Players")
 local player = Players.LocalPlayer
 local Remotes = ReplicatedStorage:WaitForChild("Remotes")
 local JoinQueueEvent = Remotes:WaitForChild("JoinQueue")
+local QueueUpdateEvent = Remotes:WaitForChild("QueueUpdate")
 
 print("[PortalController] Initialized. Listening for Portal prompts.")
+
+QueueUpdateEvent.OnClientEvent:Connect(function(joined, queueSize, requiredPlayers)
+    local status = joined and "Joined" or "Left"
+    print(string.format("[Client] Queue Status: %s. Count: %d/%d", status, queueSize, requiredPlayers))
+end)
 
 ProximityPromptService.PromptTriggered:Connect(function(promptObject, triggerPlayer)
     if triggerPlayer ~= player then return end
