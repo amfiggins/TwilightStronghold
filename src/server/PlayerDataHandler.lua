@@ -197,8 +197,16 @@ function PlayerDataHandler.SetLoadout(player, slot, itemId)
     if slot ~= "Weapon" and slot ~= "BaseKit" then return false end
     
     -- Verification: Does player own this item?
-    -- (Skipping ownership check using Inventory for MVP speed, assuming UI filters it)
-    -- In prod, iterate Inventory to confirm ownership.
+    if itemId then
+        local owned = false
+        for _, item in ipairs(data.Inventory) do
+            if item.ItemId == itemId then
+                owned = true
+                break
+            end
+        end
+        if not owned then return false end
+    end
     
     data.Loadout[slot] = itemId
     return true
