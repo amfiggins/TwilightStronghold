@@ -9,8 +9,17 @@ local WaveManager = {}
 -- Config
 local SPAWN_RATE = 5 -- Spawn an enemy every X seconds
 
+-- Optimization: Cache template to avoid repeated Instance.new and property setting
+local enemyTemplate
+
 function WaveManager.Init()
     print("[WaveManager] Initialized.")
+
+    -- Create the template part once
+    enemyTemplate = Instance.new("Part")
+    enemyTemplate.Name = "Enemy"
+    enemyTemplate.BrickColor = BrickColor.new("Really red")
+    enemyTemplate.Anchored = true -- Anchored for MVP so it doesn't fall
 end
 
 function WaveManager.StartWave(waveNumber)
@@ -37,11 +46,9 @@ function WaveManager.SpawnEnemy(difficulty)
     print(string.format("[WaveManager] Spawning Enemy (Lvl %d)", difficulty))
     
     -- Visual Debug (Create a part)
-    local part = Instance.new("Part")
-    part.Name = "Enemy"
-    part.BrickColor = BrickColor.new("Really red")
+    -- Optimization: Clone from template instead of creating new
+    local part = enemyTemplate:Clone()
     part.Position = Vector3.new(math.random(-50, 50), 5, math.random(-50, 50))
-    part.Anchored = true -- Anchored for MVP so it doesn't fall
     part.Parent = workspace
     
     -- Clean up after a few seconds mock death
