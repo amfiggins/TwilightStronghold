@@ -41,7 +41,7 @@ function WaveManager.SpawnEnemy(difficulty)
     part.Name = "Enemy"
     part.BrickColor = BrickColor.new("Really red")
     part.Position = Vector3.new(math.random(-50, 50), 5, math.random(-50, 50))
-    part.Anchored = true -- Anchored for MVP so it doesn't fall
+    part.Anchored = false
     part.Parent = workspace
     
     -- Clean up after a few seconds mock death
