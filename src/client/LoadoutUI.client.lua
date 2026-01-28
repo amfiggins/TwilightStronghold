@@ -10,6 +10,7 @@ local GameConfig = require(ReplicatedStorage.Shared.GameConfig)
 local player = Players.LocalPlayer
 local Remotes = ReplicatedStorage:WaitForChild("Remotes")
 local LoadoutEvent = Remotes:WaitForChild("SetLoadout")
+local GetPlayerData = Remotes:WaitForChild("GetPlayerData")
 
 local gui = Instance.new("ScreenGui")
 gui.Name = "LoadoutUI"
@@ -57,18 +58,47 @@ local function createButton(text, onClick)
     return btn
 end
 
--- Mock Inventory Buttons (Ideally this would read from a Client Data Cache)
-createButton("Equip Void Sword", function()
-    LoadoutEvent:FireServer("Weapon", "void_sword")
-    print("Requested Void Sword")
-end)
+-- Populate Inventory Buttons
+local function populateLoadout()
+    -- Fetch Data
+    local data = GetPlayerData:InvokeServer()
+    local inventory = data and data.Inventory or {}
 
-createButton("Unequip Weapon", function()
-    LoadoutEvent:FireServer("Weapon", nil)
-    print("Requested Unequip")
-end)
+    -- Clear existing buttons if any (though this runs once currently)
+    -- If we wanted to refresh, we'd need to clear children of 'frame' except title, layout, padding.
+    -- For now, this just adds to the initial frame setup.
 
-createButton("Equip Watchtower", function()
-    LoadoutEvent:FireServer("BaseKit", "watchtower_kit")
-    print("Requested Watchtower")
-end)
+    -- Static Unequip Options
+    createButton("Unequip Weapon", function()
+        LoadoutEvent:FireServer("Weapon", nil)
+        print("Requested Unequip Weapon")
+    end)
+
+    createButton("Unequip Kit", function()
+        LoadoutEvent:FireServer("BaseKit", nil)
+        print("Requested Unequip Kit")
+    end)
+
+    -- Dynamic Items
+    for _, item in ipairs(inventory) do
+        local itemDef = GameConfig.Items[item.ItemId]
+        if itemDef then
+            local slot = nil
+            if itemDef.Type == "Weapon" then
+                slot = "Weapon"
+            elseif itemDef.Type == "Kit" then
+                slot = "BaseKit"
+            end
+
+            if slot then
+                createButton("Equip " .. itemDef.Name, function()
+                    LoadoutEvent:FireServer(slot, item.ItemId)
+                    print("Requested " .. itemDef.Name)
+                end)
+            end
+        end
+    end
+end
+
+-- Run population
+task.spawn(populateLoadout)

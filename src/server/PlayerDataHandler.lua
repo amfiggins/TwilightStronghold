@@ -7,8 +7,9 @@
 local Players = game:GetService("Players")
 local DataStoreService = game:GetService("DataStoreService")
 local RunService = game:GetService("RunService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
-local GameConfig = require(game.ReplicatedStorage.Shared.GameConfig)
+local GameConfig = require(ReplicatedStorage.Shared.GameConfig)
 
 local PlayerDataHandler = {}
 local PlayerDataStore = DataStoreService:GetDataStore("PlayerData_" .. GameConfig.GAME_VERSION)
@@ -66,6 +67,22 @@ local function reconcile(target, template)
 end
 
 function PlayerDataHandler.Init()
+    -- Setup Remotes
+    local Remotes = ReplicatedStorage:FindFirstChild("Remotes")
+    if not Remotes then
+        Remotes = Instance.new("Folder")
+        Remotes.Name = "Remotes"
+        Remotes.Parent = ReplicatedStorage
+    end
+
+    local GetPlayerData = Instance.new("RemoteFunction")
+    GetPlayerData.Name = "GetPlayerData"
+    GetPlayerData.Parent = Remotes
+
+    GetPlayerData.OnServerInvoke = function(player)
+        return PlayerDataHandler.Get(player)
+    end
+
     Players.PlayerAdded:Connect(PlayerDataHandler.OnPlayerAdded)
     Players.PlayerRemoving:Connect(PlayerDataHandler.OnPlayerRemoving)
     
