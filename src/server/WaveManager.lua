@@ -19,7 +19,7 @@ function WaveManager.Init()
     enemyTemplate = Instance.new("Part")
     enemyTemplate.Name = "Enemy"
     enemyTemplate.BrickColor = BrickColor.new("Really red")
-    enemyTemplate.Anchored = true -- Anchored for MVP so it doesn't fall
+    enemyTemplate.Anchored = false -- Anchored for MVP so it doesn't fall
 end
 
 function WaveManager.StartWave(waveNumber)
