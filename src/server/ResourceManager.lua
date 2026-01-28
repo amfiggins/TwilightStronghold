@@ -28,22 +28,33 @@ function ResourceManager.OnGatherRequest(player, resourceId)
     
     -- Mock Resource Data for testing
     local mockLoot = {
-        ["Tree"] = { Item = "wood_log", Min = 1, Max = 3 },
+        ["Tree"] = { Item = "wood_log", Min = 1, Max = 3, RareItem = "golden_wood" },
         ["Rock"] = { Item = "stone_ore", Min = 1, Max = 2 },
         ["Lake"] = { Item = "raw_fish", Min = 1, Max = 1 }
     }
     
     -- Determine what they got (Simulating logic)
     -- In reality, resourceId would map to a specific node type
-    local drop = mockLoot["Tree"] -- Defaulting to Tree for test
+    local nodeType = "Tree" -- Fallback
+
+    if typeof(resourceId) == "Instance" then
+        nodeType = resourceId.Name
+    end
+
+    local drop = mockLoot[nodeType]
+
+    if not drop then
+        warn("[ResourceManager] Unknown resource type: " .. tostring(nodeType))
+        return
+    end
     
     -- Logic: Roll for Rarity (The "Fisch" mechanic)
     local roll = math.random(1, 100)
-    local itemAwarded = "wood_log"
-    local qty = 1
+    local itemAwarded = drop.Item
+    local qty = math.random(drop.Min, drop.Max)
     
-    if roll > 95 then
-        itemAwarded = "golden_wood" -- Rare drop!
+    if roll > 95 and drop.RareItem then
+        itemAwarded = drop.RareItem -- Rare drop!
     end
     
     -- Verify Inventory Cap? (Skip for now)
