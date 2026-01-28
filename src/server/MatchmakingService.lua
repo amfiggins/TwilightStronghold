@@ -18,6 +18,9 @@ local Remotes = ReplicatedStorage:WaitForChild("Remotes")
 local JoinQueueEvent = Instance.new("RemoteEvent", Remotes)
 JoinQueueEvent.Name = "JoinQueue"
 
+local QueueUpdateEvent = Instance.new("RemoteEvent", Remotes)
+QueueUpdateEvent.Name = "QueueUpdate"
+
 -- Constants
 local REQUIRED_PLAYERS = 1 -- Set to 1 for testing, normally GameConfig.MAX_SESSION_PLAYERS
 
@@ -48,6 +51,7 @@ function MatchmakingService.JoinQueue(player)
     task.spawn(MatchmakingService.ProcessQueue)
 
     -- Optional: Fire client event to update UI
+    QueueUpdateEvent:FireClient(player, true, #queue, REQUIRED_PLAYERS)
 end
 
 function MatchmakingService.LeaveQueue(player)
@@ -55,6 +59,7 @@ function MatchmakingService.LeaveQueue(player)
     if idx then
         table.remove(queue, idx)
         print(string.format("[Matchmaking] %s left queue.", player.Name))
+        QueueUpdateEvent:FireClient(player, false, #queue, REQUIRED_PLAYERS)
     end
 end
 
