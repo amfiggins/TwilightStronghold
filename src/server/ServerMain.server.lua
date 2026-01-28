@@ -13,14 +13,15 @@ require(script.Parent.ResourceManager).Init()
 require(script.Parent.LoadoutManager).Init()
 require(script.Parent.MatchmakingService).Init()
 
-require(script.Parent.MatchmakingService).Init()
-
 -- Conditional Loading based on Mode (Lobby vs Survival)
--- For this MVP, we use a simple flag in GameConfig to toggle for testing.
--- In production, we would check game.PlaceId.
 local GameConfig = require(game.ReplicatedStorage.Shared.GameConfig)
 
-if GameConfig.IS_SURVIVAL_MODE then
+-- Determine if we are in Survival Mode
+-- We check if the PlaceId matches the configured Survival Zone ID,
+-- OR if the debug flag IS_SURVIVAL_MODE is set (for testing in Studio/Lobby).
+local isSurvival = (game.PlaceId == GameConfig.PLACE_IDS.SurvivalZone) or GameConfig.IS_SURVIVAL_MODE
+
+if isSurvival then
     print("[Server] Starting Survival Mode Modules...")
     require(script.Parent.DayNightCycle).Init()
     require(script.Parent.WaveManager).Init()
