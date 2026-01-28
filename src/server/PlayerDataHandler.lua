@@ -74,7 +74,9 @@ function PlayerDataHandler.Init()
         while true do
             task.wait(60) -- Autosave every 60 seconds
             for _, player in ipairs(Players:GetPlayers()) do
-                PlayerDataHandler.Save(player)
+                task.spawn(function()
+                    PlayerDataHandler.Save(player)
+                end)
             end
         end
     end)
