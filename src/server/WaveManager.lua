@@ -48,7 +48,7 @@ function WaveManager.SpawnEnemy(difficulty)
     -- Visual Debug (Create a part)
     -- Optimization: Clone from template instead of creating new
     local part = enemyTemplate:Clone()
-    part.Anchored = false -- Ensure physics is enabled
+    part.Anchored = false -- Ensure physics is enabled (Task: Enable Physics)
     part.Position = Vector3.new(math.random(-50, 50), 5, math.random(-50, 50))
     part.Parent = workspace
     
