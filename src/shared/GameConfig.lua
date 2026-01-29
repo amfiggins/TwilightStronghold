@@ -10,6 +10,7 @@ Shared.GAME_VERSION = "0.1.0-alpha"
 Shared.IS_SURVIVAL_MODE = false -- Toggle to true to test Survival Loop in Studio
 Shared.MAX_LOBBY_PLAYERS = 20
 Shared.MAX_SESSION_PLAYERS = 4 -- Survival squad size
+Shared.INVENTORY_CAPACITY = 30 -- Max unique slots
 
 -- Place Configuration
 Shared.PLACE_IDS = {
