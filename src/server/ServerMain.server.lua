@@ -21,13 +21,19 @@ local GameConfig = require(game.ReplicatedStorage.Shared.GameConfig)
 -- OR if the debug flag IS_SURVIVAL_MODE is set (for testing in Studio/Lobby).
 local isSurvival = (game.PlaceId == GameConfig.PLACE_IDS.SurvivalZone) or GameConfig.IS_SURVIVAL_MODE
 
+print(string.format("[Server] Mode Logic: PlaceId=%s | SurvivalZoneId=%s | DebugFlag=%s",
+    tostring(game.PlaceId),
+    tostring(GameConfig.PLACE_IDS.SurvivalZone),
+    tostring(GameConfig.IS_SURVIVAL_MODE)
+))
+
 if isSurvival then
-    print("[Server] Starting Survival Mode Modules...")
+    print("[Server] >> Starting SURVIVAL Mode <<")
     require(script.Parent.DayNightCycle).Init()
     require(script.Parent.WaveManager).Init()
     require(script.Parent.BuildingSystem).Init()
 else
-    print("[Server] Running Lobby Mode.")
+    print("[Server] >> Starting LOBBY Mode <<")
 end
 
 print("[Server] All systems initialized.")
