@@ -53,15 +53,42 @@ local function createButton(text, onClick)
     btn.TextColor3 = Color3.fromRGB(255, 255, 255)
     btn.Text = text
     btn.Parent = frame
+    btn.AutoButtonColor = false
+
+    btn.MouseEnter:Connect(function()
+        btn.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
+    end)
+
+    btn.MouseLeave:Connect(function()
+        btn.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+    end)
     
-    btn.MouseButton1Click:Connect(onClick)
+    btn.MouseButton1Click:Connect(function()
+        btn.BackgroundColor3 = Color3.fromRGB(100, 255, 100)
+        btn.TextColor3 = Color3.fromRGB(0, 0, 0)
+        task.wait(0.1)
+        btn.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
+        btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+        onClick()
+    end)
     return btn
 end
 
 -- Populate Inventory Buttons
 local function populateLoadout()
+    -- Loading Indicator
+    local loadingLabel = Instance.new("TextLabel")
+    loadingLabel.Text = "Loading inventory..."
+    loadingLabel.Size = UDim2.new(1, 0, 0, 30)
+    loadingLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
+    loadingLabel.BackgroundTransparency = 1
+    loadingLabel.Font = Enum.Font.SourceSansItalic
+    loadingLabel.TextSize = 18
+    loadingLabel.Parent = frame
+
     -- Fetch Data
     local data = GetPlayerData:InvokeServer()
+    if loadingLabel then loadingLabel:Destroy() end
     local inventory = data and data.Inventory or {}
 
     -- Clear existing buttons if any (though this runs once currently)
