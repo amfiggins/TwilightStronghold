@@ -16,6 +16,17 @@ RemotesFolder.Name = "Remotes"
 local GatherEvent = Instance.new("RemoteEvent", RemotesFolder)
 GatherEvent.Name = "GatherResource"
 
+-- Mapping: Specific Node Name -> Generic Resource ID
+local NODE_TYPE_MAPPING = {
+    ["OakTree"] = "Tree",
+    ["BirchTree"] = "Tree",
+    ["PineTree"] = "Tree",
+    ["Boulder"] = "Rock",
+    ["Limestone"] = "Rock",
+    ["Pond"] = "Lake",
+    ["River"] = "Lake"
+}
+
 function ResourceManager.Init()
     GatherEvent.OnServerEvent:Connect(ResourceManager.OnGatherRequest)
     print("[ResourceManager] Initialized. Listening for Gather events.")
@@ -29,11 +40,14 @@ function ResourceManager.OnGatherRequest(player, resourceNode)
     end
 
     -- Determine what they got
-    local resourceType = resourceNode.Name
-    local drop = GameConfig.Resources[resourceType]
+    local nodeName = resourceNode.Name
+    -- Map specific node names to generic Resource IDs (e.g., "OakTree" -> "Tree")
+    local resourceId = NODE_TYPE_MAPPING[nodeName] or nodeName
+
+    local drop = GameConfig.Resources[resourceId]
 
     if not drop then
-        warn(string.format("[ResourceManager] Unknown resource type: %s", resourceType))
+        warn(string.format("[ResourceManager] Unknown resource type: %s (Mapped from: %s)", resourceId, nodeName))
         return
     end
     
