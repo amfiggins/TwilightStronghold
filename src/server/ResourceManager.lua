@@ -9,6 +9,8 @@ local GameConfig = require(ReplicatedStorage.Shared.GameConfig)
 
 local ResourceManager = {}
 
+local MAX_GATHER_DISTANCE = 25 -- Maximum distance in studs to allow gathering
+
 -- Create Remotes
 local RemotesFolder = ReplicatedStorage:FindFirstChild("Remotes") or Instance.new("Folder", ReplicatedStorage)
 RemotesFolder.Name = "Remotes"
@@ -25,6 +27,28 @@ function ResourceManager.OnGatherRequest(player, resourceNode)
     -- 1. Validation Logic
     if typeof(resourceNode) ~= "Instance" then
         warn("[ResourceManager] Invalid resource node received.")
+        return
+    end
+
+    -- 2. Security: Distance Validation
+    local character = player.Character
+    local rootPart = character and character.PrimaryPart
+
+    if not rootPart then
+        return -- Cannot gather if dead or spawning
+    end
+
+    local nodePos
+    if resourceNode:IsA("BasePart") then
+        nodePos = resourceNode.Position
+    elseif resourceNode:IsA("Model") then
+        nodePos = resourceNode:GetPivot().Position
+    else
+        return -- Invalid resource node type
+    end
+
+    if (rootPart.Position - nodePos).Magnitude > MAX_GATHER_DISTANCE then
+        warn(string.format("[ResourceManager] Suspicious gather: %s is too far (%.1f studs)", player.Name, (rootPart.Position - nodePos).Magnitude))
         return
     end
 
