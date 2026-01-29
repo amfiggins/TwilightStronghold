@@ -85,7 +85,22 @@ function ResourceManager.OnGatherRequest(player, resourceNode)
         itemAwarded = "golden_wood" -- Rare drop!
     end
     
-    -- Verify Inventory Cap? (Skip for now)
+    -- Verify Inventory Cap
+    local data = PlayerDataHandler.Get(player)
+    if data then
+        local alreadyHasItem = false
+        for _, slot in ipairs(data.Inventory) do
+            if slot.ItemId == itemAwarded then
+                alreadyHasItem = true
+                break
+            end
+        end
+
+        if not alreadyHasItem and #data.Inventory >= GameConfig.INVENTORY_CAPACITY then
+            warn(string.format("[ResourceManager] %s Inventory Full. Cannot add %s", player.Name, itemAwarded))
+            return
+        end
+    end
     
     -- Add Item
     local success = PlayerDataHandler.AddItem(player, itemAwarded, qty)
