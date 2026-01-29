@@ -30,9 +30,20 @@ Shared.Rarity = {
 
 -- Resource Definitions (Loot Tables)
 Shared.Resources = {
-    ["Tree"] = { Item = "wood_log", Min = 1, Max = 3 },
+    ["Tree"] = { Item = "wood_log", Min = 1, Max = 3, RareItem = "golden_wood", RareChance = 5 },
     ["Rock"] = { Item = "stone_ore", Min = 1, Max = 2 },
     ["Lake"] = { Item = "raw_fish", Min = 1, Max = 1 }
+}
+
+-- Mapping: Specific Node Name -> Generic Resource ID
+Shared.NodeTypeMapping = {
+    ["OakTree"] = "Tree",
+    ["BirchTree"] = "Tree",
+    ["PineTree"] = "Tree",
+    ["Boulder"] = "Rock",
+    ["Limestone"] = "Rock",
+    ["Pond"] = "Lake",
+    ["River"] = "Lake"
 }
 
 -- Item Database (Mock-up)
