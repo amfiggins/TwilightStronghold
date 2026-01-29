@@ -19,7 +19,7 @@ function WaveManager.Init()
     enemyTemplate = Instance.new("Part")
     enemyTemplate.Name = "Enemy"
     enemyTemplate.BrickColor = BrickColor.new("Really red")
-    enemyTemplate.Anchored = false -- Anchored for MVP so it doesn't fall
+    enemyTemplate.Anchored = false -- Unanchored to allow movement
 end
 
 function WaveManager.StartWave(waveNumber)
@@ -48,6 +48,7 @@ function WaveManager.SpawnEnemy(difficulty)
     -- Visual Debug (Create a part)
     -- Optimization: Clone from template instead of creating new
     local part = enemyTemplate:Clone()
+    part.Anchored = false -- Ensure physics is enabled
     part.Position = Vector3.new(math.random(-50, 50), 5, math.random(-50, 50))
     part.Parent = workspace
     
