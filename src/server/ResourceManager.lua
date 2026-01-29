@@ -21,21 +21,29 @@ function ResourceManager.Init()
     print("[ResourceManager] Initialized. Listening for Gather events.")
 end
 
-function ResourceManager.OnGatherRequest(player, resourceId)
+function ResourceManager.OnGatherRequest(player, resourceNode)
     -- 1. Validation Logic
-    -- In a real game, we'd check distance between player and resourceId, cooldowns, and tool equipped.
-    -- For this MVP Prototype, we trust the client's "Success" for now but log it.
-    
-    -- Determine what they got (Simulating logic)
-    -- In reality, resourceId would map to a specific node type
-    local drop = GameConfig.Resources["Tree"] -- Defaulting to Tree for test
+    if typeof(resourceNode) ~= "Instance" then
+        warn("[ResourceManager] Invalid resource node received.")
+        return
+    end
+
+    -- Determine what they got
+    local resourceType = resourceNode.Name
+    local drop = GameConfig.Resources[resourceType]
+
+    if not drop then
+        warn(string.format("[ResourceManager] Unknown resource type: %s", resourceType))
+        return
+    end
     
     -- Logic: Roll for Rarity (The "Fisch" mechanic)
     local roll = math.random(1, 100)
-    local itemAwarded = "wood_log"
-    local qty = 1
+    local itemAwarded = drop.Item
+    local qty = math.random(drop.Min, drop.Max)
     
-    if roll > 95 then
+    -- Rare drop logic override for Tree/Wood
+    if itemAwarded == "wood_log" and roll > 95 then
         itemAwarded = "golden_wood" -- Rare drop!
     end
     
