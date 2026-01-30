@@ -6,6 +6,7 @@
 local ProximityPromptService = game:GetService("ProximityPromptService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Players = game:GetService("Players")
+local TweenService = game:GetService("TweenService")
 
 local player = Players.LocalPlayer
 
@@ -18,8 +19,43 @@ local MinigameController = require(script.Parent.MinigameController)
 print("[InteractionClient] Initialized. Listening for prompts.")
 MinigameController.Init()
 
+-- Toast Notification System
+local notifGui = Instance.new("ScreenGui")
+notifGui.Name = "NotificationUI"
+notifGui.ResetOnSpawn = false
+notifGui.Parent = player:WaitForChild("PlayerGui")
+
+local function showNotification(text)
+    local label = Instance.new("TextLabel")
+    label.Text = text
+    label.Size = UDim2.new(0, 200, 0, 40)
+    label.Position = UDim2.new(0.5, -100, 0.7, 0)
+    label.BackgroundTransparency = 1
+    label.TextColor3 = Color3.fromRGB(255, 255, 255)
+    label.TextStrokeTransparency = 0.5
+    label.Font = Enum.Font.GothamBold
+    label.TextSize = 24
+    label.Parent = notifGui
+
+    -- Animate: Float up and fade out
+    local info = TweenInfo.new(1.5, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+    local goal = {
+        Position = UDim2.new(0.5, -100, 0.5, 0),
+        TextTransparency = 1,
+        TextStrokeTransparency = 1
+    }
+
+    local tween = TweenService:Create(label, info, goal)
+    tween:Play()
+    tween.Completed:Connect(function()
+        label:Destroy()
+    end)
+end
+
 -- Listen for Gathering Feedback
 GatherEvent.OnClientEvent:Connect(function(item, qty)
+    local msg = string.format("+%d %s", qty, item)
+    showNotification(msg)
     print(string.format("[InteractionClient] Received: %s x%d", item, qty))
 end)
 
