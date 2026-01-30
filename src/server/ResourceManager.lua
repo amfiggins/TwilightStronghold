@@ -54,7 +54,10 @@ function ResourceManager.OnGatherRequest(player, resourceNode)
 
     -- Determine what they got
     local nodeName = resourceNode.Name
-    -- Map specific node names to generic Resource IDs (e.g., "OakTree" -> "Tree")
+
+    -- Map specific node names (from the workspace) to generic Resource IDs (from GameConfig)
+    -- e.g., "OakTree" -> "Tree", "Boulder" -> "Rock"
+    -- This allows multiple visual variations to yield the same resource type.
     local resourceId = GameConfig.NodeTypeMapping[nodeName] or nodeName
 
     local drop = GameConfig.Resources[resourceId]
