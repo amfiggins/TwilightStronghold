@@ -11,7 +11,6 @@ print("[Server] Starting Twilight Stronghold Server...")
 PlayerDataHandler.Init()
 require(script.Parent.ResourceManager).Init()
 require(script.Parent.LoadoutManager).Init()
-require(script.Parent.MatchmakingService).Init()
 
 -- Conditional Loading based on Mode (Lobby vs Survival)
 local GameConfig = require(game.ReplicatedStorage.Shared.GameConfig)
@@ -28,6 +27,7 @@ if isSurvival then
     require(script.Parent.BuildingSystem).Init()
 else
     print(string.format("[Server] >> Starting LOBBY Mode (PlaceId: %s) <<", game.PlaceId))
+    require(script.Parent.MatchmakingService).Init()
 end
 
 print("[Server] All systems initialized.")
