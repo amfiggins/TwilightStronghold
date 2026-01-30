@@ -88,8 +88,9 @@ function ResourceManager.OnGatherRequest(player, resourceNode)
             end
         end
 
-        if not alreadyHasItem and #data.Inventory >= GameConfig.INVENTORY_CAPACITY then
-            warn(string.format("[ResourceManager] %s Inventory Full. Cannot add %s", player.Name, itemAwarded))
+        local capacity = PlayerDataHandler.GetMaxInventorySlots(player)
+        if not alreadyHasItem and #data.Inventory >= capacity then
+            warn(string.format("[ResourceManager] %s Inventory Full (%d/%d). Cannot add %s", player.Name, #data.Inventory, capacity, itemAwarded))
             return
         end
     end
