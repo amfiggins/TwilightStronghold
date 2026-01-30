@@ -18,17 +18,6 @@ RemotesFolder.Name = "Remotes"
 local GatherEvent = Instance.new("RemoteEvent", RemotesFolder)
 GatherEvent.Name = "GatherResource"
 
--- Mapping: Specific Node Name -> Generic Resource ID
-local NODE_TYPE_MAPPING = {
-    ["OakTree"] = "Tree",
-    ["BirchTree"] = "Tree",
-    ["PineTree"] = "Tree",
-    ["Boulder"] = "Rock",
-    ["Limestone"] = "Rock",
-    ["Pond"] = "Lake",
-    ["River"] = "Lake"
-}
-
 function ResourceManager.Init()
     GatherEvent.OnServerEvent:Connect(ResourceManager.OnGatherRequest)
     print("[ResourceManager] Initialized. Listening for Gather events.")
@@ -66,7 +55,7 @@ function ResourceManager.OnGatherRequest(player, resourceNode)
     -- Determine what they got
     local nodeName = resourceNode.Name
     -- Map specific node names to generic Resource IDs (e.g., "OakTree" -> "Tree")
-    local resourceId = NODE_TYPE_MAPPING[nodeName] or nodeName
+    local resourceId = GameConfig.NodeTypeMapping[nodeName] or nodeName
 
     local drop = GameConfig.Resources[resourceId]
 
@@ -80,9 +69,9 @@ function ResourceManager.OnGatherRequest(player, resourceNode)
     local itemAwarded = drop.Item
     local qty = math.random(drop.Min, drop.Max)
     
-    -- Rare drop logic override for Tree/Wood
-    if itemAwarded == "wood_log" and roll > 95 then
-        itemAwarded = "golden_wood" -- Rare drop!
+    -- Generic Rare Drop Logic
+    if drop.RareItem and drop.RareChance and roll > (100 - drop.RareChance) then
+        itemAwarded = drop.RareItem
     end
     
     -- Verify Inventory Cap
