@@ -10,7 +10,7 @@ Shared.GAME_VERSION = "0.1.0-alpha"
 Shared.IS_SURVIVAL_MODE = false -- Toggle to true to test Survival Loop in Studio
 Shared.MAX_LOBBY_PLAYERS = 20
 Shared.MAX_SESSION_PLAYERS = 4 -- Survival squad size
-Shared.INVENTORY_CAPACITY = 30 -- Max unique slots
+Shared.INVENTORY_CAPACITY = 5 -- Fallback max unique slots (if no bag equipped)
 
 -- Place Configuration
 Shared.PLACE_IDS = {
@@ -56,7 +56,12 @@ Shared.Items = {
     ["void_sword"] = { Name = "Void Slayer", Type = "Weapon", Rarity = "Legendary", Damage = 50 },
     
     -- Base Kits (Loadout Items)
-    ["watchtower_kit"] = { Name = "Watchtower Blueprint", Type = "Kit", Rarity = "Rare", StructureId = "tower_01" }
+    ["watchtower_kit"] = { Name = "Watchtower Blueprint", Type = "Kit", Rarity = "Rare", StructureId = "tower_01" },
+
+    -- Bags
+    ["starter_bag"] = { Name = "Starter Bag", Type = "Bag", Rarity = "Common", Capacity = 10, Description = "A small bag." },
+    ["leather_bag"] = { Name = "Leather Bag", Type = "Bag", Rarity = "Uncommon", Capacity = 20, Description = "A durable leather bag." },
+    ["reinforced_bag"] = { Name = "Reinforced Bag", Type = "Bag", Rarity = "Rare", Capacity = 30, Description = "A reinforced bag with extra pockets." }
 }
 
 return Shared

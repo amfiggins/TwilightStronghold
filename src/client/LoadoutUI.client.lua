@@ -115,6 +115,8 @@ local function populateLoadout()
                 slot = "Weapon"
             elseif itemDef.Type == "Kit" then
                 slot = "BaseKit"
+            elseif itemDef.Type == "Bag" then
+                slot = "Bag"
             end
 
             if slot then

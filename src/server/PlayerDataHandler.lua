@@ -24,10 +24,12 @@ local DEFAULT_DATA = {
     },
     Inventory = {
         -- Format: { Content = "wood", Qty = 10 }, { ItemId = "void_sword", GUID = "..." }
+        { ItemId = "starter_bag", Qty = 1 }
     },
     Loadout = {
         Weapon = nil, -- Usage: ItemId (e.g. "void_sword")
-        BaseKit = nil
+        BaseKit = nil,
+        Bag = "starter_bag"
     },
     CodesRedeemed = {}
 }
@@ -164,6 +166,22 @@ function PlayerDataHandler.Get(player)
     return sessionData[player.UserId]
 end
 
+-- Public API to Get Max Inventory Slots
+function PlayerDataHandler.GetMaxInventorySlots(player)
+    local data = sessionData[player.UserId]
+    if not data then return GameConfig.INVENTORY_CAPACITY end
+
+    local bagId = data.Loadout.Bag
+    if bagId then
+        local bagItem = GameConfig.Items[bagId]
+        if bagItem and bagItem.Capacity then
+            return bagItem.Capacity
+        end
+    end
+
+    return GameConfig.INVENTORY_CAPACITY
+end
+
 -- Public API to Add Item
 function PlayerDataHandler.AddItem(player, itemId, quantity)
     local data = sessionData[player.UserId]
@@ -212,8 +230,8 @@ function PlayerDataHandler.SetLoadout(player, slot, itemId)
     local data = sessionData[player.UserId]
     if not data then return false end
     
-    -- Slot must be "Weapon" or "BaseKit" based on our schema
-    if slot ~= "Weapon" and slot ~= "BaseKit" then return false end
+    -- Slot must be "Weapon" or "BaseKit" or "Bag" based on our schema
+    if slot ~= "Weapon" and slot ~= "BaseKit" and slot ~= "Bag" then return false end
     
     -- Verification: Does player own this item?
     if itemId then
