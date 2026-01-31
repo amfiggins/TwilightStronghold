@@ -207,6 +207,19 @@ function PlayerDataHandler.AddCurrency(player, currencyType, amount)
     return false
 end
 
+-- Public API to Get Item
+function PlayerDataHandler.GetItem(player, itemId)
+    local data = sessionData[player.UserId]
+    if not data then return nil end
+
+    for _, item in ipairs(data.Inventory) do
+        if item.ItemId == itemId then
+            return item
+        end
+    end
+    return nil
+end
+
 -- Public API to Set Loadout
 function PlayerDataHandler.SetLoadout(player, slot, itemId)
     local data = sessionData[player.UserId]
@@ -216,15 +229,8 @@ function PlayerDataHandler.SetLoadout(player, slot, itemId)
     if slot ~= "Weapon" and slot ~= "BaseKit" then return false end
     
     -- Verification: Does player own this item?
-    if itemId then
-        local owned = false
-        for _, item in ipairs(data.Inventory) do
-            if item.ItemId == itemId then
-                owned = true
-                break
-            end
-        end
-        if not owned then return false end
+    if itemId and not PlayerDataHandler.GetItem(player, itemId) then
+        return false
     end
     
     data.Loadout[slot] = itemId
