@@ -49,11 +49,11 @@ Shared.NodeTypeMapping = {
 -- Item Database (Mock-up)
 Shared.Items = {
     -- Tools
-    ["wooden_rod"] = { Name = "Wooden Rod", Type = "Tool", Rarity = "Common", Description = "A basic fishing rod." },
-    ["iron_pickaxe"] = { Name = "Iron Pickaxe", Type = "Tool", Rarity = "Uncommon", Description = "Better than bare hands." },
+    ["wooden_rod"] = { Name = "Wooden Rod", Type = "Tool", Rarity = "Common", Description = "A basic fishing rod.", Stackable = false },
+    ["iron_pickaxe"] = { Name = "Iron Pickaxe", Type = "Tool", Rarity = "Uncommon", Description = "Better than bare hands.", Stackable = false },
     
     -- Weapons (Loadout Items)
-    ["void_sword"] = { Name = "Void Slayer", Type = "Weapon", Rarity = "Legendary", Damage = 50 },
+    ["void_sword"] = { Name = "Void Slayer", Type = "Weapon", Rarity = "Legendary", Damage = 50, Stackable = false },
     
     -- Base Kits (Loadout Items)
     ["watchtower_kit"] = { Name = "Watchtower Blueprint", Type = "Kit", Rarity = "Rare", StructureId = "tower_01" }

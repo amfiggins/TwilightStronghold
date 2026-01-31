@@ -6,6 +6,7 @@
 
 local Players = game:GetService("Players")
 local DataStoreService = game:GetService("DataStoreService")
+local HttpService = game:GetService("HttpService")
 local RunService = game:GetService("RunService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
@@ -171,19 +172,43 @@ function PlayerDataHandler.AddItem(player, itemId, quantity)
     
     quantity = quantity or 1
     
-    -- Check if item exists (Stacking logic for "Materials")
-    -- For this MVP, we treat everything as stackable for simplicity unless it involves unique GUIDs
-    local found = false
-    for _, slot in ipairs(data.Inventory) do
-        if slot.ItemId == itemId then
-            slot.Qty = (slot.Qty or 1) + quantity
-            found = true
-            break
-        end
+    local itemDef = GameConfig.Items[itemId]
+    local isStackable = true
+    if itemDef and itemDef.Stackable == false then
+        isStackable = false
     end
     
-    if not found then
-        table.insert(data.Inventory, { ItemId = itemId, Qty = quantity })
+    if isStackable then
+        -- Check if item exists (Stacking logic for "Materials")
+        local found = false
+        for _, slot in ipairs(data.Inventory) do
+            if slot.ItemId == itemId then
+                slot.Qty = (slot.Qty or 1) + quantity
+                found = true
+                break
+            end
+        end
+
+        if not found then
+            if #data.Inventory < GameConfig.INVENTORY_CAPACITY then
+                table.insert(data.Inventory, { ItemId = itemId, Qty = quantity })
+            else
+                return false
+            end
+        end
+    else
+        -- Non-stackable logic: Items with unique GUIDs
+        if #data.Inventory + quantity <= GameConfig.INVENTORY_CAPACITY then
+            for _ = 1, quantity do
+                table.insert(data.Inventory, {
+                    ItemId = itemId,
+                    Qty = 1,
+                    GUID = HttpService:GenerateGUID(false)
+                })
+            end
+        else
+            return false
+        end
     end
     
     return true
