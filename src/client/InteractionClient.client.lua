@@ -8,6 +8,8 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
 
+local GameConfig = require(ReplicatedStorage.Shared.GameConfig)
+
 local player = Players.LocalPlayer
 
 -- Wait for Remotes
@@ -53,10 +55,14 @@ local function showNotification(text)
 end
 
 -- Listen for Gathering Feedback
-GatherEvent.OnClientEvent:Connect(function(item, qty)
-    local msg = string.format("+%d %s", qty, item)
+GatherEvent.OnClientEvent:Connect(function(itemId, qty)
+    -- Resolve item name for better feedback
+    local itemDef = GameConfig.Items[itemId]
+    local name = itemDef and itemDef.Name or itemId
+
+    local msg = string.format("+%d %s", qty, name)
     showNotification(msg)
-    print(string.format("[InteractionClient] Received: %s x%d", item, qty))
+    print(string.format("[InteractionClient] Received: %s x%d (%s)", itemId, qty, name))
 end)
 
 ProximityPromptService.PromptTriggered:Connect(function(promptObject, triggerPlayer)
