@@ -21,7 +21,7 @@ DayNightCycle.TimeRemaining = 0
 
 -- Config
 local DAY_LENGTH = 300 -- Seconds (Production)
-local NIGHT_LENGTH = 120 -- Seconds (Production)
+local NIGHT_LENGTH = 120 -- Seconds (Production Value)
 
 function DayNightCycle.Init()
     print("[DayNightCycle] Initialized.")
