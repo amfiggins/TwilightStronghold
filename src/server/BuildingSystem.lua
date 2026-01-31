@@ -8,6 +8,8 @@ local PlayerDataHandler = require(script.Parent.PlayerDataHandler)
 
 local BuildingSystem = {}
 
+local MAX_BUILD_DISTANCE = 20 -- Maximum distance in studs to allow building
+
 -- Remotes
 local Remotes = ReplicatedStorage:WaitForChild("Remotes")
 local PlaceStructureEvent = Instance.new("RemoteEvent", Remotes)
@@ -38,7 +40,26 @@ function BuildingSystem.PlaceStructure(player, structureType, cframe)
     -- if not hasResources then return end
     
     -- 2. Validate Placement (Anti-Cheat)
+    -- Ensure cframe is valid
+    if typeof(cframe) ~= "CFrame" then
+        warn(string.format("[BuildingSystem] Invalid CFrame received from %s", player.Name))
+        return
+    end
+
     -- Ensure player is close to `cframe.Position`
+    local character = player.Character
+    local rootPart = character and character.PrimaryPart
+
+    if not rootPart then
+        return -- Cannot build if dead or spawning
+    end
+
+    local dist = (rootPart.Position - cframe.Position).Magnitude
+    if dist > MAX_BUILD_DISTANCE then
+        warn(string.format("[BuildingSystem] Suspicious build: %s is too far (%.1f studs)", player.Name, dist))
+        return
+    end
+
     -- Ensure no collision
     
     -- 3. Place It
