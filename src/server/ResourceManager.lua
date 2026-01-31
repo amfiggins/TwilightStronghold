@@ -12,11 +12,19 @@ local ResourceManager = {}
 local MAX_GATHER_DISTANCE = 25 -- Maximum distance in studs to allow gathering
 
 -- Create Remotes
-local RemotesFolder = ReplicatedStorage:FindFirstChild("Remotes") or Instance.new("Folder", ReplicatedStorage)
-RemotesFolder.Name = "Remotes"
+local RemotesFolder = ReplicatedStorage:FindFirstChild("Remotes")
+if not RemotesFolder then
+    RemotesFolder = Instance.new("Folder")
+    RemotesFolder.Name = "Remotes"
+    RemotesFolder.Parent = ReplicatedStorage
+end
 
-local GatherEvent = Instance.new("RemoteEvent", RemotesFolder)
-GatherEvent.Name = "GatherResource"
+local GatherEvent = RemotesFolder:FindFirstChild("GatherResource")
+if not GatherEvent then
+    GatherEvent = Instance.new("RemoteEvent")
+    GatherEvent.Name = "GatherResource"
+    GatherEvent.Parent = RemotesFolder
+end
 
 function ResourceManager.Init()
     GatherEvent.OnServerEvent:Connect(ResourceManager.OnGatherRequest)
@@ -100,7 +108,9 @@ function ResourceManager.OnGatherRequest(player, resourceNode)
     if success then
         print(string.format("[ResourceManager] Awarded %s x%d to %s", itemAwarded, qty, player.Name))
         -- Notify client of successful gathering
-        GatherEvent:FireClient(player, itemAwarded, qty)
+        if GatherEvent then
+            GatherEvent:FireClient(player, itemAwarded, qty)
+        end
     end
 end
 
