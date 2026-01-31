@@ -4,6 +4,9 @@
 ]]
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local PathfindingService = game:GetService("PathfindingService")
+local Players = game:GetService("Players")
+
 local WaveManager = {}
 
 -- Config
@@ -15,11 +18,41 @@ local enemyTemplate
 function WaveManager.Init()
     print("[WaveManager] Initialized.")
 
-    -- Create the template part once
-    enemyTemplate = Instance.new("Part")
+    -- Create the template Model once
+    enemyTemplate = Instance.new("Model")
     enemyTemplate.Name = "Enemy"
-    enemyTemplate.BrickColor = BrickColor.new("Really red")
-    enemyTemplate.Anchored = false -- Unanchored to allow movement
+
+    local hrp = Instance.new("Part")
+    hrp.Name = "HumanoidRootPart"
+    hrp.Size = Vector3.new(2, 2, 1)
+    hrp.BrickColor = BrickColor.new("Really red")
+    hrp.Transparency = 0 -- Keep visible for debugging
+    hrp.CanCollide = true
+    hrp.Anchored = false
+    hrp.Parent = enemyTemplate
+
+    local humanoid = Instance.new("Humanoid")
+    humanoid.Parent = enemyTemplate
+
+    enemyTemplate.PrimaryPart = hrp
+end
+
+local function findNearestPlayer(position)
+    local nearestPlayer = nil
+    local minDistance = math.huge
+
+    for _, player in ipairs(Players:GetPlayers()) do
+        local character = player.Character
+        if character and character.PrimaryPart then
+            local distance = (character.PrimaryPart.Position - position).Magnitude
+            if distance < minDistance then
+                minDistance = distance
+                nearestPlayer = player
+            end
+        end
+    end
+
+    return nearestPlayer
 end
 
 function WaveManager.StartWave(waveNumber)
@@ -40,21 +73,54 @@ function WaveManager.StartWave(waveNumber)
 end
 
 function WaveManager.SpawnEnemy(difficulty)
-    -- Mock Enemy Spawing
-    -- In real impl, we'd clone a rig from ServerStorage and use PathfindingService
-    
     print(string.format("[WaveManager] Spawning Enemy (Lvl %d)", difficulty))
     
-    -- Visual Debug (Create a part)
-    -- Optimization: Clone from template instead of creating new
-    local part = enemyTemplate:Clone()
-    part.Anchored = false -- Ensure physics is enabled (Task: Enable Physics)
-    part.Position = Vector3.new(math.random(-50, 50), 5, math.random(-50, 50))
-    part.Parent = workspace
+    local enemy = enemyTemplate:Clone()
+    local hrp = enemy.PrimaryPart
+    local humanoid = enemy:FindFirstChild("Humanoid")
+
+    -- Set start position
+    local startPos = Vector3.new(math.random(-50, 50), 5, math.random(-50, 50))
+    enemy:SetPrimaryPartCFrame(CFrame.new(startPos))
+
+    enemy.Parent = workspace
     
-    -- Clean up after a few seconds mock death
-    task.delay(10, function()
-        if part then part:Destroy() end
+    -- AI Loop
+    task.spawn(function()
+        while enemy.Parent and humanoid.Health > 0 do
+            local targetPlayer = findNearestPlayer(hrp.Position)
+
+            if targetPlayer and targetPlayer.Character and targetPlayer.Character.PrimaryPart then
+                local targetPos = targetPlayer.Character.PrimaryPart.Position
+
+                -- Compute path
+                local path = PathfindingService:CreatePath()
+                local success, errorMessage = pcall(function()
+                    path:ComputeAsync(hrp.Position, targetPos)
+                end)
+
+                if success and path.Status == Enum.PathStatus.Success then
+                    local waypoints = path:GetWaypoints()
+
+                    -- Move to the second waypoint (the first one is the current position)
+                    if #waypoints >= 2 then
+                        humanoid:MoveTo(waypoints[2].Position)
+                    else
+                        -- Fallback: Move directly to target if very close
+                        humanoid:MoveTo(targetPos)
+                    end
+                else
+                    if not success then
+                        warn("[WaveManager] Path computation failed:", errorMessage)
+                    end
+                    -- Fallback: Try moving directly to target
+                    humanoid:MoveTo(targetPos)
+                end
+            end
+
+            -- Update path every 0.5 seconds
+            task.wait(0.5)
+        end
     end)
 end
 
