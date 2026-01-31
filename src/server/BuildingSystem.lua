@@ -30,14 +30,9 @@ function BuildingSystem.Init()
 end
 
 function BuildingSystem.PlaceStructure(player, structureType, cframe)
-    -- 1. Validate Cost
+    -- 1. Validate Cost Existence
     local cost = STRUCTURE_COSTS[structureType]
     if not cost then return end
-    
-    -- Check Inventory (Simplified Logic using PlayerDataHandler)
-    -- In a real scenario, we'd add a "RemoveItem" API to PlayerDataHandler
-    -- local hasResources = PlayerDataHandler.HasItem(player, cost.Resource, cost.Amount)
-    -- if not hasResources then return end
     
     -- 2. Validate Placement (Anti-Cheat)
     -- Ensure cframe is valid
@@ -61,8 +56,15 @@ function BuildingSystem.PlaceStructure(player, structureType, cframe)
     end
 
     -- Ensure no collision
+
+    -- 3. Deduct Cost
+    local success = PlayerDataHandler.RemoveItem(player, cost.Resource, cost.Amount)
+    if not success then
+        warn(string.format("[BuildingSystem] %s failed to build %s: Insufficient resources.", player.Name, structureType))
+        return
+    end
     
-    -- 3. Place It
+    -- 4. Place It
     print(string.format("[BuildingSystem] %s placed a %s", player.Name, structureType))
     
     local structure = Instance.new("Part")
@@ -72,9 +74,6 @@ function BuildingSystem.PlaceStructure(player, structureType, cframe)
     structure.CFrame = cframe
     structure.BrickColor = BrickColor.new("Brown")
     structure.Parent = workspace
-    
-    -- Deduct Cost (Mock)
-    -- PlayerDataHandler.RemoveItem(player, cost.Resource, cost.Amount)
 end
 
 return BuildingSystem
