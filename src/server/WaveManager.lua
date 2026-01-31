@@ -10,16 +10,20 @@ local WaveManager = {}
 local SPAWN_RATE = 5 -- Spawn an enemy every X seconds
 
 -- Optimization: Cache template to avoid repeated Instance.new and property setting
-local enemyTemplate
+local enemyTemplate -- Template part for enemies
 
 function WaveManager.Init()
-    print("[WaveManager] Initialized.")
+    print("[WaveManager] Initializing...")
 
-    -- Create the template part once
-    enemyTemplate = Instance.new("Part")
-    enemyTemplate.Name = "Enemy"
-    enemyTemplate.BrickColor = BrickColor.new("Really red")
-    enemyTemplate.Anchored = false -- Unanchored to allow movement
+    -- Initialize the enemy template for cloning
+    local template = Instance.new("Part")
+    template.Name = "Enemy"
+    template.BrickColor = BrickColor.new("Really red")
+    template.Anchored = false
+
+    enemyTemplate = template
+
+    print("[WaveManager] Initialized.")
 end
 
 function WaveManager.StartWave(waveNumber)
@@ -40,6 +44,11 @@ function WaveManager.StartWave(waveNumber)
 end
 
 function WaveManager.SpawnEnemy(difficulty)
+    if not enemyTemplate then
+        warn("WaveManager not initialized")
+        return
+    end
+
     -- Mock Enemy Spawing
     -- In real impl, we'd clone a rig from ServerStorage and use PathfindingService
     
@@ -48,7 +57,8 @@ function WaveManager.SpawnEnemy(difficulty)
     -- Visual Debug (Create a part)
     -- Optimization: Clone from template instead of creating new
     local part = enemyTemplate:Clone()
-    part.Anchored = false -- Ensure physics is enabled (Task: Enable Physics)
+
+    -- Set position (Physics already enabled in template)
     part.Position = Vector3.new(math.random(-50, 50), 5, math.random(-50, 50))
     part.Parent = workspace
     
