@@ -4,6 +4,7 @@
 ]]
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local TweenService = game:GetService("TweenService")
 local WaveManager = {}
 
 -- Config
@@ -15,11 +16,24 @@ local enemyTemplate
 function WaveManager.Init()
     print("[WaveManager] Initialized.")
 
-    -- Create the template part once
-    enemyTemplate = Instance.new("Part")
+    -- Create the template model once
+    enemyTemplate = Instance.new("Model")
     enemyTemplate.Name = "Enemy"
-    enemyTemplate.BrickColor = BrickColor.new("Really red")
-    enemyTemplate.Anchored = false -- Unanchored to allow movement
+
+    local rootPart = Instance.new("Part")
+    rootPart.Name = "HumanoidRootPart"
+    rootPart.Size = Vector3.new(4, 4, 4)
+    rootPart.BrickColor = BrickColor.new("Really red")
+    rootPart.Anchored = false -- Unanchored to allow movement
+    rootPart.Parent = enemyTemplate
+
+    local humanoid = Instance.new("Humanoid")
+    humanoid.MaxHealth = 100
+    humanoid.Health = 100
+    humanoid.DisplayDistanceType = Enum.HumanoidDisplayDistanceType.Viewer
+    humanoid.Parent = enemyTemplate
+
+    enemyTemplate.PrimaryPart = rootPart
 end
 
 function WaveManager.StartWave(waveNumber)
@@ -45,17 +59,36 @@ function WaveManager.SpawnEnemy(difficulty)
     
     print(string.format("[WaveManager] Spawning Enemy (Lvl %d)", difficulty))
     
-    -- Visual Debug (Create a part)
     -- Optimization: Clone from template instead of creating new
-    local part = enemyTemplate:Clone()
-    part.Anchored = false -- Ensure physics is enabled (Task: Enable Physics)
-    part.Position = Vector3.new(math.random(-50, 50), 5, math.random(-50, 50))
-    part.Parent = workspace
-    
-    -- Clean up after a few seconds mock death
-    task.delay(10, function()
-        if part then part:Destroy() end
-    end)
+    local enemy = enemyTemplate:Clone()
+    local rootPart = enemy.PrimaryPart
+    local humanoid = enemy:FindFirstChild("Humanoid")
+
+    -- Set stats based on difficulty
+    if humanoid then
+        humanoid.MaxHealth = 100 + (difficulty * 10)
+        humanoid.Health = humanoid.MaxHealth
+
+        humanoid.Died:Connect(function()
+            -- Death Sequence
+            if rootPart then
+                rootPart.Anchored = true -- Stop moving
+                rootPart.CanCollide = false
+
+                local tweenInfo = TweenInfo.new(1, Enum.EasingStyle.Linear, Enum.EasingDirection.Out)
+                local tween = TweenService:Create(rootPart, tweenInfo, {Transparency = 1})
+                tween:Play()
+
+                tween.Completed:Wait()
+            end
+            enemy:Destroy()
+        end)
+    end
+
+    if rootPart then
+        rootPart.CFrame = CFrame.new(math.random(-50, 50), 5, math.random(-50, 50))
+    end
+    enemy.Parent = workspace
 end
 
 return WaveManager
