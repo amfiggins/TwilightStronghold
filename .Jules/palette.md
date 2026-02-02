@@ -5,3 +5,7 @@
 ## 2026-05-21 - Feedback for High-Frequency Actions
 **Learning:** Repetitive actions like resource gathering (mining, cutting) feel unresponsive without immediate visual confirmation (e.g., "Toast" or "Floating Text"), even if the inventory updates in the background.
 **Action:** Implement lightweight, non-blocking visual cues (like floating text) for all high-frequency interactions to confirm success.
+
+## 2026-10-24 - List Scanability
+**Learning:** Plain text lists (like inventories) are hard to scan quickly for value/quality.
+**Action:** Use color-coded indicators (borders/icons) alongside text to allow rapid visual filtering.
