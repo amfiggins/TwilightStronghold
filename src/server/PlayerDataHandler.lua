@@ -207,6 +207,29 @@ function PlayerDataHandler.AddCurrency(player, currencyType, amount)
     return false
 end
 
+-- Public API to Remove Item
+function PlayerDataHandler.RemoveItem(player, itemId, quantity)
+    local data = sessionData[player.UserId]
+    if not data then return false end
+
+    quantity = quantity or 1
+
+    for i, slot in ipairs(data.Inventory) do
+        if slot.ItemId == itemId then
+            if (slot.Qty or 1) >= quantity then
+                slot.Qty = (slot.Qty or 1) - quantity
+                if slot.Qty <= 0 then
+                    table.remove(data.Inventory, i)
+                end
+                return true
+            end
+            return false
+        end
+    end
+
+    return false
+end
+
 -- Public API to Set Loadout
 function PlayerDataHandler.SetLoadout(player, slot, itemId)
     local data = sessionData[player.UserId]
