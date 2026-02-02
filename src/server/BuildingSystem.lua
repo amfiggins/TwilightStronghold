@@ -34,10 +34,12 @@ function BuildingSystem.PlaceStructure(player, structureType, cframe)
     local cost = STRUCTURE_COSTS[structureType]
     if not cost then return end
     
-    -- Check Inventory (Simplified Logic using PlayerDataHandler)
-    -- In a real scenario, we'd add a "RemoveItem" API to PlayerDataHandler
-    -- local hasResources = PlayerDataHandler.HasItem(player, cost.Resource, cost.Amount)
-    -- if not hasResources then return end
+    -- Check Inventory and Deduct Cost
+    local success = PlayerDataHandler.RemoveItem(player, cost.Resource, cost.Amount)
+    if not success then
+        warn(string.format("[BuildingSystem] %s cannot afford %s (Needs: %s x%d)", player.Name, structureType, cost.Resource, cost.Amount))
+        return
+    end
     
     -- 2. Validate Placement (Anti-Cheat)
     -- Ensure cframe is valid
@@ -72,9 +74,6 @@ function BuildingSystem.PlaceStructure(player, structureType, cframe)
     structure.CFrame = cframe
     structure.BrickColor = BrickColor.new("Brown")
     structure.Parent = workspace
-    
-    -- Deduct Cost (Mock)
-    -- PlayerDataHandler.RemoveItem(player, cost.Resource, cost.Amount)
 end
 
 return BuildingSystem
