@@ -14,7 +14,7 @@ local gui = nil
 local frame = nil
 local bar = nil
 local target = nil
-local progressBar = nil
+local progressFill = nil
 
 local isPlaying = false
 local progress = 0
@@ -59,22 +59,21 @@ function MinigameController.Init()
     bar.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
     bar.Parent = bg
 
-    -- Progress Bar Background (UX Improvement)
-    local pBg = Instance.new("Frame")
-    pBg.Name = "ProgressBg"
-    pBg.Size = UDim2.new(1, 0, 0, 4)
-    pBg.Position = UDim2.new(0, 0, 1, 4) -- 4px below main bar
-    pBg.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-    pBg.BorderSizePixel = 0
-    pBg.Parent = bg
+    -- Progress Bar
+    local progressBg = Instance.new("Frame")
+    progressBg.Name = "ProgressBackground"
+    progressBg.Size = UDim2.new(1, 0, 0, 8)
+    progressBg.Position = UDim2.new(0, 0, 1, 5)
+    progressBg.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+    progressBg.BorderSizePixel = 0
+    progressBg.Parent = bg
 
-    -- Progress Bar Fill
-    progressBar = Instance.new("Frame")
-    progressBar.Name = "ProgressFill"
-    progressBar.Size = UDim2.new(0, 0, 1, 0)
-    progressBar.BackgroundColor3 = Color3.fromRGB(100, 255, 100)
-    progressBar.BorderSizePixel = 0
-    progressBar.Parent = pBg
+    progressFill = Instance.new("Frame")
+    progressFill.Name = "ProgressFill"
+    progressFill.Size = UDim2.new(0, 0, 1, 0)
+    progressFill.BackgroundColor3 = Color3.fromRGB(0, 255, 100)
+    progressFill.BorderSizePixel = 0
+    progressFill.Parent = progressBg
 end
 
 function MinigameController.Start(callback)
@@ -85,6 +84,9 @@ function MinigameController.Start(callback)
     barPosition = 0.5
     
     frame.Visible = true
+    if progressFill then
+        progressFill.Size = UDim2.new(0, 0, 1, 0)
+    end
     
     -- Game Loop
     local connection
@@ -108,6 +110,9 @@ function MinigameController.Start(callback)
         -- Update UI
         bar.Position = UDim2.new(barPosition, 0, 0, 0)
         target.Position = UDim2.new(targetPosition, 0, 0, 0)
+        if progressFill then
+            progressFill.Size = UDim2.new(math.clamp(progress, 0, 1), 0, 1, 0)
+        end
         
         -- Check Overlap
         local barStart = barPosition
@@ -121,10 +126,7 @@ function MinigameController.Start(callback)
             progress = math.max(0, progress - (DECAY_RATE * dt))
         end
         
-        -- Update Progress Bar
-        if progressBar then
-            progressBar.Size = UDim2.new(math.clamp(progress, 0, 1), 0, 1, 0)
-        end
+
 
         -- Check Win/Loss
         if progress >= 1 then
