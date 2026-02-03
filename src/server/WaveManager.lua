@@ -5,16 +5,18 @@
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TweenService = game:GetService("TweenService")
+local PathfindingService = game:GetService("PathfindingService")
+local Players = game:GetService("Players")
+
 local WaveManager = {}
 
 -- Config
 local SPAWN_RATE = 5 -- Spawn an enemy every X seconds
 
 -- Optimization: Cache template to avoid repeated Instance.new and property setting
-local enemyTemplate
-
+local enemyTemplate -- Template part for enemies
 function WaveManager.Init()
-    print("[WaveManager] Initialized.")
+    print("[WaveManager] Initializing...")
 
     -- Create the template model once
     enemyTemplate = Instance.new("Model")
@@ -22,9 +24,10 @@ function WaveManager.Init()
 
     local rootPart = Instance.new("Part")
     rootPart.Name = "HumanoidRootPart"
-    rootPart.Size = Vector3.new(4, 4, 4)
+    rootPart.Size = Vector3.new(2, 2, 1)
     rootPart.BrickColor = BrickColor.new("Really red")
     rootPart.Anchored = false -- Unanchored to allow movement
+    rootPart.CanCollide = true
     rootPart.Parent = enemyTemplate
 
     local humanoid = Instance.new("Humanoid")
@@ -34,6 +37,26 @@ function WaveManager.Init()
     humanoid.Parent = enemyTemplate
 
     enemyTemplate.PrimaryPart = rootPart
+
+    print("[WaveManager] Initialized with death logic and pathfinding template.")
+end
+
+local function findNearestPlayer(position)
+    local nearestPlayer = nil
+    local minDistance = math.huge
+
+    for _, player in ipairs(Players:GetPlayers()) do
+        local character = player.Character
+        if character and character.PrimaryPart then
+            local distance = (character.PrimaryPart.Position - position).Magnitude
+            if distance < minDistance then
+                minDistance = distance
+                nearestPlayer = player
+            end
+        end
+    end
+
+    return nearestPlayer
 end
 
 function WaveManager.StartWave(waveNumber)
@@ -54,9 +77,11 @@ function WaveManager.StartWave(waveNumber)
 end
 
 function WaveManager.SpawnEnemy(difficulty)
-    -- Mock Enemy Spawing
-    -- In real impl, we'd clone a rig from ServerStorage and use PathfindingService
-    
+    if not enemyTemplate then
+        warn("[WaveManager] Not initialized")
+        return
+    end
+
     print(string.format("[WaveManager] Spawning Enemy (Lvl %d)", difficulty))
     
     -- Optimization: Clone from template instead of creating new
@@ -85,10 +110,50 @@ function WaveManager.SpawnEnemy(difficulty)
         end)
     end
 
-    if rootPart then
-        rootPart.CFrame = CFrame.new(math.random(-50, 50), 5, math.random(-50, 50))
-    end
+    -- Set start position
+    local startPos = Vector3.new(math.random(-50, 50), 5, math.random(-50, 50))
+    enemy:SetPrimaryPartCFrame(CFrame.new(startPos))
+
     enemy.Parent = workspace
+    
+    -- AI Loop (Pathfinding)
+    task.spawn(function()
+        while enemy.Parent and humanoid and humanoid.Health > 0 do
+            local targetPlayer = findNearestPlayer(rootPart.Position)
+
+            if targetPlayer and targetPlayer.Character and targetPlayer.Character.PrimaryPart then
+                local targetPos = targetPlayer.Character.PrimaryPart.Position
+
+                -- Compute path
+                local path = PathfindingService:CreatePath()
+                local success, errorMessage = pcall(function()
+                    path:ComputeAsync(rootPart.Position, targetPos)
+                end)
+
+                if success and path.Status == Enum.PathStatus.Success then
+                    local waypoints = path:GetWaypoints()
+
+                    -- Move to the second waypoint (the first one is the current position)
+                    if #waypoints >= 2 then
+                        humanoid:MoveTo(waypoints[2].Position)
+                    else
+                        -- Fallback: Move directly to target if very close
+                        humanoid:MoveTo(targetPos)
+                    end
+                else
+                    if not success then
+                        warn("[WaveManager] Path computation failed:", errorMessage)
+                    end
+                    -- Fallback: Try moving directly to target
+                    humanoid:MoveTo(targetPos)
+                end
+            end
+
+            -- Update path every 0.5 seconds
+            task.wait(0.5)
+        end
+    end)
+
 end
 
 return WaveManager

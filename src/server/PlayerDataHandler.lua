@@ -6,6 +6,7 @@
 
 local Players = game:GetService("Players")
 local DataStoreService = game:GetService("DataStoreService")
+local HttpService = game:GetService("HttpService")
 local RunService = game:GetService("RunService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
@@ -89,11 +90,20 @@ function PlayerDataHandler.Init()
     -- Autosave Loop
     task.spawn(function()
         while true do
-            task.wait(60) -- Autosave every 60 seconds
-            for _, player in ipairs(Players:GetPlayers()) do
-                task.spawn(function()
-                    PlayerDataHandler.Save(player)
-                end)
+            local players = Players:GetPlayers()
+            local playerCount = #players
+
+            if playerCount > 0 then
+                -- Stagger saves over 60 seconds to prevent DataStore throttling
+                local interval = 60 / playerCount
+                for _, player in ipairs(players) do
+                    task.spawn(function()
+                        PlayerDataHandler.Save(player)
+                    end)
+                    task.wait(interval)
+                end
+            else
+                task.wait(60)
             end
         end
     end)
@@ -167,26 +177,49 @@ end
 -- Public API to Add Item
 function PlayerDataHandler.AddItem(player, itemId, quantity)
     local data = sessionData[player.UserId]
-    if not data then return false end
+    if not data then return false, "NoData" end
     
     quantity = quantity or 1
     
-    -- Check if item exists (Stacking logic for "Materials")
-    -- For this MVP, we treat everything as stackable for simplicity unless it involves unique GUIDs
-    local found = false
-    for _, slot in ipairs(data.Inventory) do
-        if slot.ItemId == itemId then
-            slot.Qty = (slot.Qty or 1) + quantity
-            found = true
-            break
+    local itemDef = GameConfig.Items[itemId]
+    local isStackable = true
+    if itemDef and itemDef.Stackable == false then
+        isStackable = false
+    end
+    
+    if isStackable then
+        -- Check if item exists (Stacking logic for "Materials")
+        local found = false
+        for _, slot in ipairs(data.Inventory) do
+            if slot.ItemId == itemId then
+                slot.Qty = (slot.Qty or 1) + quantity
+                found = true
+                break
+            end
+        end
+
+        if not found then
+            if #data.Inventory >= GameConfig.INVENTORY_CAPACITY then
+                return false, "InventoryFull"
+            end
+            table.insert(data.Inventory, { ItemId = itemId, Qty = quantity })
+        end
+    else
+        -- Non-stackable logic: Items with unique GUIDs
+        if #data.Inventory + quantity <= GameConfig.INVENTORY_CAPACITY then
+            for _ = 1, quantity do
+                table.insert(data.Inventory, {
+                    ItemId = itemId,
+                    Qty = 1,
+                    GUID = HttpService:GenerateGUID(false)
+                })
+            end
+        else
+            return false, "InventoryFull"
         end
     end
     
-    if not found then
-        table.insert(data.Inventory, { ItemId = itemId, Qty = quantity })
-    end
-    
-    return true
+    return true, "Success"
 end
 
 -- Public API to Add Currency
@@ -207,6 +240,55 @@ function PlayerDataHandler.AddCurrency(player, currencyType, amount)
     return false
 end
 
+-- Public API to Get Item
+function PlayerDataHandler.GetItem(player, itemId)
+    local data = sessionData[player.UserId]
+    if not data then return nil end
+
+    for _, item in ipairs(data.Inventory) do
+        if item.ItemId == itemId then
+            return item
+        end
+    end
+    return nil
+end
+
+-- Public API to Remove Item
+function PlayerDataHandler.RemoveItem(player, itemId, quantity)
+    local data = sessionData[player.UserId]
+    if not data then return false end
+
+    quantity = quantity or 1
+
+    -- Check if player has enough
+    local slotIndex = nil
+    local currentQty = 0
+
+    for i, slot in ipairs(data.Inventory) do
+        if slot.ItemId == itemId then
+            slotIndex = i
+            currentQty = slot.Qty or 1
+            break
+        end
+    end
+
+    if currentQty < quantity then
+        return false -- Not enough items
+    end
+
+    -- Deduct
+    local newQty = currentQty - quantity
+    if newQty <= 0 then
+        -- Remove slot
+        table.remove(data.Inventory, slotIndex)
+    else
+        -- Update slot
+        data.Inventory[slotIndex].Qty = newQty
+    end
+
+    return true
+end
+
 -- Public API to Set Loadout
 function PlayerDataHandler.SetLoadout(player, slot, itemId)
     local data = sessionData[player.UserId]
@@ -216,15 +298,8 @@ function PlayerDataHandler.SetLoadout(player, slot, itemId)
     if slot ~= "Weapon" and slot ~= "BaseKit" then return false end
     
     -- Verification: Does player own this item?
-    if itemId then
-        local owned = false
-        for _, item in ipairs(data.Inventory) do
-            if item.ItemId == itemId then
-                owned = true
-                break
-            end
-        end
-        if not owned then return false end
+    if itemId and not PlayerDataHandler.GetItem(player, itemId) then
+        return false
     end
     
     data.Loadout[slot] = itemId

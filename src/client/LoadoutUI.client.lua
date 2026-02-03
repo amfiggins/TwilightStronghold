@@ -5,6 +5,7 @@
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local TweenService = game:GetService("TweenService")
 local GameConfig = require(ReplicatedStorage.Shared.GameConfig)
 
 local player = Players.LocalPlayer
@@ -45,25 +46,63 @@ padding.PaddingLeft = UDim.new(0, 10)
 padding.PaddingRight = UDim.new(0, 10)
 padding.Parent = frame
 
+-- Helper: Toast Notification
+local function showToast(text)
+    local toast = Instance.new("TextLabel")
+    toast.Text = text
+    toast.Size = UDim2.new(0, 180, 0, 30)
+    toast.AnchorPoint = Vector2.new(0.5, 0.5)
+    toast.Position = UDim2.new(0.5, 0, 0.9, 0) -- Bottom of frame
+    toast.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+    toast.TextColor3 = Color3.fromRGB(255, 255, 255)
+    toast.Font = Enum.Font.GothamBold
+    toast.TextSize = 14
+    toast.BorderSizePixel = 0
+    toast.ZIndex = 10
+    toast.Parent = frame
+
+    local info = TweenInfo.new(1.5, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+    local tween = TweenService:Create(toast, info, { TextTransparency = 1, BackgroundTransparency = 1, Position = UDim2.new(0.5, 0, 0.8, 0) })
+    tween:Play()
+    tween.Completed:Connect(function() toast:Destroy() end)
+end
+
 -- Helper: Create Button
-local function createButton(text, onClick)
+local function createButton(text, onClick, rarityColor, isEquipped)
     local btn = Instance.new("TextButton")
     btn.Size = UDim2.new(1, 0, 0, 40)
-    btn.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
-    btn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    btn.Text = text
+    -- Visual State: Green if equipped, Dark Gray if not
+    btn.BackgroundColor3 = isEquipped and Color3.fromRGB(30, 80, 30) or Color3.fromRGB(60, 60, 60)
+    btn.TextColor3 = isEquipped and Color3.fromRGB(200, 255, 200) or Color3.fromRGB(255, 255, 255)
+    btn.Text = isEquipped and "✓ " .. text or text
+    btn.Font = isEquipped and Enum.Font.GothamBold or Enum.Font.SourceSans
     btn.Parent = frame
     btn.AutoButtonColor = false
 
+    -- Micro-UX: Rarity Indicator
+    if rarityColor then
+        local bar = Instance.new("Frame")
+        bar.Size = UDim2.new(0, 4, 1, 0)
+        bar.BackgroundColor3 = rarityColor
+        bar.BorderSizePixel = 0
+        bar.Parent = btn
+    end
+
     btn.MouseEnter:Connect(function()
-        btn.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
+        if not isEquipped then
+            btn.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
+        end
     end)
 
     btn.MouseLeave:Connect(function()
-        btn.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+        if not isEquipped then
+            btn.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+        end
     end)
     
     btn.MouseButton1Click:Connect(function()
+        if isEquipped then return end
+
         btn.BackgroundColor3 = Color3.fromRGB(100, 255, 100)
         btn.TextColor3 = Color3.fromRGB(0, 0, 0)
         task.wait(0.1)
@@ -90,20 +129,17 @@ local function populateLoadout()
     local data = GetPlayerData:InvokeServer()
     if loadingLabel then loadingLabel:Destroy() end
     local inventory = data and data.Inventory or {}
-
-    -- Clear existing buttons if any (though this runs once currently)
-    -- If we wanted to refresh, we'd need to clear children of 'frame' except title, layout, padding.
-    -- For now, this just adds to the initial frame setup.
+    local currentLoadout = data and data.Loadout or {}
 
     -- Static Unequip Options
     createButton("Unequip Weapon", function()
         LoadoutEvent:FireServer("Weapon", nil)
-        print("Requested Unequip Weapon")
+        showToast("Unequipped Weapon")
     end)
 
     createButton("Unequip Kit", function()
         LoadoutEvent:FireServer("BaseKit", nil)
-        print("Requested Unequip Kit")
+        showToast("Unequipped Kit")
     end)
 
     -- Dynamic Items
@@ -118,10 +154,19 @@ local function populateLoadout()
             end
 
             if slot then
+                -- Resolve Rarity Color
+                local rarityColor = nil
+                if itemDef.Rarity and GameConfig.Rarity[itemDef.Rarity] then
+                    rarityColor = GameConfig.Rarity[itemDef.Rarity].Color
+                end
+
+                -- Check if equipped
+                local isEquipped = (currentLoadout[slot] == item.ItemId)
+
                 createButton("Equip " .. itemDef.Name, function()
                     LoadoutEvent:FireServer(slot, item.ItemId)
-                    print("Requested " .. itemDef.Name)
-                end)
+                    showToast("Equipped " .. itemDef.Name)
+                end, rarityColor, isEquipped)
             end
         end
     end
