@@ -13,10 +13,7 @@ local WaveManager = {}
 local SPAWN_RATE = 5 -- Spawn an enemy every X seconds
 
 -- Optimization: Cache template to avoid repeated Instance.new and property setting
-local enemyTemplate
-
-function WaveManager.Init()
-    print("[WaveManager] Initialized.")
+local enemyTemplate -- Template part for enemies
 
     -- Create the template Model once
     enemyTemplate = Instance.new("Model")
@@ -35,6 +32,8 @@ function WaveManager.Init()
     humanoid.Parent = enemyTemplate
 
     enemyTemplate.PrimaryPart = hrp
+
+    print("[WaveManager] Initialized with pathfinding template.")
 end
 
 local function findNearestPlayer(position)
@@ -73,6 +72,11 @@ function WaveManager.StartWave(waveNumber)
 end
 
 function WaveManager.SpawnEnemy(difficulty)
+    if not enemyTemplate then
+        warn("[WaveManager] Not initialized")
+        return
+    end
+
     print(string.format("[WaveManager] Spawning Enemy (Lvl %d)", difficulty))
     
     local enemy = enemyTemplate:Clone()
