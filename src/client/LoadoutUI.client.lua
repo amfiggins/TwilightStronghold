@@ -46,7 +46,7 @@ padding.PaddingRight = UDim.new(0, 10)
 padding.Parent = frame
 
 -- Helper: Create Button
-local function createButton(text, onClick)
+local function createButton(text, onClick, rarityColor)
     local btn = Instance.new("TextButton")
     btn.Size = UDim2.new(1, 0, 0, 40)
     btn.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
@@ -54,6 +54,15 @@ local function createButton(text, onClick)
     btn.Text = text
     btn.Parent = frame
     btn.AutoButtonColor = false
+
+    -- Micro-UX: Rarity Indicator
+    if rarityColor then
+        local bar = Instance.new("Frame")
+        bar.Size = UDim2.new(0, 4, 1, 0)
+        bar.BackgroundColor3 = rarityColor
+        bar.BorderSizePixel = 0
+        bar.Parent = btn
+    end
 
     btn.MouseEnter:Connect(function()
         btn.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
@@ -118,10 +127,16 @@ local function populateLoadout()
             end
 
             if slot then
+                -- Resolve Rarity Color
+                local rarityColor = nil
+                if itemDef.Rarity and GameConfig.Rarity[itemDef.Rarity] then
+                    rarityColor = GameConfig.Rarity[itemDef.Rarity].Color
+                end
+
                 createButton("Equip " .. itemDef.Name, function()
                     LoadoutEvent:FireServer(slot, item.ItemId)
                     print("Requested " .. itemDef.Name)
-                end)
+                end, rarityColor)
             end
         end
     end
