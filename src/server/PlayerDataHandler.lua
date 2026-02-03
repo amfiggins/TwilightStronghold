@@ -81,7 +81,14 @@ function PlayerDataHandler.Init()
     GetPlayerData.Parent = Remotes
 
     GetPlayerData.OnServerInvoke = function(player)
-        return PlayerDataHandler.Get(player)
+        local start = os.clock()
+        local data = PlayerDataHandler.Get(player)
+        -- Poll until data exists or timeout (5 seconds)
+        while not data and (os.clock() - start) < 5 do
+            task.wait(0.1)
+            data = PlayerDataHandler.Get(player)
+        end
+        return data
     end
 
     Players.PlayerAdded:Connect(PlayerDataHandler.OnPlayerAdded)

@@ -126,7 +126,15 @@ local function populateLoadout()
     loadingLabel.Parent = frame
 
     -- Fetch Data
-    local data = GetPlayerData:InvokeServer()
+    local success, data = pcall(function()
+        return GetPlayerData:InvokeServer()
+    end)
+
+    if not success then
+        warn("Failed to fetch player data:", data)
+        data = nil
+    end
+
     if loadingLabel then loadingLabel:Destroy() end
     local inventory = data and data.Inventory or {}
     local currentLoadout = data and data.Loadout or {}
@@ -143,6 +151,17 @@ local function populateLoadout()
     end)
 
     -- Dynamic Items
+    if #inventory == 0 then
+        local emptyLabel = Instance.new("TextLabel")
+        emptyLabel.Text = "No items found."
+        emptyLabel.Size = UDim2.new(1, 0, 0, 30)
+        emptyLabel.TextColor3 = Color3.fromRGB(150, 150, 150)
+        emptyLabel.BackgroundTransparency = 1
+        emptyLabel.Font = Enum.Font.SourceSansItalic
+        emptyLabel.TextSize = 16
+        emptyLabel.Parent = frame
+    end
+
     for _, item in ipairs(inventory) do
         local itemDef = GameConfig.Items[item.ItemId]
         if itemDef then
