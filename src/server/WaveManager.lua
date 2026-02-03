@@ -14,6 +14,8 @@ local SPAWN_RATE = 5 -- Spawn an enemy every X seconds
 
 -- Optimization: Cache template to avoid repeated Instance.new and property setting
 local enemyTemplate -- Template part for enemies
+function WaveManager.Init()
+    print("[WaveManager] Initializing...")
 
     -- Create the template Model once
     enemyTemplate = Instance.new("Model")
