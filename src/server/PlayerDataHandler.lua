@@ -167,7 +167,7 @@ end
 -- Public API to Add Item
 function PlayerDataHandler.AddItem(player, itemId, quantity)
     local data = sessionData[player.UserId]
-    if not data then return false end
+    if not data then return false, "NoData" end
     
     quantity = quantity or 1
     
@@ -183,10 +183,13 @@ function PlayerDataHandler.AddItem(player, itemId, quantity)
     end
     
     if not found then
+        if #data.Inventory >= GameConfig.INVENTORY_CAPACITY then
+            return false, "InventoryFull"
+        end
         table.insert(data.Inventory, { ItemId = itemId, Qty = quantity })
     end
     
-    return true
+    return true, "Success"
 end
 
 -- Public API to Add Currency
@@ -218,6 +221,42 @@ function PlayerDataHandler.GetItem(player, itemId)
         end
     end
     return nil
+end
+
+-- Public API to Remove Item
+function PlayerDataHandler.RemoveItem(player, itemId, quantity)
+    local data = sessionData[player.UserId]
+    if not data then return false end
+
+    quantity = quantity or 1
+
+    -- Check if player has enough
+    local slotIndex = nil
+    local currentQty = 0
+
+    for i, slot in ipairs(data.Inventory) do
+        if slot.ItemId == itemId then
+            slotIndex = i
+            currentQty = slot.Qty or 1
+            break
+        end
+    end
+
+    if currentQty < quantity then
+        return false -- Not enough items
+    end
+
+    -- Deduct
+    local newQty = currentQty - quantity
+    if newQty <= 0 then
+        -- Remove slot
+        table.remove(data.Inventory, slotIndex)
+    else
+        -- Update slot
+        data.Inventory[slotIndex].Qty = newQty
+    end
+
+    return true
 end
 
 -- Public API to Set Loadout
