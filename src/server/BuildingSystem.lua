@@ -34,6 +34,7 @@ function BuildingSystem.PlaceStructure(player, structureType, cframe)
     local cost = STRUCTURE_COSTS[structureType]
     if not cost then return end
     
+
     -- 2. Validate Placement (Anti-Cheat)
     -- Ensure cframe is valid
     if typeof(cframe) ~= "CFrame" then
