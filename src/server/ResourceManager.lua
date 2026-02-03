@@ -77,30 +77,15 @@ function ResourceManager.OnGatherRequest(player, resourceNode)
         itemAwarded = drop.RareItem
     end
     
-    -- Verify Inventory Cap
-    local data = PlayerDataHandler.Get(player)
-    if data then
-        local alreadyHasItem = false
-        for _, slot in ipairs(data.Inventory) do
-            if slot.ItemId == itemAwarded then
-                alreadyHasItem = true
-                break
-            end
-        end
-
-        if not alreadyHasItem and #data.Inventory >= GameConfig.INVENTORY_CAPACITY then
-            warn(string.format("[ResourceManager] %s Inventory Full. Cannot add %s", player.Name, itemAwarded))
-            return
-        end
-    end
-    
     -- Add Item
-    local success = PlayerDataHandler.AddItem(player, itemAwarded, qty)
+    local success, reason = PlayerDataHandler.AddItem(player, itemAwarded, qty)
     
     if success then
         print(string.format("[ResourceManager] Awarded %s x%d to %s", itemAwarded, qty, player.Name))
         -- Notify client of successful gathering
         GatherEvent:FireClient(player, itemAwarded, qty)
+    elseif reason == "InventoryFull" then
+        warn(string.format("[ResourceManager] %s Inventory Full. Cannot add %s", player.Name, itemAwarded))
     end
 end
 

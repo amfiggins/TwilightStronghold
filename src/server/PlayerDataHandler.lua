@@ -167,7 +167,7 @@ end
 -- Public API to Add Item
 function PlayerDataHandler.AddItem(player, itemId, quantity)
     local data = sessionData[player.UserId]
-    if not data then return false end
+    if not data then return false, "NoData" end
     
     quantity = quantity or 1
     
@@ -183,10 +183,13 @@ function PlayerDataHandler.AddItem(player, itemId, quantity)
     end
     
     if not found then
+        if #data.Inventory >= GameConfig.INVENTORY_CAPACITY then
+            return false, "InventoryFull"
+        end
         table.insert(data.Inventory, { ItemId = itemId, Qty = quantity })
     end
     
-    return true
+    return true, "Success"
 end
 
 -- Public API to Add Currency
