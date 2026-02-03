@@ -12,11 +12,19 @@ local ResourceManager = {}
 local MAX_GATHER_DISTANCE = 25 -- Maximum distance in studs to allow gathering
 
 -- Create Remotes
-local RemotesFolder = ReplicatedStorage:FindFirstChild("Remotes") or Instance.new("Folder", ReplicatedStorage)
-RemotesFolder.Name = "Remotes"
+local RemotesFolder = ReplicatedStorage:FindFirstChild("Remotes")
+if not RemotesFolder then
+    RemotesFolder = Instance.new("Folder")
+    RemotesFolder.Name = "Remotes"
+    RemotesFolder.Parent = ReplicatedStorage
+end
 
-local GatherEvent = Instance.new("RemoteEvent", RemotesFolder)
-GatherEvent.Name = "GatherResource"
+local GatherEvent = RemotesFolder:FindFirstChild("GatherResource")
+if not GatherEvent then
+    GatherEvent = Instance.new("RemoteEvent")
+    GatherEvent.Name = "GatherResource"
+    GatherEvent.Parent = RemotesFolder
+end
 
 function ResourceManager.Init()
     GatherEvent.OnServerEvent:Connect(ResourceManager.OnGatherRequest)
@@ -77,30 +85,17 @@ function ResourceManager.OnGatherRequest(player, resourceNode)
         itemAwarded = drop.RareItem
     end
     
-    -- Verify Inventory Cap
-    local data = PlayerDataHandler.Get(player)
-    if data then
-        local alreadyHasItem = false
-        for _, slot in ipairs(data.Inventory) do
-            if slot.ItemId == itemAwarded then
-                alreadyHasItem = true
-                break
-            end
-        end
-
-        if not alreadyHasItem and #data.Inventory >= GameConfig.INVENTORY_CAPACITY then
-            warn(string.format("[ResourceManager] %s Inventory Full. Cannot add %s", player.Name, itemAwarded))
-            return
-        end
-    end
-    
     -- Add Item
-    local success = PlayerDataHandler.AddItem(player, itemAwarded, qty)
+    local success, reason = PlayerDataHandler.AddItem(player, itemAwarded, qty)
     
     if success then
         print(string.format("[ResourceManager] Awarded %s x%d to %s", itemAwarded, qty, player.Name))
         -- Notify client of successful gathering
-        GatherEvent:FireClient(player, itemAwarded, qty)
+        if GatherEvent then
+            GatherEvent:FireClient(player, itemAwarded, qty)
+        end
+    elseif reason == "InventoryFull" then
+        warn(string.format("[ResourceManager] %s Inventory Full. Cannot add %s", player.Name, itemAwarded))
     end
 end
 

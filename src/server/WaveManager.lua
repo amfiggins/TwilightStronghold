@@ -59,6 +59,7 @@ function WaveManager.SpawnEnemy(difficulty)
     local part = enemyTemplate:Clone()
 
     -- Set position (Physics already enabled in template)
+
     part.Position = Vector3.new(math.random(-50, 50), 5, math.random(-50, 50))
     part.Parent = workspace
     
