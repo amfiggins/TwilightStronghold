@@ -214,24 +214,33 @@ function PlayerDataHandler.RemoveItem(player, itemId, quantity)
 
     quantity = quantity or 1
 
+    -- Check if player has enough
+    local slotIndex = nil
+    local currentQty = 0
+
     for i, slot in ipairs(data.Inventory) do
         if slot.ItemId == itemId then
-            if (slot.Qty or 1) >= quantity then
-                slot.Qty = (slot.Qty or 1) - quantity
-
-                -- Remove slot if empty
-                if slot.Qty <= 0 then
-                    table.remove(data.Inventory, i)
-                end
-
-                return true
-            else
-                return false -- Not enough items
-            end
+            slotIndex = i
+            currentQty = slot.Qty or 1
+            break
         end
     end
 
-    return false -- Item not found
+    if currentQty < quantity then
+        return false -- Not enough items
+    end
+
+    -- Deduct
+    local newQty = currentQty - quantity
+    if newQty <= 0 then
+        -- Remove slot
+        table.remove(data.Inventory, slotIndex)
+    else
+        -- Update slot
+        data.Inventory[slotIndex].Qty = newQty
+    end
+
+    return true
 end
 
 -- Public API to Set Loadout
