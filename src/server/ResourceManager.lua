@@ -4,12 +4,16 @@
 ]]
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Players = game:GetService("Players")
 local PlayerDataHandler = require(script.Parent.PlayerDataHandler)
 local GameConfig = require(ReplicatedStorage.Shared.GameConfig)
 
 local ResourceManager = {}
 
 local MAX_GATHER_DISTANCE = 25 -- Maximum distance in studs to allow gathering
+local GATHER_COOLDOWN = 1.0 -- Seconds between gathers
+
+local lastGatherTimes = {} -- [UserId] = timestamp
 
 -- Create Remotes
 local RemotesFolder = ReplicatedStorage:FindFirstChild("Remotes")
@@ -28,10 +32,25 @@ end
 
 function ResourceManager.Init()
     GatherEvent.OnServerEvent:Connect(ResourceManager.OnGatherRequest)
+
+    Players.PlayerRemoving:Connect(function(player)
+        lastGatherTimes[player.UserId] = nil
+    end)
+
     print("[ResourceManager] Initialized. Listening for Gather events.")
 end
 
 function ResourceManager.OnGatherRequest(player, resourceNode)
+    -- 0. Security: Rate Limiting
+    local now = os.clock()
+    local lastGather = lastGatherTimes[player.UserId] or 0
+
+    if (now - lastGather) < GATHER_COOLDOWN then
+        -- Silently fail or warn if excessive
+        return
+    end
+    lastGatherTimes[player.UserId] = now
+
     -- 1. Validation Logic
     if typeof(resourceNode) ~= "Instance" then
         warn("[ResourceManager] Invalid resource node received.")
