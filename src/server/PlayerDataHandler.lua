@@ -89,11 +89,20 @@ function PlayerDataHandler.Init()
     -- Autosave Loop
     task.spawn(function()
         while true do
-            task.wait(60) -- Autosave every 60 seconds
-            for _, player in ipairs(Players:GetPlayers()) do
-                task.spawn(function()
-                    PlayerDataHandler.Save(player)
-                end)
+            local players = Players:GetPlayers()
+            local playerCount = #players
+
+            if playerCount > 0 then
+                -- Stagger saves over 60 seconds to prevent DataStore throttling
+                local interval = 60 / playerCount
+                for _, player in ipairs(players) do
+                    task.spawn(function()
+                        PlayerDataHandler.Save(player)
+                    end)
+                    task.wait(interval)
+                end
+            else
+                task.wait(60)
             end
         end
     end)
