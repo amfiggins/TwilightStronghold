@@ -35,6 +35,7 @@ local DEFAULT_DATA = {
 
 -- Runtime session cache
 local sessionData = {}
+local inventoryLookups = {} -- [UserId] = { [ItemId] = Index }
 
 -- Helper: Deep Copy Table
 local function deepCopy(orig)
@@ -122,6 +123,14 @@ function PlayerDataHandler.OnPlayerAdded(player)
         reconcile(data, DEFAULT_DATA)
         sessionData[userId] = data
         
+        -- Build Lookup Table
+        inventoryLookups[userId] = {}
+        for i, item in ipairs(data.Inventory) do
+            if not inventoryLookups[userId][item.ItemId] then
+                inventoryLookups[userId][item.ItemId] = i
+            end
+        end
+
         -- Setup Leaderstats (Visual Debug)
         local ls = Instance.new("Folder")
         ls.Name = "leaderstats"
@@ -148,6 +157,7 @@ end
 function PlayerDataHandler.OnPlayerRemoving(player)
     PlayerDataHandler.Save(player)
     sessionData[player.UserId] = nil
+    inventoryLookups[player.UserId] = nil
 end
 
 function PlayerDataHandler.Save(player)
@@ -179,6 +189,7 @@ function PlayerDataHandler.AddItem(player, itemId, quantity)
     local data = sessionData[player.UserId]
     if not data then return false, "NoData" end
     
+    local lookup = inventoryLookups[player.UserId]
     quantity = quantity or 1
     
     local itemDef = GameConfig.Items[itemId]
@@ -188,14 +199,17 @@ function PlayerDataHandler.AddItem(player, itemId, quantity)
     end
     
     if isStackable then
-        -- Check if item exists (Stacking logic for "Materials")
+        -- Check if item exists (Lookup O(1))
+        local foundIndex = lookup and lookup[itemId]
         local found = false
-        for _, slot in ipairs(data.Inventory) do
-            if slot.ItemId == itemId then
-                slot.Qty = (slot.Qty or 1) + quantity
-                found = true
-                break
-            end
+
+        if foundIndex then
+             -- Safety check
+             local slot = data.Inventory[foundIndex]
+             if slot and slot.ItemId == itemId then
+                 slot.Qty = (slot.Qty or 1) + quantity
+                 found = true
+             end
         end
 
         if not found then
@@ -203,6 +217,7 @@ function PlayerDataHandler.AddItem(player, itemId, quantity)
                 return false, "InventoryFull"
             end
             table.insert(data.Inventory, { ItemId = itemId, Qty = quantity })
+            if lookup then lookup[itemId] = #data.Inventory end
         end
     else
         -- Non-stackable logic: Items with unique GUIDs
@@ -213,6 +228,10 @@ function PlayerDataHandler.AddItem(player, itemId, quantity)
                     Qty = 1,
                     GUID = HttpService:GenerateGUID(false)
                 })
+                -- Update lookup to point to first one if not set
+                if lookup and not lookup[itemId] then
+                    lookup[itemId] = #data.Inventory
+                end
             end
         else
             return false, "InventoryFull"
@@ -245,8 +264,12 @@ function PlayerDataHandler.GetItem(player, itemId)
     local data = sessionData[player.UserId]
     if not data then return nil end
 
-    for _, item in ipairs(data.Inventory) do
-        if item.ItemId == itemId then
+    local lookup = inventoryLookups[player.UserId]
+    local index = lookup and lookup[itemId]
+
+    if index then
+        local item = data.Inventory[index]
+        if item and item.ItemId == itemId then
             return item
         end
     end
@@ -258,19 +281,21 @@ function PlayerDataHandler.RemoveItem(player, itemId, quantity)
     local data = sessionData[player.UserId]
     if not data then return false end
 
+    local lookup = inventoryLookups[player.UserId]
     quantity = quantity or 1
 
     -- Check if player has enough
-    local slotIndex = nil
-    local currentQty = 0
+    local slotIndex = lookup and lookup[itemId]
 
-    for i, slot in ipairs(data.Inventory) do
-        if slot.ItemId == itemId then
-            slotIndex = i
-            currentQty = slot.Qty or 1
-            break
-        end
+    if not slotIndex then return false end -- Not found
+
+    local slot = data.Inventory[slotIndex]
+    if not slot or slot.ItemId ~= itemId then
+        -- Desync or invalid lookup
+        return false
     end
+
+    local currentQty = slot.Qty or 1
 
     if currentQty < quantity then
         return false -- Not enough items
@@ -281,6 +306,17 @@ function PlayerDataHandler.RemoveItem(player, itemId, quantity)
     if newQty <= 0 then
         -- Remove slot
         table.remove(data.Inventory, slotIndex)
+
+        -- Rebuild Lookup (O(N) - required due to index shifting)
+        if lookup then
+            local newLookup = {}
+            for i, item in ipairs(data.Inventory) do
+                if not newLookup[item.ItemId] then
+                    newLookup[item.ItemId] = i
+                end
+            end
+            inventoryLookups[player.UserId] = newLookup
+        end
     else
         -- Update slot
         data.Inventory[slotIndex].Qty = newQty
