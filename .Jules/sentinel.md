@@ -15,3 +15,9 @@
 **Vulnerability:** `ResourceManager` allowed clients to fire `GatherResource` events infinitely fast, bypassing game mechanics and enabling rapid infinite item generation.
 **Learning:** Client-side delays (animations, UI) do not constrain exploiters. Every reward-granting RemoteEvent must have a server-side cooldown enforcement.
 **Prevention:** Track the last execution timestamp for each player and enforce a `COOLDOWN` threshold on the server. Reject requests that occur too frequently.
+
+## 2024-05-24 - Infinite Resource Node Exploitation
+
+**Vulnerability:** `ResourceManager` validated gathering requests but failed to update the state of the resource node (e.g., destroy or deplete it) after awarding items, allowing players to gather infinitely from a single permanent node.
+**Learning:** Validating *access* (distance, cooldown) is not enough; the server must also manage the *lifecycle* of the interactive object to prevent reuse abuse.
+**Prevention:** Ensure that successful interactions that yield finite rewards trigger a state change on the server (e.g., `Destroy()`, disabling a `ProximityPrompt`, or setting a depletion flag) to invalidate subsequent requests.
