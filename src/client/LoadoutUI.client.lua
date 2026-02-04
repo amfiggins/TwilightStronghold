@@ -33,18 +33,43 @@ title.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 title.TextColor3 = Color3.fromRGB(255, 255, 255)
 title.Parent = frame
 
+-- Refresh Button (Micro-UX)
+local refreshBtn = Instance.new("TextButton")
+refreshBtn.Text = "↻"
+refreshBtn.Size = UDim2.new(0, 30, 1, 0)
+refreshBtn.Position = UDim2.new(1, -30, 0, 0)
+refreshBtn.BackgroundTransparency = 1
+refreshBtn.TextColor3 = Color3.fromRGB(200, 200, 200)
+refreshBtn.Font = Enum.Font.GothamBold
+refreshBtn.TextSize = 18
+refreshBtn.Parent = title
+
+refreshBtn.MouseEnter:Connect(function() refreshBtn.TextColor3 = Color3.fromRGB(255, 255, 255) end)
+refreshBtn.MouseLeave:Connect(function() refreshBtn.TextColor3 = Color3.fromRGB(200, 200, 200) end)
+
+-- List Container (ScrollingFrame for Scanability)
+local listContainer = Instance.new("ScrollingFrame")
+listContainer.Size = UDim2.new(1, 0, 1, -30)
+listContainer.Position = UDim2.new(0, 0, 0, 30)
+listContainer.BackgroundTransparency = 1
+listContainer.BorderSizePixel = 0
+listContainer.ScrollBarThickness = 6
+listContainer.AutomaticCanvasSize = Enum.AutomaticSize.Y
+listContainer.CanvasSize = UDim2.new(0, 0, 0, 0)
+listContainer.Parent = frame
+
 -- List Layout
 local layout = Instance.new("UIListLayout")
-layout.Parent = frame
+layout.Parent = listContainer
 layout.Padding = UDim.new(0, 5)
 layout.SortOrder = Enum.SortOrder.LayoutOrder
 
 -- Padding
 local padding = Instance.new("UIPadding")
-padding.PaddingTop = UDim.new(0, 35)
+padding.PaddingTop = UDim.new(0, 5)
 padding.PaddingLeft = UDim.new(0, 10)
 padding.PaddingRight = UDim.new(0, 10)
-padding.Parent = frame
+padding.Parent = listContainer
 
 -- Helper: Toast Notification
 local function showToast(text)
@@ -76,7 +101,7 @@ local function createButton(text, onClick, rarityColor, isEquipped)
     btn.TextColor3 = isEquipped and Color3.fromRGB(200, 255, 200) or Color3.fromRGB(255, 255, 255)
     btn.Text = isEquipped and "✓ " .. text or text
     btn.Font = isEquipped and Enum.Font.GothamBold or Enum.Font.SourceSans
-    btn.Parent = frame
+    btn.Parent = listContainer -- Parent to container
     btn.AutoButtonColor = false
 
     -- Micro-UX: Rarity Indicator
@@ -113,8 +138,21 @@ local function createButton(text, onClick, rarityColor, isEquipped)
     return btn
 end
 
+local isRefreshing = false
+
 -- Populate Inventory Buttons
 local function populateLoadout()
+    if isRefreshing then return end
+    isRefreshing = true
+    refreshBtn.TextTransparency = 0.5
+
+    -- Cleanup
+    for _, child in ipairs(listContainer:GetChildren()) do
+        if child:IsA("TextButton") or child:IsA("TextLabel") then
+            child:Destroy()
+        end
+    end
+
     -- Loading Indicator
     local loadingLabel = Instance.new("TextLabel")
     loadingLabel.Text = "Loading inventory..."
@@ -123,13 +161,17 @@ local function populateLoadout()
     loadingLabel.BackgroundTransparency = 1
     loadingLabel.Font = Enum.Font.SourceSansItalic
     loadingLabel.TextSize = 18
-    loadingLabel.Parent = frame
+    loadingLabel.Parent = listContainer
 
-    -- Fetch Data
-    local data = GetPlayerData:InvokeServer()
+    -- Fetch Data (Safely)
+    local success, data = pcall(function()
+        return GetPlayerData:InvokeServer()
+    end)
+
     if loadingLabel then loadingLabel:Destroy() end
-    local inventory = data and data.Inventory or {}
-    local currentLoadout = data and data.Loadout or {}
+
+    local inventory = (success and data and data.Inventory) or {}
+    local currentLoadout = (success and data and data.Loadout) or {}
 
     -- Static Unequip Options
     createButton("Unequip Weapon", function()
@@ -141,6 +183,8 @@ local function populateLoadout()
         LoadoutEvent:FireServer("BaseKit", nil)
         showToast("Unequipped Kit")
     end)
+
+    local itemCount = 0
 
     -- Dynamic Items
     for _, item in ipairs(inventory) do
@@ -154,6 +198,7 @@ local function populateLoadout()
             end
 
             if slot then
+                itemCount = itemCount + 1
                 -- Resolve Rarity Color
                 local rarityColor = nil
                 if itemDef.Rarity and GameConfig.Rarity[itemDef.Rarity] then
@@ -170,7 +215,24 @@ local function populateLoadout()
             end
         end
     end
+
+    -- Empty State (Micro-UX)
+    if itemCount == 0 then
+        local emptyLabel = Instance.new("TextLabel")
+        emptyLabel.Text = "No equippable items found."
+        emptyLabel.Size = UDim2.new(1, 0, 0, 30)
+        emptyLabel.TextColor3 = Color3.fromRGB(150, 150, 150)
+        emptyLabel.BackgroundTransparency = 1
+        emptyLabel.Font = Enum.Font.SourceSansItalic
+        emptyLabel.TextSize = 14
+        emptyLabel.Parent = listContainer
+    end
+
+    isRefreshing = false
+    refreshBtn.TextTransparency = 0
 end
+
+refreshBtn.MouseButton1Click:Connect(populateLoadout)
 
 -- Run population
 task.spawn(populateLoadout)
