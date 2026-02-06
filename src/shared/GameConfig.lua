@@ -30,8 +30,8 @@ Shared.Rarity = {
 
 -- Resource Definitions (Loot Tables)
 Shared.Resources = {
-    ["Tree"] = { Item = "wood_log", Min = 1, Max = 3, RareItem = "golden_wood", RareChance = 5 },
-    ["Rock"] = { Item = "stone_ore", Min = 1, Max = 2 },
+    ["Tree"] = { Item = "wood_log", Min = 1, Max = 3, RareItem = "golden_wood", RareChance = 5, DestroyOnGather = true },
+    ["Rock"] = { Item = "stone_ore", Min = 1, Max = 2, DestroyOnGather = true },
     ["Lake"] = { Item = "raw_fish", Min = 1, Max = 1 }
 }
 
