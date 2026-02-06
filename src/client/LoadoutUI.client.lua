@@ -20,8 +20,8 @@ gui.Parent = player:WaitForChild("PlayerGui")
 
 -- Container
 local frame = Instance.new("Frame")
-frame.Size = UDim2.new(0, 200, 0, 300)
-frame.Position = UDim2.new(0.05, 0, 0.5, -150)
+frame.Size = UDim2.new(0, 220, 0, 350) -- Adjusted width for scrollbar
+frame.Position = UDim2.new(0.05, 0, 0.5, -175)
 frame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
 frame.Parent = gui
 
@@ -33,18 +33,30 @@ title.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 title.TextColor3 = Color3.fromRGB(255, 255, 255)
 title.Parent = frame
 
+-- Scrolling Container (The Fix)
+local listContainer = Instance.new("ScrollingFrame")
+listContainer.Size = UDim2.new(1, 0, 1, -30)
+listContainer.Position = UDim2.new(0, 0, 0, 30)
+listContainer.BackgroundTransparency = 1
+listContainer.BorderSizePixel = 0
+listContainer.ScrollBarThickness = 6
+listContainer.CanvasSize = UDim2.new(0, 0, 0, 0)
+listContainer.AutomaticCanvasSize = Enum.AutomaticSize.Y
+listContainer.Parent = frame
+
 -- List Layout
 local layout = Instance.new("UIListLayout")
-layout.Parent = frame
+layout.Parent = listContainer -- Parent to ScrollingFrame
 layout.Padding = UDim.new(0, 5)
 layout.SortOrder = Enum.SortOrder.LayoutOrder
 
 -- Padding
 local padding = Instance.new("UIPadding")
-padding.PaddingTop = UDim.new(0, 35)
+padding.PaddingTop = UDim.new(0, 5)
 padding.PaddingLeft = UDim.new(0, 10)
 padding.PaddingRight = UDim.new(0, 10)
-padding.Parent = frame
+padding.PaddingBottom = UDim.new(0, 5)
+padding.Parent = listContainer -- Parent to ScrollingFrame
 
 -- Helper: Toast Notification
 local function showToast(text)
@@ -76,7 +88,7 @@ local function createButton(text, onClick, rarityColor, isEquipped)
     btn.TextColor3 = isEquipped and Color3.fromRGB(200, 255, 200) or Color3.fromRGB(255, 255, 255)
     btn.Text = isEquipped and "✓ " .. text or text
     btn.Font = isEquipped and Enum.Font.GothamBold or Enum.Font.SourceSans
-    btn.Parent = frame
+    btn.Parent = listContainer -- Parent to ScrollingFrame
     btn.AutoButtonColor = false
 
     -- Micro-UX: Rarity Indicator
@@ -123,7 +135,7 @@ local function populateLoadout()
     loadingLabel.BackgroundTransparency = 1
     loadingLabel.Font = Enum.Font.SourceSansItalic
     loadingLabel.TextSize = 18
-    loadingLabel.Parent = frame
+    loadingLabel.Parent = listContainer -- Parent to ScrollingFrame
 
     -- Fetch Data
     local data = GetPlayerData:InvokeServer()
