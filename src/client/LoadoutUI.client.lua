@@ -28,23 +28,44 @@ frame.Parent = gui
 -- Title
 local title = Instance.new("TextLabel")
 title.Text = "Loadout (Meta-Link)"
-title.Size = UDim2.new(1, 0, 0, 30)
+title.Size = UDim2.new(1, -30, 0, 30)
 title.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 title.TextColor3 = Color3.fromRGB(255, 255, 255)
 title.Parent = frame
 
+-- Refresh Button
+local refreshBtn = Instance.new("TextButton")
+refreshBtn.Text = "↻"
+refreshBtn.Size = UDim2.new(0, 30, 0, 30)
+refreshBtn.Position = UDim2.new(1, -30, 0, 0)
+refreshBtn.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+refreshBtn.TextColor3 = Color3.fromRGB(200, 200, 200)
+refreshBtn.Parent = frame
+
+-- Scrolling Container
+local listContainer = Instance.new("ScrollingFrame")
+listContainer.Name = "listContainer"
+listContainer.Size = UDim2.new(1, 0, 1, -30)
+listContainer.Position = UDim2.new(0, 0, 0, 30)
+listContainer.BackgroundTransparency = 1
+listContainer.BorderSizePixel = 0
+listContainer.AutomaticCanvasSize = Enum.AutomaticSize.Y
+listContainer.CanvasSize = UDim2.new(0, 0, 0, 0)
+listContainer.ScrollBarThickness = 6
+listContainer.Parent = frame
+
 -- List Layout
 local layout = Instance.new("UIListLayout")
-layout.Parent = frame
+layout.Parent = listContainer
 layout.Padding = UDim.new(0, 5)
 layout.SortOrder = Enum.SortOrder.LayoutOrder
 
 -- Padding
 local padding = Instance.new("UIPadding")
-padding.PaddingTop = UDim.new(0, 35)
+padding.PaddingTop = UDim.new(0, 5)
 padding.PaddingLeft = UDim.new(0, 10)
 padding.PaddingRight = UDim.new(0, 10)
-padding.Parent = frame
+padding.Parent = listContainer
 
 -- Helper: Toast Notification
 local function showToast(text)
@@ -76,7 +97,7 @@ local function createButton(text, onClick, rarityColor, isEquipped)
     btn.TextColor3 = isEquipped and Color3.fromRGB(200, 255, 200) or Color3.fromRGB(255, 255, 255)
     btn.Text = isEquipped and "✓ " .. text or text
     btn.Font = isEquipped and Enum.Font.GothamBold or Enum.Font.SourceSans
-    btn.Parent = frame
+    btn.Parent = listContainer
     btn.AutoButtonColor = false
 
     -- Micro-UX: Rarity Indicator
@@ -113,8 +134,21 @@ local function createButton(text, onClick, rarityColor, isEquipped)
     return btn
 end
 
+local isLoading = false
+
 -- Populate Inventory Buttons
 local function populateLoadout()
+    if isLoading then return end
+    isLoading = true
+    refreshBtn.Text = "..."
+
+    -- Clear previous items
+    for _, child in ipairs(listContainer:GetChildren()) do
+        if child:IsA("GuiButton") or child:IsA("TextLabel") then
+            child:Destroy()
+        end
+    end
+
     -- Loading Indicator
     local loadingLabel = Instance.new("TextLabel")
     loadingLabel.Text = "Loading inventory..."
@@ -123,10 +157,21 @@ local function populateLoadout()
     loadingLabel.BackgroundTransparency = 1
     loadingLabel.Font = Enum.Font.SourceSansItalic
     loadingLabel.TextSize = 18
-    loadingLabel.Parent = frame
+    loadingLabel.Parent = listContainer
 
     -- Fetch Data
-    local data = GetPlayerData:InvokeServer()
+    local success, result = pcall(function() return GetPlayerData:InvokeServer() end)
+
+    if not success then
+        warn("Failed to load inventory: " .. tostring(result))
+        loadingLabel.Text = "Failed to load inventory."
+        loadingLabel.TextColor3 = Color3.fromRGB(255, 100, 100)
+        isLoading = false
+        refreshBtn.Text = "↻"
+        return
+    end
+
+    local data = result
     if loadingLabel then loadingLabel:Destroy() end
     local inventory = data and data.Inventory or {}
     local currentLoadout = data and data.Loadout or {}
@@ -170,7 +215,15 @@ local function populateLoadout()
             end
         end
     end
+
+    isLoading = false
+    refreshBtn.Text = "↻"
 end
+
+-- Refresh Logic
+refreshBtn.MouseButton1Click:Connect(function()
+    populateLoadout()
+end)
 
 -- Run population
 task.spawn(populateLoadout)
