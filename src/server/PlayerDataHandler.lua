@@ -181,6 +181,11 @@ function PlayerDataHandler.AddItem(player, itemId, quantity)
     
     quantity = quantity or 1
     
+    -- Security: Prevent adding negative/zero items
+    if type(quantity) ~= "number" or quantity <= 0 then
+        return false, "InvalidQuantity"
+    end
+
     local itemDef = GameConfig.Items[itemId]
     local isStackable = true
     if itemDef and itemDef.Stackable == false then
@@ -227,6 +232,11 @@ function PlayerDataHandler.AddCurrency(player, currencyType, amount)
     local data = sessionData[player.UserId]
     if not data then return false end
     
+    -- Security: Prevent negative currency (spending should be explicit)
+    if type(amount) ~= "number" or amount <= 0 then
+        return false
+    end
+
     if data.Stats[currencyType] then
         data.Stats[currencyType] = data.Stats[currencyType] + amount
         
@@ -259,6 +269,11 @@ function PlayerDataHandler.RemoveItem(player, itemId, quantity)
     if not data then return false end
 
     quantity = quantity or 1
+
+    -- Security: Prevent negative quantity exploit (which would add items)
+    if type(quantity) ~= "number" or quantity <= 0 then
+        return false
+    end
 
     -- Check if player has enough
     local slotIndex = nil
