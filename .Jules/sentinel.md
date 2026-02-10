@@ -33,3 +33,9 @@
 **Vulnerability:** The `BuildingSystem` accepted client-provided `CFrame` without validating that its components were finite numbers, allowing attackers to send `NaN` or `Inf` values to crash the server or corrupt the physics engine.
 **Learning:** Roblox `CFrame` and `Vector3` types can contain `NaN` (Not a Number) values which bypass standard comparisons (e.g., `NaN > Distance` is false) and propagate through physics calculations.
 **Prevention:** Always validate that `Vector3` and `CFrame` inputs from clients contain only finite numbers (`x == x` and `x ~= inf`) before using them in logic or physics.
+
+## 2024-05-25 - Logic Inversion via Negative Numbers
+
+**Vulnerability:** `PlayerDataHandler` functions (`AddItem`, `RemoveItem`, `AddCurrency`) failed to validate that input quantities were positive. This allowed attackers to perform actions like `RemoveItem(..., -10)` to *add* items (logic inversion) or `AddItem(..., -10)` to corrupt inventory states.
+**Learning:** Mathematical operations (subtraction/addition) on unvalidated user input can be inverted by negative numbers, completely bypassing intended game logic (e.g., "paying" a negative cost increases balance).
+**Prevention:** Always enforce `quantity > 0` checks at the entry point of any function that modifies inventory or currency. Treat "subtract" and "add" as distinct operations that only accept positive magnitudes.
