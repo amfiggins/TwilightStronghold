@@ -33,18 +33,21 @@ title.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 title.TextColor3 = Color3.fromRGB(255, 255, 255)
 title.Parent = frame
 
--- Refresh Button
+-- Refresh Button (Micro-UX)
 local refreshBtn = Instance.new("TextButton")
-refreshBtn.Text = "Refresh"
-refreshBtn.Size = UDim2.new(0, 60, 0, 24)
-refreshBtn.Position = UDim2.new(1, -65, 0, 3)
-refreshBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
-refreshBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-refreshBtn.Font = Enum.Font.GothamMedium
-refreshBtn.TextSize = 12
-refreshBtn.Parent = frame
+refreshBtn.Text = "↻"
+refreshBtn.Size = UDim2.new(0, 30, 1, 0)
+refreshBtn.Position = UDim2.new(1, -30, 0, 0)
+refreshBtn.BackgroundTransparency = 1
+refreshBtn.TextColor3 = Color3.fromRGB(200, 200, 200)
+refreshBtn.Font = Enum.Font.GothamBold
+refreshBtn.TextSize = 18
+refreshBtn.Parent = title
 
--- List Container (ScrollingFrame)
+refreshBtn.MouseEnter:Connect(function() refreshBtn.TextColor3 = Color3.fromRGB(255, 255, 255) end)
+refreshBtn.MouseLeave:Connect(function() refreshBtn.TextColor3 = Color3.fromRGB(200, 200, 200) end)
+
+-- List Container (ScrollingFrame for Scanability)
 local listContainer = Instance.new("ScrollingFrame")
 listContainer.Size = UDim2.new(1, 0, 1, -30)
 listContainer.Position = UDim2.new(0, 0, 0, 30)
@@ -135,6 +138,8 @@ local function createButton(text, onClick, rarityColor, isEquipped)
     end)
     return btn
 end
+
+local isRefreshing = false
 
 -- Populate Inventory Buttons
 local function populateLoadout()
@@ -251,11 +256,11 @@ local isRefreshing = false
 refreshBtn.MouseButton1Click:Connect(function()
     if isRefreshing then return end
     isRefreshing = true
-    refreshBtn.Text = "..."
+    refreshBtn.TextTransparency = 0.5
 
     populateLoadout()
 
-    refreshBtn.Text = "Refresh"
+    refreshBtn.TextTransparency = 0
     isRefreshing = false
 end)
 
