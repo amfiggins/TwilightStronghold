@@ -225,7 +225,6 @@ function PlayerDataHandler.AddItem(player, itemId, quantity)
         rebuildLookup(userId)
     end
     local lookup = sessionInventoryLookup[userId]
-
     quantity = quantity or 1
     
     local itemDef = GameConfig.Items[itemId]
@@ -311,8 +310,6 @@ function PlayerDataHandler.RemoveItem(player, itemId, quantity)
     local data = sessionData[userId]
     if not data then return false end
 
-    quantity = quantity or 1
-
     -- Optimization: Use Lookup Table to find slot (O(1))
     local lookup = sessionInventoryLookup[userId]
     local slotIndex = lookup and lookup[itemId]
@@ -320,7 +317,13 @@ function PlayerDataHandler.RemoveItem(player, itemId, quantity)
     if not slotIndex then return false end -- Not found
 
     local slot = data.Inventory[slotIndex]
+    if not slot or slot.ItemId ~= itemId then
+        -- Desync or invalid lookup
+        return false
+    end
     local currentQty = slot.Qty or 1
+
+
 
     if currentQty < quantity then
         return false -- Not enough items

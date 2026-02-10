@@ -28,33 +28,26 @@ frame.Parent = gui
 -- Title
 local title = Instance.new("TextLabel")
 title.Text = "Loadout (Meta-Link)"
-title.Size = UDim2.new(1, 0, 0, 30)
+title.Size = UDim2.new(1, -30, 0, 30)
 title.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 title.TextColor3 = Color3.fromRGB(255, 255, 255)
 title.Parent = frame
 
--- Refresh Button (UX Improvement)
-local refreshButton = Instance.new("TextButton")
-refreshButton.Name = "RefreshButton"
-refreshButton.Text = "↻"
-refreshButton.Size = UDim2.new(0, 30, 0, 30)
-refreshButton.Position = UDim2.new(1, -30, 0, 0)
-refreshButton.BackgroundTransparency = 1
-refreshButton.TextColor3 = Color3.fromRGB(200, 200, 200)
-refreshButton.Font = Enum.Font.GothamBold
-refreshButton.TextSize = 20
-refreshButton.Parent = frame
-refreshButton.ZIndex = 2
+-- Refresh Button (Micro-UX)
+local refreshBtn = Instance.new("TextButton")
+refreshBtn.Text = "↻"
+refreshBtn.Size = UDim2.new(0, 30, 1, 0)
+refreshBtn.Position = UDim2.new(1, -30, 0, 0)
+refreshBtn.BackgroundTransparency = 1
+refreshBtn.TextColor3 = Color3.fromRGB(200, 200, 200)
+refreshBtn.Font = Enum.Font.GothamBold
+refreshBtn.TextSize = 18
+refreshBtn.Parent = title
 
-refreshButton.MouseEnter:Connect(function()
-    refreshButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-end)
+refreshBtn.MouseEnter:Connect(function() refreshBtn.TextColor3 = Color3.fromRGB(255, 255, 255) end)
+refreshBtn.MouseLeave:Connect(function() refreshBtn.TextColor3 = Color3.fromRGB(200, 200, 200) end)
 
-refreshButton.MouseLeave:Connect(function()
-    refreshButton.TextColor3 = Color3.fromRGB(200, 200, 200)
-end)
-
--- Scrolling Container (The Fix)
+-- List Container (ScrollingFrame for Scanability)
 local listContainer = Instance.new("ScrollingFrame")
 listContainer.Size = UDim2.new(1, 0, 1, -30)
 listContainer.Position = UDim2.new(0, 0, 0, 30)
@@ -73,11 +66,11 @@ layout.SortOrder = Enum.SortOrder.LayoutOrder
 
 -- Padding
 local padding = Instance.new("UIPadding")
-padding.PaddingTop = UDim.new(0, 5)
+padding.PaddingTop = UDim.new(0, 10) -- Adjusted padding since title is separate
 padding.PaddingLeft = UDim.new(0, 10)
 padding.PaddingRight = UDim.new(0, 10)
-padding.PaddingBottom = UDim.new(0, 5)
-padding.Parent = listContainer -- Parent to ScrollingFrame
+padding.PaddingBottom = UDim.new(0, 10)
+padding.Parent = listContainer
 
 -- Helper: Toast Notification
 local function showToast(text)
@@ -146,20 +139,17 @@ local function createButton(text, onClick, rarityColor, isEquipped)
     return btn
 end
 
-local isLoading = false
+local isRefreshing = false
 
 -- Populate Inventory Buttons
 local function populateLoadout()
-    if isLoading then return end
-    isLoading = true
+    if isRefreshing then return end
+    isRefreshing = true
+    refreshBtn.Text = "..."
 
-    -- Visual feedback on refresh button
-    refreshButton.Text = "..."
-    refreshButton.Active = false
-
-    -- Clear existing items (preserve Layout/Padding)
+    -- Clear List (preserve layout)
     for _, child in ipairs(listContainer:GetChildren()) do
-        if not child:IsA("UIListLayout") and not child:IsA("UIPadding") then
+        if child:IsA("GuiObject") then
             child:Destroy()
         end
     end
@@ -179,42 +169,44 @@ local function populateLoadout()
         return GetPlayerData:InvokeServer()
     end)
 
+    if loadingLabel then loadingLabel:Destroy() end
+
     if not success then
         warn("Failed to fetch player data:", data)
-        data = nil
+        showToast("Failed to load data")
+        local errorLabel = Instance.new("TextLabel")
+        errorLabel.Text = "Connection Error"
+        errorLabel.Size = UDim2.new(1, 0, 0, 40)
+        errorLabel.TextColor3 = Color3.fromRGB(255, 100, 100)
+        errorLabel.BackgroundTransparency = 1
+        errorLabel.Font = Enum.Font.SourceSansBold
+        errorLabel.TextSize = 14
+        errorLabel.Parent = listContainer
+
+        refreshBtn.Text = "↻"
+        isRefreshing = false
+        return
     end
 
-    if loadingLabel then loadingLabel:Destroy() end
-    local inventory = data and data.Inventory or {}
-    local currentLoadout = data and data.Loadout or {}
+    local inventory = (data and data.Inventory) or {}
+    local currentLoadout = (data and data.Loadout) or {}
 
     -- Static Unequip Options
     createButton("Unequip Weapon", function()
         LoadoutEvent:FireServer("Weapon", nil)
         showToast("Unequipped Weapon")
-        task.wait(0.1)
-        populateLoadout() -- Refresh to show state
+        task.delay(0.5, populateLoadout)
     end)
 
     createButton("Unequip Kit", function()
         LoadoutEvent:FireServer("BaseKit", nil)
         showToast("Unequipped Kit")
-        task.wait(0.1)
-        populateLoadout() -- Refresh to show state
+        task.delay(0.5, populateLoadout)
     end)
 
-    -- Dynamic Items
-    if #inventory == 0 then
-        local emptyLabel = Instance.new("TextLabel")
-        emptyLabel.Text = "No items found."
-        emptyLabel.Size = UDim2.new(1, 0, 0, 30)
-        emptyLabel.TextColor3 = Color3.fromRGB(150, 150, 150)
-        emptyLabel.BackgroundTransparency = 1
-        emptyLabel.Font = Enum.Font.SourceSansItalic
-        emptyLabel.TextSize = 16
-        emptyLabel.Parent = listContainer -- Parent to listContainer for proper cleanup
-    end
+    local foundItems = 0
 
+    -- Dynamic Items
     for _, item in ipairs(inventory) do
         local itemDef = GameConfig.Items[item.ItemId]
         if itemDef then
@@ -226,6 +218,7 @@ local function populateLoadout()
             end
 
             if slot then
+                foundItems = foundItems + 1
                 -- Resolve Rarity Color
                 local rarityColor = nil
                 if itemDef.Rarity and GameConfig.Rarity[itemDef.Rarity] then
@@ -238,21 +231,34 @@ local function populateLoadout()
                 createButton("Equip " .. itemDef.Name, function()
                     LoadoutEvent:FireServer(slot, item.ItemId)
                     showToast("Equipped " .. itemDef.Name)
-                    -- Slight delay to allow server to process before refreshing
-                    task.wait(0.1)
-                    populateLoadout()
+                    -- Don't auto-refresh immediately to keep UI stable, user can click Refresh if needed
+                    -- or we can wait a bit
+                    task.delay(0.5, populateLoadout)
                 end, rarityColor, isEquipped)
             end
         end
     end
 
-    isLoading = false
-    refreshButton.Text = "↻"
-    refreshButton.Active = true
+    -- Empty State
+    if foundItems == 0 then
+        local emptyLabel = Instance.new("TextLabel")
+        emptyLabel.Text = "No loadout items found.\nGather resources to craft weapons!"
+        emptyLabel.Size = UDim2.new(1, 0, 0, 60)
+        emptyLabel.TextColor3 = Color3.fromRGB(150, 150, 150)
+        emptyLabel.BackgroundTransparency = 1
+        emptyLabel.Font = Enum.Font.SourceSans
+        emptyLabel.TextSize = 16
+        emptyLabel.Parent = listContainer
+    end
+
+    refreshBtn.Text = "↻"
+    isRefreshing = false
 end
 
--- Connect Refresh Button
-refreshButton.MouseButton1Click:Connect(populateLoadout)
+-- Refresh Logic
+refreshBtn.MouseButton1Click:Connect(function()
+    populateLoadout()
+end)
 
 -- Run population
 task.spawn(populateLoadout)
