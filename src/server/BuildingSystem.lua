@@ -35,11 +35,13 @@ local STRUCTURE_COSTS = {
     ["Tower"] = { Resource = "wood_log", Amount = 20 }
 }
 
--- Helper: Validate CFrame for NaNs/Infs
-local function ValidateCFrame(cf)
+-- Helper: Validate CFrame for NaNs and Inf
+local function isValidCFrame(cf)
+    if typeof(cf) ~= "CFrame" then return false end
+
     local components = {cf:GetComponents()}
     for _, v in ipairs(components) do
-        -- Check for NaN (x ~= x) or Infinity
+        -- Check for NaN (v ~= v) and Infinity
         if v ~= v or math.abs(v) == math.huge then
             return false
         end
@@ -61,15 +63,9 @@ function BuildingSystem.PlaceStructure(player, structureType, cframe)
     if not cost then return end
     
     -- 2. Validate Placement (Anti-Cheat)
-    -- Ensure cframe is valid (Finite numbers only)
+    -- Ensure cframe is valid (Type Check & Finite numbers only - DoS Prevention)
     if not isValidCFrame(cframe) then
-        warn(string.format("[BuildingSystem] Invalid CFrame received from %s", player.Name))
-        return
-    end
-
-    -- Security: Validate CFrame Components (DoS Prevention)
-    if not ValidateCFrame(cframe) then
-        warn(string.format("[BuildingSystem] Malformed CFrame (NaN/Inf) received from %s", player.Name))
+        warn(string.format("[BuildingSystem] Invalid or Malformed CFrame (NaN/Inf) received from %s", player.Name))
         return
     end
 
