@@ -20,8 +20,8 @@ gui.Parent = player:WaitForChild("PlayerGui")
 
 -- Container
 local frame = Instance.new("Frame")
-frame.Size = UDim2.new(0, 200, 0, 300)
-frame.Position = UDim2.new(0.05, 0, 0.5, -150)
+frame.Size = UDim2.new(0, 220, 0, 350) -- Adjusted width for scrollbar
+frame.Position = UDim2.new(0.05, 0, 0.5, -175)
 frame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
 frame.Parent = gui
 
@@ -51,12 +51,13 @@ listContainer.Position = UDim2.new(0, 0, 0, 30)
 listContainer.BackgroundTransparency = 1
 listContainer.BorderSizePixel = 0
 listContainer.ScrollBarThickness = 6
+listContainer.CanvasSize = UDim2.new(0, 0, 0, 0)
 listContainer.AutomaticCanvasSize = Enum.AutomaticSize.Y
 listContainer.Parent = frame
 
 -- List Layout
 local layout = Instance.new("UIListLayout")
-layout.Parent = listContainer
+layout.Parent = listContainer -- Parent to ScrollingFrame
 layout.Padding = UDim.new(0, 5)
 layout.SortOrder = Enum.SortOrder.LayoutOrder
 
@@ -98,7 +99,7 @@ local function createButton(text, onClick, rarityColor, isEquipped)
     btn.TextColor3 = isEquipped and Color3.fromRGB(200, 255, 200) or Color3.fromRGB(255, 255, 255)
     btn.Text = isEquipped and "✓ " .. text or text
     btn.Font = isEquipped and Enum.Font.GothamBold or Enum.Font.SourceSans
-    btn.Parent = listContainer
+    btn.Parent = listContainer -- Parent to ScrollingFrame
     btn.AutoButtonColor = false
 
     -- Micro-UX: Rarity Indicator
@@ -152,10 +153,17 @@ local function populateLoadout()
     loadingLabel.BackgroundTransparency = 1
     loadingLabel.Font = Enum.Font.SourceSansItalic
     loadingLabel.TextSize = 18
-    loadingLabel.Parent = listContainer
+    loadingLabel.Parent = listContainer -- Parent to ScrollingFrame
 
     -- Fetch Data
-    local success, data = pcall(function() return GetPlayerData:InvokeServer() end)
+    local success, data = pcall(function()
+        return GetPlayerData:InvokeServer()
+    end)
+
+    if not success then
+        warn("Failed to fetch player data:", data)
+        data = nil
+    end
     if loadingLabel then loadingLabel:Destroy() end
 
     if not success or not data then
@@ -185,6 +193,17 @@ local function populateLoadout()
     local foundItems = false
 
     -- Dynamic Items
+    if #inventory == 0 then
+        local emptyLabel = Instance.new("TextLabel")
+        emptyLabel.Text = "No items found."
+        emptyLabel.Size = UDim2.new(1, 0, 0, 30)
+        emptyLabel.TextColor3 = Color3.fromRGB(150, 150, 150)
+        emptyLabel.BackgroundTransparency = 1
+        emptyLabel.Font = Enum.Font.SourceSansItalic
+        emptyLabel.TextSize = 16
+        emptyLabel.Parent = frame
+    end
+
     for _, item in ipairs(inventory) do
         local itemDef = GameConfig.Items[item.ItemId]
         if itemDef then
