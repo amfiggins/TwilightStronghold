@@ -143,6 +143,10 @@ local isRefreshing = false
 
 -- Populate Inventory Buttons
 local function populateLoadout()
+    if isRefreshing then return end
+    isRefreshing = true
+    refreshBtn.Text = "..."
+
     -- Clear List (preserve layout)
     for _, child in ipairs(listContainer:GetChildren()) do
         if child:IsA("GuiObject") then
@@ -165,50 +169,44 @@ local function populateLoadout()
         return GetPlayerData:InvokeServer()
     end)
 
-    if not success then
-        warn("Failed to fetch player data:", data)
-        data = nil
-    end
     if loadingLabel then loadingLabel:Destroy() end
 
-    if not success or not data then
-        local errLabel = Instance.new("TextLabel")
-        errLabel.Text = "Failed to load inventory."
-        errLabel.Size = UDim2.new(1, 0, 0, 30)
-        errLabel.TextColor3 = Color3.fromRGB(255, 100, 100)
-        errLabel.BackgroundTransparency = 1
-        errLabel.Parent = listContainer
+    if not success then
+        warn("Failed to fetch player data:", data)
+        showToast("Failed to load data")
+        local errorLabel = Instance.new("TextLabel")
+        errorLabel.Text = "Connection Error"
+        errorLabel.Size = UDim2.new(1, 0, 0, 40)
+        errorLabel.TextColor3 = Color3.fromRGB(255, 100, 100)
+        errorLabel.BackgroundTransparency = 1
+        errorLabel.Font = Enum.Font.SourceSansBold
+        errorLabel.TextSize = 14
+        errorLabel.Parent = listContainer
+
+        refreshBtn.Text = "↻"
+        isRefreshing = false
         return
     end
 
-    local inventory = data.Inventory or {}
-    local currentLoadout = data.Loadout or {}
+    local inventory = (data and data.Inventory) or {}
+    local currentLoadout = (data and data.Loadout) or {}
 
     -- Static Unequip Options
     createButton("Unequip Weapon", function()
         LoadoutEvent:FireServer("Weapon", nil)
         showToast("Unequipped Weapon")
+        task.delay(0.5, populateLoadout)
     end)
 
     createButton("Unequip Kit", function()
         LoadoutEvent:FireServer("BaseKit", nil)
         showToast("Unequipped Kit")
+        task.delay(0.5, populateLoadout)
     end)
 
-    local foundItems = false
+    local foundItems = 0
 
     -- Dynamic Items
-    if #inventory == 0 then
-        local emptyLabel = Instance.new("TextLabel")
-        emptyLabel.Text = "No items found."
-        emptyLabel.Size = UDim2.new(1, 0, 0, 30)
-        emptyLabel.TextColor3 = Color3.fromRGB(150, 150, 150)
-        emptyLabel.BackgroundTransparency = 1
-        emptyLabel.Font = Enum.Font.SourceSansItalic
-        emptyLabel.TextSize = 16
-        emptyLabel.Parent = frame
-    end
-
     for _, item in ipairs(inventory) do
         local itemDef = GameConfig.Items[item.ItemId]
         if itemDef then
@@ -220,7 +218,7 @@ local function populateLoadout()
             end
 
             if slot then
-                foundItems = true
+                foundItems = foundItems + 1
                 -- Resolve Rarity Color
                 local rarityColor = nil
                 if itemDef.Rarity and GameConfig.Rarity[itemDef.Rarity] then
@@ -233,13 +231,16 @@ local function populateLoadout()
                 createButton("Equip " .. itemDef.Name, function()
                     LoadoutEvent:FireServer(slot, item.ItemId)
                     showToast("Equipped " .. itemDef.Name)
+                    -- Don't auto-refresh immediately to keep UI stable, user can click Refresh if needed
+                    -- or we can wait a bit
+                    task.delay(0.5, populateLoadout)
                 end, rarityColor, isEquipped)
             end
         end
     end
 
     -- Empty State
-    if not foundItems then
+    if foundItems == 0 then
         local emptyLabel = Instance.new("TextLabel")
         emptyLabel.Text = "No loadout items found.\nGather resources to craft weapons!"
         emptyLabel.Size = UDim2.new(1, 0, 0, 60)
@@ -249,6 +250,9 @@ local function populateLoadout()
         emptyLabel.TextSize = 16
         emptyLabel.Parent = listContainer
     end
+
+    refreshBtn.Text = "↻"
+    isRefreshing = false
 end
 
 -- Refresh Logic
