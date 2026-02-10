@@ -114,6 +114,7 @@ function PlayerDataHandler.Init()
     
     -- Autosave Loop
     task.spawn(function()
+        local playerIndex = 1
         while true do
             local players = Players:GetPlayers()
             local playerCount = #players
@@ -121,14 +122,24 @@ function PlayerDataHandler.Init()
             if playerCount > 0 then
                 -- Stagger saves over 60 seconds to prevent DataStore throttling
                 local interval = 60 / playerCount
-                for _, player in ipairs(players) do
+
+                -- Wrap index if it exceeds current player count
+                if playerIndex > playerCount then
+                    playerIndex = 1
+                end
+
+                local player = players[playerIndex]
+                if player then
                     task.spawn(function()
                         PlayerDataHandler.Save(player)
                     end)
-                    task.wait(interval)
                 end
+
+                playerIndex = playerIndex + 1
+                task.wait(interval)
             else
-                task.wait(60)
+                playerIndex = 1
+                task.wait(5)
             end
         end
     end)
