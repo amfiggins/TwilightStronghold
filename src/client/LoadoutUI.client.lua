@@ -31,6 +31,7 @@ title.Text = "Loadout (Meta-Link)"
 title.Size = UDim2.new(1, -30, 0, 30)
 title.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 title.TextColor3 = Color3.fromRGB(255, 255, 255)
+title.BorderSizePixel = 0
 title.Parent = frame
 
 -- Refresh Button (Micro-UX)
@@ -85,7 +86,7 @@ local function showToast(text)
     toast.TextSize = 14
     toast.BorderSizePixel = 0
     toast.ZIndex = 10
-    toast.Parent = frame
+    toast.Parent = frame -- Keep toast on frame, over the list
 
     local info = TweenInfo.new(1.5, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
     local tween = TweenService:Create(toast, info, { TextTransparency = 1, BackgroundTransparency = 1, Position = UDim2.new(0.5, 0, 0.8, 0) })
