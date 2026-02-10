@@ -22,3 +22,7 @@
 
 **Learning:** Static lists in Roblox UI (like inventory) are not automatically scrollable and can overflow, leading to inaccessible items. Additionally, triggering async data fetches without a debounce can lead to race conditions and duplicate UI elements.
 **Action:** Always wrap dynamic lists in a `ScrollingFrame` with `AutomaticCanvasSize` and implement debounce/loading states for any button that triggers an async fetch.
+
+## 2026-11-20 - Static Inventory State
+**Learning:** Roblox GUIs often load data once. Users assume UI updates automatically when data changes (like inventory), leading to confusion when it doesn't.
+**Action:** If reactive binding isn't available, always provide a manual "Refresh" trigger and explicit "Loading/Empty" states to manage expectations.
