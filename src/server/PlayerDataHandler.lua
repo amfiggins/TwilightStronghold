@@ -35,7 +35,9 @@ local DEFAULT_DATA = {
 
 -- Runtime session cache
 local sessionData = {}
-local inventoryLookups = {} -- [UserId] = { [ItemId] = Index }
+-- Runtime inventory lookup cache: [UserId] = { [ItemId] = slotIndex }
+-- Optimization: Maps ItemId to the *first* index in inventory for O(1) checks.
+local sessionInventoryLookup = {}
 
 -- Helper: Deep Copy Table
 local function deepCopy(orig)
@@ -68,6 +70,21 @@ local function reconcile(target, template)
     end
 end
 
+-- Helper: Rebuild Lookup for a user (O(N)) - Called when indices shift
+local function rebuildLookup(userId)
+    local data = sessionData[userId]
+    if not data then return end
+
+    local lookup = {}
+    for i, slot in ipairs(data.Inventory) do
+        -- Only store the first occurrence to preserve "first found" logic
+        if not lookup[slot.ItemId] then
+            lookup[slot.ItemId] = i
+        end
+    end
+    sessionInventoryLookup[userId] = lookup
+end
+
 function PlayerDataHandler.Init()
     -- Setup Remotes
     local Remotes = ReplicatedStorage:FindFirstChild("Remotes")
@@ -82,7 +99,14 @@ function PlayerDataHandler.Init()
     GetPlayerData.Parent = Remotes
 
     GetPlayerData.OnServerInvoke = function(player)
-        return PlayerDataHandler.Get(player)
+        local start = os.clock()
+        local data = PlayerDataHandler.Get(player)
+        -- Poll until data exists or timeout (5 seconds)
+        while not data and (os.clock() - start) < 5 do
+            task.wait(0.1)
+            data = PlayerDataHandler.Get(player)
+        end
+        return data
     end
 
     Players.PlayerAdded:Connect(PlayerDataHandler.OnPlayerAdded)
@@ -90,6 +114,7 @@ function PlayerDataHandler.Init()
     
     -- Autosave Loop
     task.spawn(function()
+        local playerIndex = 1
         while true do
             local players = Players:GetPlayers()
             local playerCount = #players
@@ -97,14 +122,24 @@ function PlayerDataHandler.Init()
             if playerCount > 0 then
                 -- Stagger saves over 60 seconds to prevent DataStore throttling
                 local interval = 60 / playerCount
-                for _, player in ipairs(players) do
+
+                -- Wrap index if it exceeds current player count
+                if playerIndex > playerCount then
+                    playerIndex = 1
+                end
+
+                local player = players[playerIndex]
+                if player then
                     task.spawn(function()
                         PlayerDataHandler.Save(player)
                     end)
-                    task.wait(interval)
                 end
+
+                playerIndex = playerIndex + 1
+                task.wait(interval)
             else
-                task.wait(60)
+                playerIndex = 1
+                task.wait(5)
             end
         end
     end)
@@ -124,12 +159,7 @@ function PlayerDataHandler.OnPlayerAdded(player)
         sessionData[userId] = data
         
         -- Build Lookup Table
-        inventoryLookups[userId] = {}
-        for i, item in ipairs(data.Inventory) do
-            if not inventoryLookups[userId][item.ItemId] then
-                inventoryLookups[userId][item.ItemId] = i
-            end
-        end
+        rebuildLookup(userId)
 
         -- Setup Leaderstats (Visual Debug)
         local ls = Instance.new("Folder")
@@ -157,7 +187,7 @@ end
 function PlayerDataHandler.OnPlayerRemoving(player)
     PlayerDataHandler.Save(player)
     sessionData[player.UserId] = nil
-    inventoryLookups[player.UserId] = nil
+    sessionInventoryLookup[player.UserId] = nil
 end
 
 function PlayerDataHandler.Save(player)
@@ -186,10 +216,15 @@ end
 
 -- Public API to Add Item
 function PlayerDataHandler.AddItem(player, itemId, quantity)
-    local data = sessionData[player.UserId]
+    local userId = player.UserId
+    local data = sessionData[userId]
     if not data then return false, "NoData" end
     
-    local lookup = inventoryLookups[player.UserId]
+    -- Ensure lookup exists (safety)
+    if not sessionInventoryLookup[userId] then
+        rebuildLookup(userId)
+    end
+    local lookup = sessionInventoryLookup[userId]
     quantity = quantity or 1
     
     local itemDef = GameConfig.Items[itemId]
@@ -199,25 +234,20 @@ function PlayerDataHandler.AddItem(player, itemId, quantity)
     end
     
     if isStackable then
-        -- Check if item exists (Lookup O(1))
-        local foundIndex = lookup and lookup[itemId]
-        local found = false
+        -- Check if item exists (Stacking logic for "Materials")
+        -- Optimization: Use GetItem (which uses Lookup O(1))
+        local slot = PlayerDataHandler.GetItem(player, itemId)
 
-        if foundIndex then
-             -- Safety check
-             local slot = data.Inventory[foundIndex]
-             if slot and slot.ItemId == itemId then
-                 slot.Qty = (slot.Qty or 1) + quantity
-                 found = true
-             end
-        end
-
-        if not found then
+        if slot then
+            slot.Qty = (slot.Qty or 1) + quantity
+        else
+            -- Not found, Add new slot
             if #data.Inventory >= GameConfig.INVENTORY_CAPACITY then
                 return false, "InventoryFull"
             end
             table.insert(data.Inventory, { ItemId = itemId, Qty = quantity })
-            if lookup then lookup[itemId] = #data.Inventory end
+            -- Update Lookup
+            lookup[itemId] = #data.Inventory
         end
     else
         -- Non-stackable logic: Items with unique GUIDs
@@ -228,8 +258,8 @@ function PlayerDataHandler.AddItem(player, itemId, quantity)
                     Qty = 1,
                     GUID = HttpService:GenerateGUID(false)
                 })
-                -- Update lookup to point to first one if not set
-                if lookup and not lookup[itemId] then
+                -- Update Lookup (point to first one if not set)
+                if not lookup[itemId] then
                     lookup[itemId] = #data.Inventory
                 end
             end
@@ -261,30 +291,27 @@ end
 
 -- Public API to Get Item
 function PlayerDataHandler.GetItem(player, itemId)
-    local data = sessionData[player.UserId]
+    local userId = player.UserId
+    local data = sessionData[userId]
     if not data then return nil end
 
-    local lookup = inventoryLookups[player.UserId]
-    local index = lookup and lookup[itemId]
-
-    if index then
-        local item = data.Inventory[index]
-        if item and item.ItemId == itemId then
-            return item
-        end
+    -- Optimization: Use Lookup Table (O(1))
+    local lookup = sessionInventoryLookup[userId]
+    if lookup and lookup[itemId] then
+        return data.Inventory[lookup[itemId]]
     end
+
     return nil
 end
 
 -- Public API to Remove Item
 function PlayerDataHandler.RemoveItem(player, itemId, quantity)
-    local data = sessionData[player.UserId]
+    local userId = player.UserId
+    local data = sessionData[userId]
     if not data then return false end
 
-    local lookup = inventoryLookups[player.UserId]
-    quantity = quantity or 1
-
-    -- Check if player has enough
+    -- Optimization: Use Lookup Table to find slot (O(1))
+    local lookup = sessionInventoryLookup[userId]
     local slotIndex = lookup and lookup[itemId]
 
     if not slotIndex then return false end -- Not found
@@ -294,8 +321,9 @@ function PlayerDataHandler.RemoveItem(player, itemId, quantity)
         -- Desync or invalid lookup
         return false
     end
-
     local currentQty = slot.Qty or 1
+
+
 
     if currentQty < quantity then
         return false -- Not enough items
@@ -306,20 +334,12 @@ function PlayerDataHandler.RemoveItem(player, itemId, quantity)
     if newQty <= 0 then
         -- Remove slot
         table.remove(data.Inventory, slotIndex)
-
-        -- Rebuild Lookup (O(N) - required due to index shifting)
-        if lookup then
-            local newLookup = {}
-            for i, item in ipairs(data.Inventory) do
-                if not newLookup[item.ItemId] then
-                    newLookup[item.ItemId] = i
-                end
-            end
-            inventoryLookups[player.UserId] = newLookup
-        end
+        -- Indices shifted, we must rebuild lookup (O(N))
+        rebuildLookup(userId)
     else
         -- Update slot
-        data.Inventory[slotIndex].Qty = newQty
+        slot.Qty = newQty
+        -- Lookup index remains valid
     end
 
     return true
