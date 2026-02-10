@@ -85,6 +85,33 @@ local function rebuildLookup(userId)
     sessionInventoryLookup[userId] = lookup
 end
 
+-- Helper: Retry GetAsync with Exponential Backoff
+local function retryGetAsync(store, key, retries, baseDelay)
+    retries = retries or 3
+    baseDelay = baseDelay or 1
+
+    local currentTry = 0
+    local success, result
+
+    while currentTry <= retries do
+        success, result = pcall(function()
+            return store:GetAsync(key)
+        end)
+
+        if success then
+            return true, result
+        else
+            currentTry = currentTry + 1
+            if currentTry <= retries then
+                warn(string.format("[Data] GetAsync failed for key %s (Attempt %d/%d): %s. Retrying...", key, currentTry, retries + 1, tostring(result)))
+                task.wait(baseDelay * (2 ^ (currentTry - 1)))
+            end
+        end
+    end
+
+    return false, result
+end
+
 function PlayerDataHandler.Init()
     -- Setup Remotes
     local Remotes = ReplicatedStorage:FindFirstChild("Remotes")
@@ -149,9 +176,7 @@ function PlayerDataHandler.OnPlayerAdded(player)
     local userId = player.UserId
     local key = "Player_" .. userId
     
-    local success, data = pcall(function()
-        return PlayerDataStore:GetAsync(key)
-    end)
+    local success, data = retryGetAsync(PlayerDataStore, key, 3, 2)
     
     if success then
         data = data or deepCopy(DEFAULT_DATA)
