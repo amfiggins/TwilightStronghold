@@ -57,6 +57,10 @@ function ResourceManager.OnGatherRequest(player, resourceNode)
         return
     end
 
+    if not resourceNode:IsDescendantOf(game.Workspace) then
+        return -- Ignore requests for deleted/inactive nodes
+    end
+
     -- 2. Security: Distance Validation
     local character = player.Character
     local rootPart = character and character.PrimaryPart
@@ -110,8 +114,8 @@ function ResourceManager.OnGatherRequest(player, resourceNode)
     if success then
         print(string.format("[ResourceManager] Awarded %s x%d to %s", itemAwarded, qty, player.Name))
 
-        -- Prevent infinite gathering by destroying the node
-        if resourceNode and resourceNode.Parent then
+        -- Deplete Resource
+        if drop.DestroyOnGather then
             resourceNode:Destroy()
         end
 

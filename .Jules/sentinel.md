@@ -16,6 +16,12 @@
 **Learning:** Client-side delays (animations, UI) do not constrain exploiters. Every reward-granting RemoteEvent must have a server-side cooldown enforcement.
 **Prevention:** Track the last execution timestamp for each player and enforce a `COOLDOWN` threshold on the server. Reject requests that occur too frequently.
 
+## 2024-05-24 - Infinite Resource Farming (Persistence & Deletion)
+
+**Vulnerability:** `ResourceManager` allowed players to gather resources from a node (Tree/Rock) repeatedly without destroying it, and failed to check if the node was still part of the Workspace, enabling infinite farming of a single (or deleted) instance.
+**Learning:** Validating input type (`typeof(instance)`) is insufficient; you must also validate the *state* and *location* of the instance (e.g., `IsDescendantOf(Workspace)`). Without server-side depletion (destruction or state change), the economy is vulnerable to simple loop scripts.
+**Prevention:** Enforce `IsDescendantOf(game.Workspace)` for all physical interaction targets. Implement explicit resource depletion (e.g., `Destroy()`) on the server side immediately after a successful interaction.
+
 ## 2024-05-24 - Infinite Resource Node Exploitation
 
 **Vulnerability:** `ResourceManager` validated gathering requests but failed to update the state of the resource node (e.g., destroy or deplete it) after awarding items, allowing players to gather infinitely from a single permanent node.
