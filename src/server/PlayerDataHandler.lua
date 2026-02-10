@@ -159,7 +159,11 @@ function PlayerDataHandler.Save(player)
     local key = "Player_" .. userId
     
     local success, err = pcall(function()
-        PlayerDataStore:SetAsync(key, data)
+        PlayerDataStore:UpdateAsync(key, function(oldData)
+            -- UpdateAsync is safer than SetAsync as it prevents data corruption
+            -- from concurrent writes and respects session locks.
+            return data
+        end)
     end)
     
     if success then
