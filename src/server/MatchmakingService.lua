@@ -68,9 +68,18 @@ function MatchmakingService.ProcessQueue()
         print("[Matchmaking] Found match! Teleporting...")
         
         -- Extract the squad
-        local squad = {}
-        for i = 1, REQUIRED_PLAYERS do
-            table.insert(squad, table.remove(queue, 1))
+        local squad = table.create(REQUIRED_PLAYERS)
+        table.move(queue, 1, REQUIRED_PLAYERS, 1, squad)
+
+        -- Batch remove from queue (shift remaining players down)
+        local newSize = #queue - REQUIRED_PLAYERS
+        if newSize > 0 then
+            table.move(queue, REQUIRED_PLAYERS + 1, #queue, 1)
+        end
+
+        -- Clear the old tail elements
+        for i = #queue, newSize + 1, -1 do
+            queue[i] = nil
         end
         
         task.spawn(function()

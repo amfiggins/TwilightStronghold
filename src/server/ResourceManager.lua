@@ -52,9 +52,13 @@ function ResourceManager.OnGatherRequest(player, resourceNode)
     lastGatherTimes[player.UserId] = now
 
     -- 1. Validation Logic
-    if typeof(resourceNode) ~= "Instance" then
+    if typeof(resourceNode) ~= "Instance" or not resourceNode:IsDescendantOf(workspace) then
         warn("[ResourceManager] Invalid resource node received.")
         return
+    end
+
+    if not resourceNode:IsDescendantOf(game.Workspace) then
+        return -- Ignore requests for deleted/inactive nodes
     end
 
     -- 2. Security: Distance Validation
@@ -109,6 +113,12 @@ function ResourceManager.OnGatherRequest(player, resourceNode)
     
     if success then
         print(string.format("[ResourceManager] Awarded %s x%d to %s", itemAwarded, qty, player.Name))
+
+        -- Deplete Resource
+        if drop.DestroyOnGather then
+            resourceNode:Destroy()
+        end
+
         -- Notify client of successful gathering
         if GatherEvent then
             GatherEvent:FireClient(player, itemAwarded, qty)

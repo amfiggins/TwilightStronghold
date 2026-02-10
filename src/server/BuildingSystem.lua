@@ -10,6 +10,20 @@ local BuildingSystem = {}
 
 local MAX_BUILD_DISTANCE = 20 -- Maximum distance in studs to allow building
 
+-- Helper: Validate CFrame for NaNs and Inf
+local function isValidCFrame(cf)
+    if typeof(cf) ~= "CFrame" then return false end
+
+    local components = {cf:GetComponents()}
+    for _, v in ipairs(components) do
+        -- Check for NaN (v ~= v) and Infinity
+        if v ~= v or math.abs(v) == math.huge then
+            return false
+        end
+    end
+    return true
+end
+
 -- Remotes
 local Remotes = ReplicatedStorage:WaitForChild("Remotes")
 local PlaceStructureEvent = Instance.new("RemoteEvent", Remotes)
@@ -21,17 +35,15 @@ local STRUCTURE_COSTS = {
     ["Tower"] = { Resource = "wood_log", Amount = 20 }
 }
 
--- Helper: Validate CFrame (Prevent NaN/Inf crash)
-local function validateCFrame(cf)
+-- Helper: Validate CFrame for NaNs and Inf
+local function isValidCFrame(cf)
+    if typeof(cf) ~= "CFrame" then return false end
+
     local components = {cf:GetComponents()}
-    for _, val in ipairs(components) do
-        -- Check for NaN: val ~= val in Lua
-        if val ~= val then
-            return false, "NaN detected"
-        end
-        -- Check for Inf
-        if val == math.huge or val == -math.huge then
-            return false, "Infinity detected"
+    for _, v in ipairs(components) do
+        -- Check for NaN (v ~= v) and Infinity
+        if v ~= v or math.abs(v) == math.huge then
+            return false
         end
     end
     return true
@@ -50,18 +62,10 @@ function BuildingSystem.PlaceStructure(player, structureType, cframe)
     local cost = STRUCTURE_COSTS[structureType]
     if not cost then return end
     
-
     -- 2. Validate Placement (Anti-Cheat)
-    -- Ensure cframe is valid (Type Check)
-    if typeof(cframe) ~= "CFrame" then
-        warn(string.format("[BuildingSystem] Invalid CFrame received from %s", player.Name))
-        return
-    end
-
-    -- Ensure CFrame components are finite (Value Check)
-    local isValid, err = validateCFrame(cframe)
-    if not isValid then
-        warn(string.format("[BuildingSystem] Malformed CFrame from %s: %s", player.Name, err))
+    -- Ensure cframe is valid (Type Check & Finite numbers only - DoS Prevention)
+    if not isValidCFrame(cframe) then
+        warn(string.format("[BuildingSystem] Invalid or Malformed CFrame (NaN/Inf) received from %s", player.Name))
         return
     end
 
