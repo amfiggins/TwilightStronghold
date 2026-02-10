@@ -21,3 +21,9 @@
 **Vulnerability:** `ResourceManager` validated gathering requests but failed to update the state of the resource node (e.g., destroy or deplete it) after awarding items, allowing players to gather infinitely from a single permanent node.
 **Learning:** Validating *access* (distance, cooldown) is not enough; the server must also manage the *lifecycle* of the interactive object to prevent reuse abuse.
 **Prevention:** Ensure that successful interactions that yield finite rewards trigger a state change on the server (e.g., `Destroy()`, disabling a `ProximityPrompt`, or setting a depletion flag) to invalidate subsequent requests.
+
+## 2024-05-24 - DoS via Invalid CFrame
+
+**Vulnerability:** The `BuildingSystem` accepted client-provided `CFrame` without validating that its components were finite numbers, allowing attackers to send `NaN` or `Inf` values to crash the server or corrupt the physics engine.
+**Learning:** Roblox `CFrame` and `Vector3` types can contain `NaN` (Not a Number) values which bypass standard comparisons (e.g., `NaN > Distance` is false) and propagate through physics calculations.
+**Prevention:** Always validate that `Vector3` and `CFrame` inputs from clients contain only finite numbers (`x == x` and `x ~= inf`) before using them in logic or physics.
