@@ -9,6 +9,7 @@ local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
 
 local GameConfig = require(ReplicatedStorage.Shared.GameConfig)
+local ItemDatabase = require(ReplicatedStorage.Shared.ItemDatabase)
 
 local player = Players.LocalPlayer
 
@@ -57,7 +58,7 @@ end
 -- Listen for Gathering Feedback
 GatherEvent.OnClientEvent:Connect(function(itemId, qty)
     -- Resolve item name for better feedback
-    local itemDef = GameConfig.Items[itemId]
+    local itemDef = ItemDatabase.GetItem(itemId)
     local name = itemDef and itemDef.Name or itemId
 
     local msg = string.format("+%d %s", qty, name)

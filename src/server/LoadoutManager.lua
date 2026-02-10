@@ -6,6 +6,7 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local PlayerDataHandler = require(script.Parent.PlayerDataHandler)
 local GameConfig = require(ReplicatedStorage.Shared.GameConfig)
+local ItemDatabase = require(ReplicatedStorage.Shared.ItemDatabase)
 
 local LoadoutManager = {}
 
@@ -29,7 +30,7 @@ function LoadoutManager.OnLoadoutRequest(player, slot, itemId)
     end
     
     -- Validation 2: Item ID must exist in GameConfig
-    if itemId and not GameConfig.Items[itemId] then
+    if itemId and not ItemDatabase.GetItem(itemId) then
         warn("Invalid item ID")
         return
     end
