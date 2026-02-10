@@ -227,6 +227,9 @@ function PlayerDataHandler.AddItem(player, itemId, quantity)
     local lookup = sessionInventoryLookup[userId]
 
     quantity = quantity or 1
+    if type(quantity) ~= "number" or quantity <= 0 then
+        return false, "InvalidQuantity"
+    end
     
     local itemDef = GameConfig.Items[itemId]
     local isStackable = true
@@ -277,6 +280,10 @@ function PlayerDataHandler.AddCurrency(player, currencyType, amount)
     local data = sessionData[player.UserId]
     if not data then return false end
     
+    if type(amount) ~= "number" or amount <= 0 then
+        return false
+    end
+
     if data.Stats[currencyType] then
         data.Stats[currencyType] = data.Stats[currencyType] + amount
         
@@ -312,6 +319,9 @@ function PlayerDataHandler.RemoveItem(player, itemId, quantity)
     if not data then return false end
 
     quantity = quantity or 1
+    if type(quantity) ~= "number" or quantity <= 0 then
+        return false
+    end
 
     -- Optimization: Use Lookup Table to find slot (O(1))
     local lookup = sessionInventoryLookup[userId]
