@@ -10,6 +10,20 @@ local BuildingSystem = {}
 
 local MAX_BUILD_DISTANCE = 20 -- Maximum distance in studs to allow building
 
+-- Helper: Validate CFrame for NaNs and Inf
+local function isValidCFrame(cf)
+    if typeof(cf) ~= "CFrame" then return false end
+
+    local components = {cf:GetComponents()}
+    for _, v in ipairs(components) do
+        -- Check for NaN (v ~= v) and Infinity
+        if v ~= v or math.abs(v) == math.huge then
+            return false
+        end
+    end
+    return true
+end
+
 -- Remotes
 local Remotes = ReplicatedStorage:WaitForChild("Remotes")
 local PlaceStructureEvent = Instance.new("RemoteEvent", Remotes)
@@ -46,10 +60,9 @@ function BuildingSystem.PlaceStructure(player, structureType, cframe)
     local cost = STRUCTURE_COSTS[structureType]
     if not cost then return end
     
-
     -- 2. Validate Placement (Anti-Cheat)
-    -- Ensure cframe is valid
-    if typeof(cframe) ~= "CFrame" then
+    -- Ensure cframe is valid (Finite numbers only)
+    if not isValidCFrame(cframe) then
         warn(string.format("[BuildingSystem] Invalid CFrame received from %s", player.Name))
         return
     end
