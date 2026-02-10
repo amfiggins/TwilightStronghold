@@ -28,7 +28,7 @@ frame.Parent = gui
 -- Title
 local title = Instance.new("TextLabel")
 title.Text = "Loadout (Meta-Link)"
-title.Size = UDim2.new(1, 0, 0, 30)
+title.Size = UDim2.new(1, -30, 0, 30)
 title.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 title.TextColor3 = Color3.fromRGB(255, 255, 255)
 title.Parent = frame
@@ -256,16 +256,8 @@ local function populateLoadout()
 end
 
 -- Refresh Logic
-local isRefreshing = false
 refreshBtn.MouseButton1Click:Connect(function()
-    if isRefreshing then return end
-    isRefreshing = true
-    refreshBtn.TextTransparency = 0.5
-
     populateLoadout()
-
-    refreshBtn.TextTransparency = 0
-    isRefreshing = false
 end)
 
 -- Run population
