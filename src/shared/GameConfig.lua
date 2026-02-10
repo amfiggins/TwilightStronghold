@@ -18,6 +18,12 @@ Shared.PLACE_IDS = {
     SurvivalZone = 114856846700519 -- Survival Zone
 }
 
+-- Structure Costs
+Shared.StructureCosts = {
+    ["Wall"] = { Resource = "wood_log", Amount = 5 },
+    ["Tower"] = { Resource = "wood_log", Amount = 20 }
+}
+
 -- Rarity Definitions
 Shared.Rarity = {
     Common = { Name = "Common", Color = Color3.fromRGB(200, 200, 200), Chance = 100 },
