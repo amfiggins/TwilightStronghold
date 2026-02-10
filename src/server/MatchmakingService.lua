@@ -22,7 +22,7 @@ local QueueUpdateEvent = Instance.new("RemoteEvent", Remotes)
 QueueUpdateEvent.Name = "QueueUpdate"
 
 -- Constants
-local REQUIRED_PLAYERS = 1 -- Set to 1 for testing, normally GameConfig.MAX_SESSION_PLAYERS
+local REQUIRED_PLAYERS = GameConfig.MAX_SESSION_PLAYERS
 
 function MatchmakingService.Init()
     print("[MatchmakingService] Initialized.")
