@@ -28,7 +28,7 @@ frame.Parent = gui
 -- Title
 local title = Instance.new("TextLabel")
 title.Text = "Loadout (Meta-Link)"
-title.Size = UDim2.new(1, -30, 0, 30) -- Leave space for refresh button
+title.Size = UDim2.new(1, -30, 0, 30)
 title.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 title.TextColor3 = Color3.fromRGB(255, 255, 255)
 title.BorderSizePixel = 0
