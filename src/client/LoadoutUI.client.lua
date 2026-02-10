@@ -33,7 +33,18 @@ title.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 title.TextColor3 = Color3.fromRGB(255, 255, 255)
 title.Parent = frame
 
--- Scrolling Container (The Fix)
+-- Refresh Button
+local refreshBtn = Instance.new("TextButton")
+refreshBtn.Text = "Refresh"
+refreshBtn.Size = UDim2.new(0, 60, 0, 24)
+refreshBtn.Position = UDim2.new(1, -65, 0, 3)
+refreshBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+refreshBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+refreshBtn.Font = Enum.Font.GothamMedium
+refreshBtn.TextSize = 12
+refreshBtn.Parent = frame
+
+-- List Container (ScrollingFrame)
 local listContainer = Instance.new("ScrollingFrame")
 listContainer.Size = UDim2.new(1, 0, 1, -30)
 listContainer.Position = UDim2.new(0, 0, 0, 30)
@@ -52,11 +63,11 @@ layout.SortOrder = Enum.SortOrder.LayoutOrder
 
 -- Padding
 local padding = Instance.new("UIPadding")
-padding.PaddingTop = UDim.new(0, 5)
+padding.PaddingTop = UDim.new(0, 10) -- Adjusted padding since title is separate
 padding.PaddingLeft = UDim.new(0, 10)
 padding.PaddingRight = UDim.new(0, 10)
-padding.PaddingBottom = UDim.new(0, 5)
-padding.Parent = listContainer -- Parent to ScrollingFrame
+padding.PaddingBottom = UDim.new(0, 10)
+padding.Parent = listContainer
 
 -- Helper: Toast Notification
 local function showToast(text)
@@ -127,6 +138,13 @@ end
 
 -- Populate Inventory Buttons
 local function populateLoadout()
+    -- Clear List (preserve layout)
+    for _, child in ipairs(listContainer:GetChildren()) do
+        if child:IsA("GuiObject") then
+            child:Destroy()
+        end
+    end
+
     -- Loading Indicator
     local loadingLabel = Instance.new("TextLabel")
     loadingLabel.Text = "Loading inventory..."
@@ -146,10 +164,20 @@ local function populateLoadout()
         warn("Failed to fetch player data:", data)
         data = nil
     end
-
     if loadingLabel then loadingLabel:Destroy() end
-    local inventory = data and data.Inventory or {}
-    local currentLoadout = data and data.Loadout or {}
+
+    if not success or not data then
+        local errLabel = Instance.new("TextLabel")
+        errLabel.Text = "Failed to load inventory."
+        errLabel.Size = UDim2.new(1, 0, 0, 30)
+        errLabel.TextColor3 = Color3.fromRGB(255, 100, 100)
+        errLabel.BackgroundTransparency = 1
+        errLabel.Parent = listContainer
+        return
+    end
+
+    local inventory = data.Inventory or {}
+    local currentLoadout = data.Loadout or {}
 
     -- Static Unequip Options
     createButton("Unequip Weapon", function()
@@ -161,6 +189,8 @@ local function populateLoadout()
         LoadoutEvent:FireServer("BaseKit", nil)
         showToast("Unequipped Kit")
     end)
+
+    local foundItems = false
 
     -- Dynamic Items
     if #inventory == 0 then
@@ -185,6 +215,7 @@ local function populateLoadout()
             end
 
             if slot then
+                foundItems = true
                 -- Resolve Rarity Color
                 local rarityColor = nil
                 if itemDef.Rarity and GameConfig.Rarity[itemDef.Rarity] then
@@ -201,7 +232,32 @@ local function populateLoadout()
             end
         end
     end
+
+    -- Empty State
+    if not foundItems then
+        local emptyLabel = Instance.new("TextLabel")
+        emptyLabel.Text = "No loadout items found.\nGather resources to craft weapons!"
+        emptyLabel.Size = UDim2.new(1, 0, 0, 60)
+        emptyLabel.TextColor3 = Color3.fromRGB(150, 150, 150)
+        emptyLabel.BackgroundTransparency = 1
+        emptyLabel.Font = Enum.Font.SourceSans
+        emptyLabel.TextSize = 16
+        emptyLabel.Parent = listContainer
+    end
 end
+
+-- Refresh Logic
+local isRefreshing = false
+refreshBtn.MouseButton1Click:Connect(function()
+    if isRefreshing then return end
+    isRefreshing = true
+    refreshBtn.Text = "..."
+
+    populateLoadout()
+
+    refreshBtn.Text = "Refresh"
+    isRefreshing = false
+end)
 
 -- Run population
 task.spawn(populateLoadout)
