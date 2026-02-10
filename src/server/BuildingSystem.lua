@@ -5,6 +5,7 @@
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local PlayerDataHandler = require(script.Parent.PlayerDataHandler)
+local GameConfig = require(ReplicatedStorage.Shared.GameConfig)
 
 local BuildingSystem = {}
 
@@ -29,26 +30,6 @@ local Remotes = ReplicatedStorage:WaitForChild("Remotes")
 local PlaceStructureEvent = Instance.new("RemoteEvent", Remotes)
 PlaceStructureEvent.Name = "PlaceStructure"
 
--- Config (Mock Cost Table)
-local STRUCTURE_COSTS = {
-    ["Wall"] = { Resource = "wood_log", Amount = 5 },
-    ["Tower"] = { Resource = "wood_log", Amount = 20 }
-}
-
--- Helper: Validate CFrame for NaNs and Inf
-local function isValidCFrame(cf)
-    if typeof(cf) ~= "CFrame" then return false end
-
-    local components = {cf:GetComponents()}
-    for _, v in ipairs(components) do
-        -- Check for NaN (v ~= v) and Infinity
-        if v ~= v or math.abs(v) == math.huge then
-            return false
-        end
-    end
-    return true
-end
-
 function BuildingSystem.Init()
     print("[BuildingSystem] Initialized.")
     
@@ -59,7 +40,7 @@ end
 
 function BuildingSystem.PlaceStructure(player, structureType, cframe)
     -- 1. Validate Cost Existence
-    local cost = STRUCTURE_COSTS[structureType]
+    local cost = GameConfig.StructureCosts[structureType]
     if not cost then return end
     
     -- 2. Validate Placement (Anti-Cheat)
