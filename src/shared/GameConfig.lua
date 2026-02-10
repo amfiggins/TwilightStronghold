@@ -40,8 +40,12 @@ Shared.NodeTypeMapping = {
     ["OakTree"] = "Tree",
     ["BirchTree"] = "Tree",
     ["PineTree"] = "Tree",
+    ["PalmTree"] = "Tree",
+    ["WillowTree"] = "Tree",
     ["Boulder"] = "Rock",
     ["Limestone"] = "Rock",
+    ["Granite"] = "Rock",
+    ["Basalt"] = "Rock",
     ["Pond"] = "Lake",
     ["River"] = "Lake"
 }

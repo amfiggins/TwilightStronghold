@@ -52,7 +52,7 @@ function ResourceManager.OnGatherRequest(player, resourceNode)
     lastGatherTimes[player.UserId] = now
 
     -- 1. Validation Logic
-    if typeof(resourceNode) ~= "Instance" then
+    if typeof(resourceNode) ~= "Instance" or not resourceNode:IsDescendantOf(workspace) then
         warn("[ResourceManager] Invalid resource node received.")
         return
     end
