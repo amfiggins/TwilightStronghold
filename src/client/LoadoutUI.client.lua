@@ -33,6 +33,27 @@ title.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 title.TextColor3 = Color3.fromRGB(255, 255, 255)
 title.Parent = frame
 
+-- Refresh Button (UX Improvement)
+local refreshButton = Instance.new("TextButton")
+refreshButton.Name = "RefreshButton"
+refreshButton.Text = "↻"
+refreshButton.Size = UDim2.new(0, 30, 0, 30)
+refreshButton.Position = UDim2.new(1, -30, 0, 0)
+refreshButton.BackgroundTransparency = 1
+refreshButton.TextColor3 = Color3.fromRGB(200, 200, 200)
+refreshButton.Font = Enum.Font.GothamBold
+refreshButton.TextSize = 20
+refreshButton.Parent = frame
+refreshButton.ZIndex = 2
+
+refreshButton.MouseEnter:Connect(function()
+    refreshButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+end)
+
+refreshButton.MouseLeave:Connect(function()
+    refreshButton.TextColor3 = Color3.fromRGB(200, 200, 200)
+end)
+
 -- Scrolling Container (The Fix)
 local listContainer = Instance.new("ScrollingFrame")
 listContainer.Size = UDim2.new(1, 0, 1, -30)
@@ -125,8 +146,24 @@ local function createButton(text, onClick, rarityColor, isEquipped)
     return btn
 end
 
+local isLoading = false
+
 -- Populate Inventory Buttons
 local function populateLoadout()
+    if isLoading then return end
+    isLoading = true
+
+    -- Visual feedback on refresh button
+    refreshButton.Text = "..."
+    refreshButton.Active = false
+
+    -- Clear existing items (preserve Layout/Padding)
+    for _, child in ipairs(listContainer:GetChildren()) do
+        if not child:IsA("UIListLayout") and not child:IsA("UIPadding") then
+            child:Destroy()
+        end
+    end
+
     -- Loading Indicator
     local loadingLabel = Instance.new("TextLabel")
     loadingLabel.Text = "Loading inventory..."
@@ -155,11 +192,15 @@ local function populateLoadout()
     createButton("Unequip Weapon", function()
         LoadoutEvent:FireServer("Weapon", nil)
         showToast("Unequipped Weapon")
+        task.wait(0.1)
+        populateLoadout() -- Refresh to show state
     end)
 
     createButton("Unequip Kit", function()
         LoadoutEvent:FireServer("BaseKit", nil)
         showToast("Unequipped Kit")
+        task.wait(0.1)
+        populateLoadout() -- Refresh to show state
     end)
 
     -- Dynamic Items
@@ -171,7 +212,7 @@ local function populateLoadout()
         emptyLabel.BackgroundTransparency = 1
         emptyLabel.Font = Enum.Font.SourceSansItalic
         emptyLabel.TextSize = 16
-        emptyLabel.Parent = frame
+        emptyLabel.Parent = listContainer -- Parent to listContainer for proper cleanup
     end
 
     for _, item in ipairs(inventory) do
@@ -197,11 +238,21 @@ local function populateLoadout()
                 createButton("Equip " .. itemDef.Name, function()
                     LoadoutEvent:FireServer(slot, item.ItemId)
                     showToast("Equipped " .. itemDef.Name)
+                    -- Slight delay to allow server to process before refreshing
+                    task.wait(0.1)
+                    populateLoadout()
                 end, rarityColor, isEquipped)
             end
         end
     end
+
+    isLoading = false
+    refreshButton.Text = "↻"
+    refreshButton.Active = true
 end
+
+-- Connect Refresh Button
+refreshButton.MouseButton1Click:Connect(populateLoadout)
 
 -- Run population
 task.spawn(populateLoadout)
