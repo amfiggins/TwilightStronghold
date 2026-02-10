@@ -51,22 +51,7 @@ Shared.NodeTypeMapping = {
 }
 
 -- Item Database (Mock-up)
-Shared.Items = {
-    -- Tools
-    ["wooden_rod"] = { Name = "Wooden Rod", Type = "Tool", Rarity = "Common", Description = "A basic fishing rod.", Stackable = false },
-    ["iron_pickaxe"] = { Name = "Iron Pickaxe", Type = "Tool", Rarity = "Uncommon", Description = "Better than bare hands.", Stackable = false },
-    
-    -- Weapons (Loadout Items)
-    ["void_sword"] = { Name = "Void Slayer", Type = "Weapon", Rarity = "Legendary", Damage = 50, Stackable = false },
-    
-    -- Base Kits (Loadout Items)
-    ["watchtower_kit"] = { Name = "Watchtower Blueprint", Type = "Kit", Rarity = "Rare", StructureId = "tower_01" },
-
-    -- Resources
-    ["wood_log"] = { Name = "Wood Log", Type = "Material", Rarity = "Common", Description = "Basic building material." },
-    ["golden_wood"] = { Name = "Golden Wood", Type = "Material", Rarity = "Rare", Description = "Shiny wood." },
-    ["stone_ore"] = { Name = "Stone", Type = "Material", Rarity = "Common", Description = "A heavy rock." },
-    ["raw_fish"] = { Name = "Raw Fish", Type = "Consumable", Rarity = "Common", Description = "Smells fishy." }
-}
+-- Item Database moved to ItemDatabase.lua
+-- Shared.Items = require(script.Parent.ItemDatabase) -- Optional: If needed for back-compat
 
 return Shared

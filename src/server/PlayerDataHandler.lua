@@ -11,6 +11,7 @@ local RunService = game:GetService("RunService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local GameConfig = require(ReplicatedStorage.Shared.GameConfig)
+local ItemDatabase = require(ReplicatedStorage.Shared.ItemDatabase)
 
 local PlayerDataHandler = {}
 local PlayerDataStore = DataStoreService:GetDataStore("PlayerData_" .. GameConfig.GAME_VERSION)
@@ -234,7 +235,7 @@ function PlayerDataHandler.AddItem(player, itemId, quantity)
         return false, "InvalidQuantity"
     end
     
-    local itemDef = GameConfig.Items[itemId]
+    local itemDef = ItemDatabase.GetItem(itemId)
     local isStackable = true
     if itemDef and itemDef.Stackable == false then
         isStackable = false

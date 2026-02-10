@@ -7,6 +7,7 @@ local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TweenService = game:GetService("TweenService")
 local GameConfig = require(ReplicatedStorage.Shared.GameConfig)
+local ItemDatabase = require(ReplicatedStorage.Shared.ItemDatabase)
 
 local player = Players.LocalPlayer
 local Remotes = ReplicatedStorage:WaitForChild("Remotes")
@@ -209,7 +210,7 @@ local function populateLoadout()
 
     -- Dynamic Items
     for _, item in ipairs(inventory) do
-        local itemDef = GameConfig.Items[item.ItemId]
+        local itemDef = ItemDatabase.GetItem(item.ItemId)
         if itemDef then
             local slot = nil
             if itemDef.Type == "Weapon" then
