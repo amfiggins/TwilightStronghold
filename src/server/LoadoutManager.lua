@@ -30,9 +30,28 @@ function LoadoutManager.OnLoadoutRequest(player, slot, itemId)
     end
     
     -- Validation 2: Item ID must exist in GameConfig
-    if itemId and not ItemDatabase.GetItem(itemId) then
-        warn("Invalid item ID")
-        return
+    -- Sentinel: Type checking is critical here. Clients can send any type (e.g. bool, table).
+    -- If itemId is not nil, it must be a string and exist in the database.
+    if itemId ~= nil then
+        if type(itemId) ~= "string" then
+            warn(string.format("[LoadoutManager] Security: Invalid itemId type (%s) from %s", type(itemId), player.Name))
+            return
+        end
+
+        local itemDef = ItemDatabase.GetItem(itemId)
+        if not itemDef then
+            warn(string.format("[LoadoutManager] Invalid item ID: %s", itemId))
+            return
+        end
+
+        -- Sentinel: Enforce Type Constraints (e.g., prevent equipping Logs as Weapons)
+        if slot == "Weapon" and itemDef.Type ~= "Weapon" then
+            warn(string.format("[LoadoutManager] Security: Type Mismatch (Weapon) for %s by %s", itemId, player.Name))
+            return
+        elseif slot == "BaseKit" and itemDef.Type ~= "Kit" then
+            warn(string.format("[LoadoutManager] Security: Type Mismatch (Kit) for %s by %s", itemId, player.Name))
+            return
+        end
     end
     
     -- Execute
