@@ -96,7 +96,7 @@ local function showToast(text)
 end
 
 -- Helper: Create Button
-local function createButton(text, onClick, rarityColor, isEquipped)
+local function createButton(text, onClick, rarityColor, isEquipped, rarityName)
     local btn = Instance.new("TextButton")
     btn.Size = UDim2.new(1, 0, 0, 40)
     -- Visual State: Green if equipped, Dark Gray if not
@@ -106,27 +106,43 @@ local function createButton(text, onClick, rarityColor, isEquipped)
     btn.Font = isEquipped and Enum.Font.GothamBold or Enum.Font.SourceSans
     btn.Parent = listContainer -- Parent to ScrollingFrame
     btn.AutoButtonColor = false
+    btn.BorderSizePixel = 0
 
     -- Micro-UX: Rarity Indicator
+    local rarityLabel
     if rarityColor then
         local bar = Instance.new("Frame")
         bar.Size = UDim2.new(0, 4, 1, 0)
         bar.BackgroundColor3 = rarityColor
         bar.BorderSizePixel = 0
         bar.Parent = btn
+
+        if rarityName then
+            rarityLabel = Instance.new("TextLabel")
+            rarityLabel.Text = rarityName
+            rarityLabel.Size = UDim2.new(0, 100, 1, 0)
+            rarityLabel.Position = UDim2.new(1, -10, 0, 0)
+            rarityLabel.AnchorPoint = Vector2.new(1, 0)
+            rarityLabel.BackgroundTransparency = 1
+            rarityLabel.TextColor3 = rarityColor
+            rarityLabel.Font = Enum.Font.GothamBold
+            rarityLabel.TextSize = 12
+            rarityLabel.TextXAlignment = Enum.TextXAlignment.Right
+            rarityLabel.Visible = false
+            rarityLabel.Parent = btn
+        end
     end
 
-    btn.MouseEnter:Connect(function()
-        if not isEquipped then
-            btn.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
-        end
-    end)
+    local function updateState(isHovered)
+        if isEquipped then return end
+        btn.BackgroundColor3 = isHovered and Color3.fromRGB(80, 80, 80) or Color3.fromRGB(60, 60, 60)
+        if rarityLabel then rarityLabel.Visible = isHovered end
+    end
 
-    btn.MouseLeave:Connect(function()
-        if not isEquipped then
-            btn.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
-        end
-    end)
+    btn.MouseEnter:Connect(function() updateState(true) end)
+    btn.MouseLeave:Connect(function() updateState(false) end)
+    btn.SelectionGained:Connect(function() updateState(true) end)
+    btn.SelectionLost:Connect(function() updateState(false) end)
     
     btn.MouseButton1Click:Connect(function()
         if isEquipped then return end
@@ -223,8 +239,10 @@ local function populateLoadout()
                 foundItems = foundItems + 1
                 -- Resolve Rarity Color
                 local rarityColor = nil
+                local rarityName = nil
                 if itemDef.Rarity and GameConfig.Rarity[itemDef.Rarity] then
                     rarityColor = GameConfig.Rarity[itemDef.Rarity].Color
+                    rarityName = GameConfig.Rarity[itemDef.Rarity].Name
                 end
 
                 -- Check if equipped
@@ -236,7 +254,7 @@ local function populateLoadout()
                     -- Don't auto-refresh immediately to keep UI stable, user can click Refresh if needed
                     -- or we can wait a bit
                     task.delay(0.5, populateLoadout)
-                end, rarityColor, isEquipped)
+                end, rarityColor, isEquipped, rarityName)
             end
         end
     end
