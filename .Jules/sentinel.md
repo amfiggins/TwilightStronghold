@@ -39,3 +39,15 @@
 **Vulnerability:** `PlayerDataHandler` functions (`AddItem`, `RemoveItem`, `AddCurrency`) failed to validate that input quantities were positive. This allowed attackers to perform actions like `RemoveItem(..., -10)` to *add* items (logic inversion) or `AddItem(..., -10)` to corrupt inventory states.
 **Learning:** Mathematical operations (subtraction/addition) on unvalidated user input can be inverted by negative numbers, completely bypassing intended game logic (e.g., "paying" a negative cost increases balance).
 **Prevention:** Always enforce `quantity > 0` checks at the entry point of any function that modifies inventory or currency. Treat "subtract" and "add" as distinct operations that only accept positive magnitudes.
+
+## 2024-05-25 - RemoteEvent Type Confusion
+
+**Vulnerability:** `LoadoutManager` accepted `itemId` from the client without strict type checking. A client sending `false` (boolean) could bypass `if itemId` checks (falsy) while technically providing a non-nil value, leading to unexpected logic paths or state corruption.
+**Learning:** Lua's loose typing and falsy nature of `false` can be exploited in RemoteEvents. `if value then` is not the same as `if value ~= nil then`.
+**Prevention:** Always explicitly check `typeof(value)` for RemoteEvent arguments, especially when `nil` has a semantic meaning (e.g., "Unequip") distinct from `false` or invalid types.
+
+## 2024-05-25 - Logic Gap: Invalid Item Types in Loadout
+
+**Vulnerability:** The server verified that a player *owned* an item but failed to verify the item's *type* was appropriate for the target slot (e.g., equipping a "Wood Log" as a "Weapon"). This allowed players to create impossible loadouts.
+**Learning:** Ownership validation is insufficient; context validation is also required. Just because you have it doesn't mean you can use it *here*.
+**Prevention:** Enforce domain-specific constraints (e.g., `item.Type == "Weapon"`) at the entry point of any configuration change (Loadout, Equipment, etc.).
