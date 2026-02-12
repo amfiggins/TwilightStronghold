@@ -96,13 +96,28 @@ local function showToast(text)
 end
 
 -- Helper: Create Button
-local function createButton(text, onClick, rarityColor, isEquipped, rarityName)
+local function createButton(text, onClick, rarityColor, isEquipped, rarityName, subtext)
     local btn = Instance.new("TextButton")
     btn.Size = UDim2.new(1, 0, 0, 40)
     -- Visual State: Green if equipped, Dark Gray if not
     btn.BackgroundColor3 = isEquipped and Color3.fromRGB(30, 80, 30) or Color3.fromRGB(60, 60, 60)
     btn.TextColor3 = isEquipped and Color3.fromRGB(200, 255, 200) or Color3.fromRGB(255, 255, 255)
-    btn.Text = isEquipped and "✓ " .. text or text
+
+    -- RichText Configuration
+    btn.RichText = true
+    btn.TextXAlignment = Enum.TextXAlignment.Left
+
+    local padding = Instance.new("UIPadding")
+    padding.PaddingLeft = UDim.new(0, 10)
+    padding.Parent = btn
+
+    local displayText = isEquipped and "✓ " .. text or text
+    if subtext then
+        btn.Text = "<b>" .. displayText .. "</b>\n<font size='12' color='#BBBBBB'>" .. subtext .. "</font>"
+    else
+        btn.Text = displayText
+    end
+
     btn.Font = isEquipped and Enum.Font.GothamBold or Enum.Font.SourceSans
     btn.Parent = listContainer -- Parent to ScrollingFrame
     btn.AutoButtonColor = false
@@ -209,18 +224,26 @@ local function populateLoadout()
     local inventory = (data and data.Inventory) or {}
     local currentLoadout = (data and data.Loadout) or {}
 
-    -- Static Unequip Options
-    createButton("Unequip Weapon", function()
-        LoadoutEvent:FireServer("Weapon", nil)
-        showToast("Unequipped Weapon")
-        task.delay(0.5, populateLoadout)
-    end)
+    -- Dynamic Unequip Options
+    if currentLoadout.Weapon then
+        local itemDef = ItemDatabase.GetItem(currentLoadout.Weapon)
+        local name = itemDef and itemDef.Name or "Weapon"
+        createButton("Unequip " .. name, function()
+            LoadoutEvent:FireServer("Weapon", nil)
+            showToast("Unequipped " .. name)
+            task.delay(0.5, populateLoadout)
+        end, nil, false, nil, "Click to unequip weapon")
+    end
 
-    createButton("Unequip Kit", function()
-        LoadoutEvent:FireServer("BaseKit", nil)
-        showToast("Unequipped Kit")
-        task.delay(0.5, populateLoadout)
-    end)
+    if currentLoadout.BaseKit then
+        local itemDef = ItemDatabase.GetItem(currentLoadout.BaseKit)
+        local name = itemDef and itemDef.Name or "Kit"
+        createButton("Unequip " .. name, function()
+            LoadoutEvent:FireServer("BaseKit", nil)
+            showToast("Unequipped " .. name)
+            task.delay(0.5, populateLoadout)
+        end, nil, false, nil, "Click to unequip kit")
+    end
 
     local foundItems = 0
 
@@ -229,10 +252,18 @@ local function populateLoadout()
         local itemDef = ItemDatabase.GetItem(item.ItemId)
         if itemDef then
             local slot = nil
+            local subtext = itemDef.Description or ""
+
             if itemDef.Type == "Weapon" then
                 slot = "Weapon"
+                if itemDef.Damage then
+                    subtext = "Damage: " .. tostring(itemDef.Damage)
+                end
             elseif itemDef.Type == "Kit" then
                 slot = "BaseKit"
+                if itemDef.StructureId then
+                    subtext = "Structure: " .. tostring(itemDef.StructureId)
+                end
             end
 
             if slot then
@@ -254,7 +285,7 @@ local function populateLoadout()
                     -- Don't auto-refresh immediately to keep UI stable, user can click Refresh if needed
                     -- or we can wait a bit
                     task.delay(0.5, populateLoadout)
-                end, rarityColor, isEquipped, rarityName)
+                end, rarityColor, isEquipped, rarityName, subtext)
             end
         end
     end
