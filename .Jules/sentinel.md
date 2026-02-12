@@ -51,3 +51,9 @@
 **Vulnerability:** The server verified that a player *owned* an item but failed to verify the item's *type* was appropriate for the target slot (e.g., equipping a "Wood Log" as a "Weapon"). This allowed players to create impossible loadouts.
 **Learning:** Ownership validation is insufficient; context validation is also required. Just because you have it doesn't mean you can use it *here*.
 **Prevention:** Enforce domain-specific constraints (e.g., `item.Type == "Weapon"`) at the entry point of any configuration change (Loadout, Equipment, etc.).
+
+## 2024-05-25 - Resource Node Name Collision
+
+**Vulnerability:** `ResourceManager` relied solely on `node.Name` mapping to determine loot, allowing players to gather from any `Workspace` object (e.g., decorative rocks, walls) that shared a name with a resource, potentially destroying map geometry.
+**Learning:** Validating physical properties (distance, parent) is insufficient when semantic identity is ambiguous. Names are not unique identifiers and should not be trusted for critical game logic without secondary validation (e.g., Tags, Prompts).
+**Prevention:** Verify the presence of an interaction component (e.g., `ProximityPrompt`, `CollectionService` tag) that explicitly designates the object as interactable before processing the request.
