@@ -51,3 +51,9 @@
 **Vulnerability:** The server verified that a player *owned* an item but failed to verify the item's *type* was appropriate for the target slot (e.g., equipping a "Wood Log" as a "Weapon"). This allowed players to create impossible loadouts.
 **Learning:** Ownership validation is insufficient; context validation is also required. Just because you have it doesn't mean you can use it *here*.
 **Prevention:** Enforce domain-specific constraints (e.g., `item.Type == "Weapon"`) at the entry point of any configuration change (Loadout, Equipment, etc.).
+
+## 2024-05-25 - Unverified Interaction Target (Missing ProximityPrompt Check)
+
+**Vulnerability:** `ResourceManager` accepted any `BasePart` or `Model` in the Workspace as a valid resource node if it was within distance, allowing exploiters to gather/destroy arbitrary map geometry by sending non-interactive parts.
+**Learning:** Checking `IsDescendantOf(Workspace)` and distance is insufficient for interaction security. The server must also verify the object has the specific *component* (e.g., `ProximityPrompt`, `ClickDetector`) that designates it as interactable.
+**Prevention:** For any interaction claiming to be triggered by a client, explicitly check for the existence and `Enabled` state of the server-side interaction object (e.g., `part:FindFirstChild("Gather"):IsA("ProximityPrompt")`) before processing.
