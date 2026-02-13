@@ -9,6 +9,7 @@ local GameConfig = require(ReplicatedStorage.Shared.GameConfig)
 
 local BuildingSystem = {}
 
+local TemplateStructure
 local MAX_BUILD_DISTANCE = 20 -- Maximum distance in studs to allow building
 
 -- Helper: Validate CFrame for NaNs and Inf
@@ -33,6 +34,13 @@ PlaceStructureEvent.Name = "PlaceStructure"
 function BuildingSystem.Init()
     print("[BuildingSystem] Initialized.")
     
+    -- Initialize Template Structure for optimized cloning
+    TemplateStructure = Instance.new("Part")
+    TemplateStructure.Name = "Structure"
+    TemplateStructure.Size = Vector3.new(4, 8, 1) -- Wall dimensions
+    TemplateStructure.Anchored = true
+    TemplateStructure.BrickColor = BrickColor.new("Brown")
+
     PlaceStructureEvent.OnServerEvent:Connect(function(player, structureType, cframe)
         BuildingSystem.PlaceStructure(player, structureType, cframe)
     end)
@@ -78,12 +86,9 @@ function BuildingSystem.PlaceStructure(player, structureType, cframe)
     -- 4. Place It
     print(string.format("[BuildingSystem] %s placed a %s", player.Name, structureType))
     
-    local structure = Instance.new("Part")
+    local structure = TemplateStructure:Clone()
     structure.Name = structureType
-    structure.Size = Vector3.new(4, 8, 1) -- Wall dimensions
-    structure.Anchored = true
     structure.CFrame = cframe
-    structure.BrickColor = BrickColor.new("Brown")
     structure.Parent = workspace
 
 end
