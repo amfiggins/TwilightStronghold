@@ -118,7 +118,7 @@ function WaveManager.SpawnEnemy(difficulty)
     
     -- AI Loop (Pathfinding)
     task.spawn(function()
-        -- Optimization: Create path once and reuse it to reduce allocation
+        -- Optimization: Reuse Path object to avoid allocation in loop
         local path = PathfindingService:CreatePath()
 
         while enemy.Parent and humanoid and humanoid.Health > 0 do

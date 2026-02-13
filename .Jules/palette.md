@@ -30,3 +30,7 @@
 ## 2026-12-05 - Gamepad & Keyboard Accessibility
 **Learning:** Roblox UI elements do not automatically mirror hover states for Gamepad/Keyboard selection. This leaves non-mouse users without visual feedback when navigating.
 **Action:** Always bind `SelectionGained` and `SelectionLost` events to the same visual update logic used for `MouseEnter` and `MouseLeave`.
+
+## 2027-01-15 - Context-Aware Actions & Details
+**Learning:** Generic buttons (e.g., "Unequip Weapon") confuse users when the context (which weapon?) is unclear or the button is irrelevant (nothing equipped).
+**Action:** Use context-aware labels (e.g., "Unequip Void Slayer") and conditionally render action buttons to reduce cognitive load and clutter.
