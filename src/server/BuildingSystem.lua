@@ -9,8 +9,6 @@ local GameConfig = require(ReplicatedStorage.Shared.GameConfig)
 
 local BuildingSystem = {}
 
-local MAX_BUILD_DISTANCE = 20 -- Maximum distance in studs to allow building
-
 -- Helper: Validate CFrame for NaNs and Inf
 local function isValidCFrame(cf)
     if typeof(cf) ~= "CFrame" then return false end
@@ -59,7 +57,7 @@ function BuildingSystem.PlaceStructure(player, structureType, cframe)
     end
 
     local dist = (rootPart.Position - cframe.Position).Magnitude
-    if dist > MAX_BUILD_DISTANCE then
+    if dist > GameConfig.MAX_BUILD_DISTANCE then
         warn(string.format("[BuildingSystem] Suspicious build: %s is too far (%.1f studs)", player.Name, dist))
         return
     end
@@ -78,12 +76,18 @@ function BuildingSystem.PlaceStructure(player, structureType, cframe)
     -- 4. Place It
     print(string.format("[BuildingSystem] %s placed a %s", player.Name, structureType))
     
+    local props = GameConfig.StructureProperties[structureType]
+    if not props then
+        warn(string.format("[BuildingSystem] Missing properties for %s", structureType))
+        return
+    end
+
     local structure = Instance.new("Part")
     structure.Name = structureType
-    structure.Size = Vector3.new(4, 8, 1) -- Wall dimensions
-    structure.Anchored = true
+    structure.Size = props.Size
+    structure.Anchored = props.Anchored
     structure.CFrame = cframe
-    structure.BrickColor = BrickColor.new("Brown")
+    structure.Color = props.Color
     structure.Parent = workspace
 
 end

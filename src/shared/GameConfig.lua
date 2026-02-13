@@ -11,6 +11,7 @@ Shared.IS_SURVIVAL_MODE = false -- Toggle to true to test Survival Loop in Studi
 Shared.MAX_LOBBY_PLAYERS = 20
 Shared.MAX_SESSION_PLAYERS = 4 -- Survival squad size
 Shared.INVENTORY_CAPACITY = 30 -- Max unique slots
+Shared.MAX_BUILD_DISTANCE = 20 -- Maximum distance in studs to allow building
 
 -- Place Configuration
 Shared.PLACE_IDS = {
@@ -22,6 +23,12 @@ Shared.PLACE_IDS = {
 Shared.StructureCosts = {
     ["Wall"] = { Resource = "wood_log", Amount = 5 },
     ["Tower"] = { Resource = "wood_log", Amount = 20 }
+}
+
+-- Structure Properties (Visuals & Physics)
+Shared.StructureProperties = {
+    ["Wall"] = { Size = Vector3.new(4, 8, 1), Color = Color3.fromRGB(160, 132, 79), Anchored = true },
+    ["Tower"] = { Size = Vector3.new(4, 8, 1), Color = Color3.fromRGB(160, 132, 79), Anchored = true }
 }
 
 -- Rarity Definitions
