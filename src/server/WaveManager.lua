@@ -121,36 +121,70 @@ function WaveManager.SpawnEnemy(difficulty)
         -- Optimization: Reuse Path object to avoid allocation in loop
         local path = PathfindingService:CreatePath()
 
+        -- Reuse RaycastParams to avoid allocation in loop
+        local rayParams = RaycastParams.new()
+        rayParams.FilterType = Enum.RaycastFilterType.Exclude
+        rayParams.FilterDescendantsInstances = {enemy}
+
         while enemy.Parent and humanoid and humanoid.Health > 0 do
             local targetPlayer = findNearestPlayer(rootPart.Position)
+            local updateRate = 0.5
 
             if targetPlayer and targetPlayer.Character and targetPlayer.Character.PrimaryPart then
                 local targetPos = targetPlayer.Character.PrimaryPart.Position
+                local dist = (targetPos - rootPart.Position).Magnitude
 
-                -- Compute path (Reuses the 'path' object)
-                local success, errorMessage = pcall(path.ComputeAsync, path, rootPart.Position, targetPos)
+                -- Optimization: Throttle updates based on distance
+                if dist > 100 then
+                    updateRate = 2.0
+                elseif dist > 50 then
+                    updateRate = 1.0
+                end
 
-                if success and path.Status == Enum.PathStatus.Success then
-                    local waypoints = path:GetWaypoints()
+                local usePathfinding = true
 
-                    -- Move to the second waypoint (the first one is the current position)
-                    if #waypoints >= 2 then
-                        humanoid:MoveTo(waypoints[2].Position)
+                -- Optimization: Use direct movement if close and clear Line of Sight
+                if dist < 30 then
+                    -- Update filter to include target character (so we don't hit it)
+                    rayParams.FilterDescendantsInstances = {enemy, targetPlayer.Character}
+
+                    local direction = targetPos - rootPart.Position
+                    local result = workspace:Raycast(rootPart.Position, direction, rayParams)
+
+                    if not result then
+                        usePathfinding = false
+                    end
+                end
+
+                if usePathfinding then
+                    -- Compute path (Reuses the 'path' object)
+                    local success, errorMessage = pcall(path.ComputeAsync, path, rootPart.Position, targetPos)
+
+                    if success and path.Status == Enum.PathStatus.Success then
+                        local waypoints = path:GetWaypoints()
+
+                        -- Move to the second waypoint (the first one is the current position)
+                        if #waypoints >= 2 then
+                            humanoid:MoveTo(waypoints[2].Position)
+                        else
+                            -- Fallback: Move directly to target if very close
+                            humanoid:MoveTo(targetPos)
+                        end
                     else
-                        -- Fallback: Move directly to target if very close
+                        if not success then
+                            warn("[WaveManager] Path computation failed:", errorMessage)
+                        end
+                        -- Fallback: Try moving directly to target
                         humanoid:MoveTo(targetPos)
                     end
                 else
-                    if not success then
-                        warn("[WaveManager] Path computation failed:", errorMessage)
-                    end
-                    -- Fallback: Try moving directly to target
+                    -- Direct movement optimization
                     humanoid:MoveTo(targetPos)
                 end
             end
 
-            -- Update path every 0.5 seconds
-            task.wait(0.5)
+            -- Update path at variable rate
+            task.wait(updateRate)
         end
     end)
 
