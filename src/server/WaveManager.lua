@@ -118,17 +118,17 @@ function WaveManager.SpawnEnemy(difficulty)
     
     -- AI Loop (Pathfinding)
     task.spawn(function()
+        -- Optimization: Reuse Path object to avoid allocation in loop
+        local path = PathfindingService:CreatePath()
+
         while enemy.Parent and humanoid and humanoid.Health > 0 do
             local targetPlayer = findNearestPlayer(rootPart.Position)
 
             if targetPlayer and targetPlayer.Character and targetPlayer.Character.PrimaryPart then
                 local targetPos = targetPlayer.Character.PrimaryPart.Position
 
-                -- Compute path
-                local path = PathfindingService:CreatePath()
-                local success, errorMessage = pcall(function()
-                    path:ComputeAsync(rootPart.Position, targetPos)
-                end)
+                -- Compute path (Reuses the 'path' object)
+                local success, errorMessage = pcall(path.ComputeAsync, path, rootPart.Position, targetPos)
 
                 if success and path.Status == Enum.PathStatus.Success then
                     local waypoints = path:GetWaypoints()
