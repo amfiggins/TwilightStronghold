@@ -14,8 +14,8 @@ Shared.INVENTORY_CAPACITY = 30 -- Max unique slots
 
 -- Place Configuration
 Shared.PLACE_IDS = {
-    Lobby = 140360553864312, -- Twilight Stronghold - Lobby
-    SurvivalZone = 114856846700519 -- Survival Zone
+    Lobby = 140360553864312, -- Twilight Stronghold - Lobby Place ID
+    SurvivalZone = 114856846700519 -- Survival Zone Place ID
 }
 
 -- Structure Costs
