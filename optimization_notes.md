@@ -30,3 +30,16 @@ Replaced `SetAsync` with `UpdateAsync` in `PlayerDataHandler.lua`.
 
 **Measurement Note:**
 Direct performance measurement (latency) of DataStore calls is not feasible in the sandbox environment as it requires network access to Roblox's backend services. However, this change is a significant improvement in *system efficiency* and *reliability*.
+
+## Pathfinding Optimization (WaveManager)
+### Path Object Reuse
+Moved `PathfindingService:CreatePath()` outside the enemy AI loop in `WaveManager.SpawnEnemy`.
+
+**Rationale:**
+1. **Allocation:** Creating a new `Path` object every 0.5 seconds for every enemy generates unnecessary garbage and overhead.
+2. **Reuse:** `Path` objects are designed to be reused for the same agent. Calling `ComputeAsync` on an existing path clears and recalculates it.
+3. **Closure Avoidance:** Replaced `pcall(function() ... end)` with `pcall(path.ComputeAsync, path, ...)` to avoid creating a new function closure on every tick.
+
+**Impact:**
+- Reduces memory allocation rate significantly during high enemy counts.
+- Reduces CPU time spent in object creation and garbage collection.

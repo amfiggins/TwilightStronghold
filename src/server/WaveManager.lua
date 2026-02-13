@@ -127,10 +127,8 @@ function WaveManager.SpawnEnemy(difficulty)
             if targetPlayer and targetPlayer.Character and targetPlayer.Character.PrimaryPart then
                 local targetPos = targetPlayer.Character.PrimaryPart.Position
 
-                -- Compute path
-                local success, errorMessage = pcall(function()
-                    path:ComputeAsync(rootPart.Position, targetPos)
-                end)
+                -- Compute path (Reuses the 'path' object)
+                local success, errorMessage = pcall(path.ComputeAsync, path, rootPart.Position, targetPos)
 
                 if success and path.Status == Enum.PathStatus.Success then
                     local waypoints = path:GetWaypoints()
