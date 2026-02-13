@@ -46,8 +46,30 @@ refreshBtn.Font = Enum.Font.GothamBold
 refreshBtn.TextSize = 18
 refreshBtn.Parent = title
 
-refreshBtn.MouseEnter:Connect(function() refreshBtn.TextColor3 = Color3.fromRGB(255, 255, 255) end)
-refreshBtn.MouseLeave:Connect(function() refreshBtn.TextColor3 = Color3.fromRGB(200, 200, 200) end)
+-- Refresh Tooltip (Micro-UX)
+local refreshTooltip = Instance.new("TextLabel")
+refreshTooltip.Text = "Refresh Inventory"
+refreshTooltip.Size = UDim2.new(0, 120, 0, 24)
+refreshTooltip.AnchorPoint = Vector2.new(1, 0)
+refreshTooltip.Position = UDim2.new(1, 0, -1, -5) -- Above the button
+refreshTooltip.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+refreshTooltip.TextColor3 = Color3.fromRGB(255, 255, 255)
+refreshTooltip.BorderSizePixel = 0
+refreshTooltip.Font = Enum.Font.SourceSans
+refreshTooltip.TextSize = 12
+refreshTooltip.Visible = false
+refreshTooltip.ZIndex = 10
+refreshTooltip.Parent = refreshBtn
+
+local function updateRefreshState(isActive)
+    refreshBtn.TextColor3 = isActive and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(200, 200, 200)
+    refreshTooltip.Visible = isActive
+end
+
+refreshBtn.MouseEnter:Connect(function() updateRefreshState(true) end)
+refreshBtn.MouseLeave:Connect(function() updateRefreshState(false) end)
+refreshBtn.SelectionGained:Connect(function() updateRefreshState(true) end)
+refreshBtn.SelectionLost:Connect(function() updateRefreshState(false) end)
 
 -- List Container (ScrollingFrame for Scanability)
 local listContainer = Instance.new("ScrollingFrame")
@@ -277,6 +299,13 @@ end
 
 -- Refresh Logic
 refreshBtn.MouseButton1Click:Connect(function()
+    -- Click Animation (Non-blocking)
+    task.spawn(function()
+        refreshBtn.TextSize = 14
+        task.wait(0.1)
+        refreshBtn.TextSize = 18
+    end)
+
     populateLoadout()
 end)
 
