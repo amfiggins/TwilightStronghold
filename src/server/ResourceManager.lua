@@ -84,11 +84,11 @@ function ResourceManager.OnGatherRequest(player, resourceNode)
     end
 
     -- 3. Security: Interaction Validation
-    -- Ensure the node has a valid, enabled ProximityPrompt named "Gather".
-    -- This prevents players from farming arbitrary map geometry that happens to share a name.
+    -- Ensure the object has an active ProximityPrompt intended for gathering.
+    -- This prevents exploiters from gathering arbitrary parts in the workspace (e.g. decorative props).
     local prompt = resourceNode:FindFirstChild("Gather")
     if not prompt or not prompt:IsA("ProximityPrompt") or not prompt.Enabled then
-        warn(string.format("[ResourceManager] Security: %s tried to gather from non-interactive object %s", player.Name, resourceNode.Name))
+        warn(string.format("[ResourceManager] Invalid gather request from %s: Node has no active 'Gather' prompt.", player.Name))
         return
     end
 
