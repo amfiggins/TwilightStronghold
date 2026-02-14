@@ -121,31 +121,52 @@ function WaveManager.SpawnEnemy(difficulty)
         -- Optimization: Reuse Path object to avoid allocation in loop
         local path = PathfindingService:CreatePath()
 
+        -- RaycastParams for line-of-sight checks
+        local rayParams = RaycastParams.new()
+        rayParams.FilterDescendantsInstances = {enemy}
+        rayParams.FilterType = Enum.RaycastFilterType.Exclude
+
         while enemy.Parent and humanoid and humanoid.Health > 0 do
             local targetPlayer = findNearestPlayer(rootPart.Position)
 
             if targetPlayer and targetPlayer.Character and targetPlayer.Character.PrimaryPart then
                 local targetPos = targetPlayer.Character.PrimaryPart.Position
+                local direction = targetPos - rootPart.Position
+                local distance = direction.Magnitude
+                local directPathFound = false
 
-                -- Compute path (Reuses the 'path' object)
-                local success, errorMessage = pcall(path.ComputeAsync, path, rootPart.Position, targetPos)
+                -- Optimization: Raycast check for short-range direct movement (< 30 studs)
+                if distance < 30 then
+                    local result = workspace:Raycast(rootPart.Position, direction, rayParams)
 
-                if success and path.Status == Enum.PathStatus.Success then
-                    local waypoints = path:GetWaypoints()
+                    -- If result is nil (no obstruction) or hits the target player, move directly
+                    if not result or result.Instance:IsDescendantOf(targetPlayer.Character) then
+                        humanoid:MoveTo(targetPos)
+                        directPathFound = true
+                    end
+                end
 
-                    -- Move to the second waypoint (the first one is the current position)
-                    if #waypoints >= 2 then
-                        humanoid:MoveTo(waypoints[2].Position)
+                if not directPathFound then
+                    -- Compute path (Reuses the 'path' object)
+                    local success, errorMessage = pcall(path.ComputeAsync, path, rootPart.Position, targetPos)
+
+                    if success and path.Status == Enum.PathStatus.Success then
+                        local waypoints = path:GetWaypoints()
+
+                        -- Move to the second waypoint (the first one is the current position)
+                        if #waypoints >= 2 then
+                            humanoid:MoveTo(waypoints[2].Position)
+                        else
+                            -- Fallback: Move directly to target if very close
+                            humanoid:MoveTo(targetPos)
+                        end
                     else
-                        -- Fallback: Move directly to target if very close
+                        if not success then
+                            warn("[WaveManager] Path computation failed:", errorMessage)
+                        end
+                        -- Fallback: Try moving directly to target
                         humanoid:MoveTo(targetPos)
                     end
-                else
-                    if not success then
-                        warn("[WaveManager] Path computation failed:", errorMessage)
-                    end
-                    -- Fallback: Try moving directly to target
-                    humanoid:MoveTo(targetPos)
                 end
             end
 
