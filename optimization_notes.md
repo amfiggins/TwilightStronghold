@@ -43,3 +43,24 @@ Moved `PathfindingService:CreatePath()` outside the enemy AI loop in `WaveManage
 **Impact:**
 - Reduces memory allocation rate significantly during high enemy counts.
 - Reduces CPU time spent in object creation and garbage collection.
+
+## Raycast and Adaptive Throttling (WaveManager)
+### Raycast Line-of-Sight Check
+Added a raycast check before calling `ComputeAsync` for nearby targets (< 30 studs).
+
+**Rationale:**
+1. **Cost:** Raycasting is significantly cheaper than full A* pathfinding.
+2. **Behavior:** If an enemy has a direct line of sight to the player, complex pathfinding is unnecessary; simple movement (`MoveTo`) suffices.
+3. **Reuse:** Reused a single `RaycastParams` object per enemy to minimize allocation overhead.
+
+### Adaptive Throttling
+Implemented variable update rates based on distance to the target.
+
+**Logic:**
+- Distance < 50 studs: Update every 0.5s (High alertness)
+- Distance 50-100 studs: Update every 1.0s (Medium alertness)
+- Distance > 100 studs: Update every 2.0s (Low alertness)
+
+**Impact:**
+- Drastically reduces CPU usage for enemies far from players.
+- Maintains responsiveness for active combat scenarios.

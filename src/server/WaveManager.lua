@@ -121,36 +121,68 @@ function WaveManager.SpawnEnemy(difficulty)
         -- Optimization: Reuse Path object to avoid allocation in loop
         local path = PathfindingService:CreatePath()
 
+        -- Optimization: Reuse RaycastParams for line-of-sight checks
+        local raycastParams = RaycastParams.new()
+        raycastParams.FilterDescendantsInstances = {enemy}
+        raycastParams.FilterType = Enum.RaycastFilterType.Exclude
+
         while enemy.Parent and humanoid and humanoid.Health > 0 do
             local targetPlayer = findNearestPlayer(rootPart.Position)
+            local waitTime = 0.5
 
             if targetPlayer and targetPlayer.Character and targetPlayer.Character.PrimaryPart then
                 local targetPos = targetPlayer.Character.PrimaryPart.Position
+                local direction = targetPos - rootPart.Position
+                local distance = direction.Magnitude
 
-                -- Compute path (Reuses the 'path' object)
-                local success, errorMessage = pcall(path.ComputeAsync, path, rootPart.Position, targetPos)
+                -- Optimization: Adaptive throttling based on distance
+                if distance > 100 then
+                    waitTime = 2.0
+                elseif distance > 50 then
+                    waitTime = 1.0
+                end
 
-                if success and path.Status == Enum.PathStatus.Success then
-                    local waypoints = path:GetWaypoints()
+                -- Optimization: Raycast check for close targets to skip expensive pathfinding
+                local hasLineOfSight = false
+                if distance < 30 then
+                    local result = workspace:Raycast(rootPart.Position, direction, raycastParams)
+                    if result and result.Instance and result.Instance:IsDescendantOf(targetPlayer.Character) then
+                        hasLineOfSight = true
+                    elseif not result then
+                         -- No obstruction found (unlikely given we aim at player, but strictly speaking "no hit" means clear if range is infinite, but Raycast needs length.
+                         -- Wait, direction includes length. So if result is nil, it means clear path to targetPos.
+                         hasLineOfSight = true
+                    end
+                end
 
-                    -- Move to the second waypoint (the first one is the current position)
-                    if #waypoints >= 2 then
-                        humanoid:MoveTo(waypoints[2].Position)
+                if hasLineOfSight then
+                     humanoid:MoveTo(targetPos)
+                else
+                    -- Compute path (Reuses the 'path' object)
+                    local success, errorMessage = pcall(path.ComputeAsync, path, rootPart.Position, targetPos)
+
+                    if success and path.Status == Enum.PathStatus.Success then
+                        local waypoints = path:GetWaypoints()
+
+                        -- Move to the second waypoint (the first one is the current position)
+                        if #waypoints >= 2 then
+                            humanoid:MoveTo(waypoints[2].Position)
+                        else
+                            -- Fallback: Move directly to target if very close
+                            humanoid:MoveTo(targetPos)
+                        end
                     else
-                        -- Fallback: Move directly to target if very close
+                        if not success then
+                            warn("[WaveManager] Path computation failed:", errorMessage)
+                        end
+                        -- Fallback: Try moving directly to target
                         humanoid:MoveTo(targetPos)
                     end
-                else
-                    if not success then
-                        warn("[WaveManager] Path computation failed:", errorMessage)
-                    end
-                    -- Fallback: Try moving directly to target
-                    humanoid:MoveTo(targetPos)
                 end
             end
 
-            -- Update path every 0.5 seconds
-            task.wait(0.5)
+            -- Update path every X seconds
+            task.wait(waitTime)
         end
     end)
 
