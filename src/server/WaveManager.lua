@@ -43,14 +43,15 @@ end
 
 local function findNearestPlayer(position)
     local nearestPlayer = nil
-    local minDistance = math.huge
+    local minDistanceSq = math.huge
 
     for _, player in ipairs(Players:GetPlayers()) do
         local character = player.Character
         if character and character.PrimaryPart then
-            local distance = (character.PrimaryPart.Position - position).Magnitude
-            if distance < minDistance then
-                minDistance = distance
+            local diff = character.PrimaryPart.Position - position
+            local distSq = diff:Dot(diff) -- Optimization: Use squared distance to avoid sqrt
+            if distSq < minDistanceSq then
+                minDistanceSq = distSq
                 nearestPlayer = player
             end
         end
@@ -121,36 +122,67 @@ function WaveManager.SpawnEnemy(difficulty)
         -- Optimization: Reuse Path object to avoid allocation in loop
         local path = PathfindingService:CreatePath()
 
+        -- Optimization: Reuse RaycastParams for line-of-sight checks
+        local rayParams = RaycastParams.new()
+        rayParams.FilterType = Enum.RaycastFilterType.Exclude
+        rayParams.FilterDescendantsInstances = {enemy}
+
         while enemy.Parent and humanoid and humanoid.Health > 0 do
+            local waitTime = 0.5 -- Default update rate
             local targetPlayer = findNearestPlayer(rootPart.Position)
 
             if targetPlayer and targetPlayer.Character and targetPlayer.Character.PrimaryPart then
                 local targetPos = targetPlayer.Character.PrimaryPart.Position
+                local direction = targetPos - rootPart.Position
+                local distance = direction.Magnitude
 
-                -- Compute path (Reuses the 'path' object)
-                local success, errorMessage = pcall(path.ComputeAsync, path, rootPart.Position, targetPos)
+                -- Optimization: Adaptive Throttling
+                if distance < 50 then
+                    waitTime = 0.5
+                elseif distance < 100 then
+                    waitTime = 1.0
+                else
+                    waitTime = 2.0
+                end
 
-                if success and path.Status == Enum.PathStatus.Success then
-                    local waypoints = path:GetWaypoints()
+                local usePathfinding = true
 
-                    -- Move to the second waypoint (the first one is the current position)
-                    if #waypoints >= 2 then
-                        humanoid:MoveTo(waypoints[2].Position)
-                    else
-                        -- Fallback: Move directly to target if very close
+                -- Optimization: Raycast check for close range (< 30 studs)
+                -- If direct line of sight exists, skip expensive ComputeAsync
+                if distance < 30 then
+                    local result = workspace:Raycast(rootPart.Position, direction, rayParams)
+                    if not result or result.Instance:IsDescendantOf(targetPlayer.Character) then
+                        usePathfinding = false
                         humanoid:MoveTo(targetPos)
                     end
-                else
-                    if not success then
-                        warn("[WaveManager] Path computation failed:", errorMessage)
+                end
+
+                if usePathfinding then
+                    -- Compute path (Reuses the 'path' object)
+                    local success, errorMessage = pcall(path.ComputeAsync, path, rootPart.Position, targetPos)
+
+                    if success and path.Status == Enum.PathStatus.Success then
+                        local waypoints = path:GetWaypoints()
+
+                        -- Move to the second waypoint (the first one is the current position)
+                        if #waypoints >= 2 then
+                            humanoid:MoveTo(waypoints[2].Position)
+                        else
+                            -- Fallback: Move directly to target if very close
+                            humanoid:MoveTo(targetPos)
+                        end
+                    else
+                        if not success then
+                            warn("[WaveManager] Path computation failed:", errorMessage)
+                        end
+                        -- Fallback: Try moving directly to target
+                        humanoid:MoveTo(targetPos)
                     end
-                    -- Fallback: Try moving directly to target
-                    humanoid:MoveTo(targetPos)
                 end
             end
 
-            -- Update path every 0.5 seconds
-            task.wait(0.5)
+            -- Update path periodically (Adaptive)
+            task.wait(waitTime)
         end
     end)
 

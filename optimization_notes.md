@@ -43,3 +43,20 @@ Moved `PathfindingService:CreatePath()` outside the enemy AI loop in `WaveManage
 **Impact:**
 - Reduces memory allocation rate significantly during high enemy counts.
 - Reduces CPU time spent in object creation and garbage collection.
+
+### WaveManager AI Optimization (Bolt Update)
+**1. Raycast Shortcut:**
+Added a `workspace:Raycast` check for close-range targets (< 30 studs).
+If there is a direct line of sight to the player, `ComputeAsync` is skipped, and `humanoid:MoveTo` is called directly.
+**Impact:** Eliminates expensive pathfinding calculations for close-quarters combat, where enemies are most active.
+
+**2. Adaptive Throttling:**
+The AI loop update rate now scales with distance:
+- < 50 studs: 0.5s (High frequency)
+- 50-100 studs: 1.0s (Medium frequency)
+- > 100 studs: 2.0s (Low frequency)
+**Impact:** Reduces CPU load significantly for distant enemies that do not need precise movement updates.
+
+**3. Squared Distance Comparison:**
+Updated `findNearestPlayer` to use `Vector3:Dot` (squared distance) instead of `.Magnitude` (sqrt).
+**Impact:** Avoids thousands of square root calculations per second during high enemy counts.
