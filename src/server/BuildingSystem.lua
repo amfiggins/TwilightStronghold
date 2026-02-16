@@ -10,6 +10,8 @@ local GameConfig = require(ReplicatedStorage.Shared.GameConfig)
 local BuildingSystem = {}
 
 local MAX_BUILD_DISTANCE = 20 -- Maximum distance in studs to allow building
+local WALL_SIZE = Vector3.new(4, 8, 1) -- Standard structure size
+local COLLISION_MARGIN = 0.1 -- Reduction margin to allow face-touching placement
 
 -- Helper: Validate CFrame for NaNs and Inf
 local function isValidCFrame(cf)
@@ -23,6 +25,19 @@ local function isValidCFrame(cf)
         end
     end
     return true
+end
+
+-- Helper: Check Collision (OverlapParams)
+local function checkCollision(cframe, size)
+    local overlapParams = OverlapParams.new()
+    overlapParams.FilterType = Enum.RaycastFilterType.Exclude
+    overlapParams.FilterDescendantsInstances = {} -- Consider everything collidable by default
+
+    -- Reduce size slightly to allow "flush" placement (e.g. on ground or stacking)
+    local checkSize = size - Vector3.new(COLLISION_MARGIN, COLLISION_MARGIN, COLLISION_MARGIN)
+
+    local parts = workspace:GetPartBoundsInBox(cframe, checkSize, overlapParams)
+    return #parts > 0
 end
 
 -- Remotes
@@ -64,9 +79,11 @@ function BuildingSystem.PlaceStructure(player, structureType, cframe)
         return
     end
 
-
-
-    -- Ensure no collision
+    -- Ensure no collision (Server-Side Validation)
+    if checkCollision(cframe, WALL_SIZE) then
+        warn(string.format("[BuildingSystem] Build failed: %s attempted to build intersecting geometry.", player.Name))
+        return
+    end
 
     -- 3. Deduct Cost
     local success = PlayerDataHandler.RemoveItem(player, cost.Resource, cost.Amount)
@@ -80,7 +97,7 @@ function BuildingSystem.PlaceStructure(player, structureType, cframe)
     
     local structure = Instance.new("Part")
     structure.Name = structureType
-    structure.Size = Vector3.new(4, 8, 1) -- Wall dimensions
+    structure.Size = WALL_SIZE
     structure.Anchored = true
     structure.CFrame = cframe
     structure.BrickColor = BrickColor.new("Brown")
