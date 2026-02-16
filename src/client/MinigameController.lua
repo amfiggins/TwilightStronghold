@@ -52,6 +52,19 @@ function MinigameController.Init()
     target.BackgroundColor3 = Color3.fromRGB(0, 255, 0)
     target.BackgroundTransparency = 0.5
     target.Parent = bg
+
+    -- Instruction Label (Micro-UX)
+    local instruction = Instance.new("TextLabel")
+    instruction.Name = "Instruction"
+    instruction.Text = "Hold SPACE"
+    instruction.Size = UDim2.new(1, 0, 0, 20)
+    instruction.Position = UDim2.new(0, 0, -0.8, 0) -- Above the bar
+    instruction.BackgroundTransparency = 1
+    instruction.TextColor3 = Color3.fromRGB(255, 255, 255)
+    instruction.Font = Enum.Font.GothamBold
+    instruction.TextSize = 14
+    instruction.TextStrokeTransparency = 0.5
+    instruction.Parent = bg
     
     bar = Instance.new("Frame")
     bar.Name = "Bar"
