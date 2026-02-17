@@ -74,6 +74,18 @@ function MinigameController.Init()
     progressFill.BackgroundColor3 = Color3.fromRGB(0, 255, 100)
     progressFill.BorderSizePixel = 0
     progressFill.Parent = progressBg
+
+    -- Instruction Label (Micro-UX)
+    local instruction = Instance.new("TextLabel")
+    instruction.Name = "Instruction"
+    instruction.Text = "Hold SPACE"
+    instruction.Size = UDim2.new(1, 0, 0, 20)
+    instruction.Position = UDim2.new(0, 0, -0.8, 0) -- Above the bar
+    instruction.BackgroundTransparency = 1
+    instruction.TextColor3 = Color3.fromRGB(200, 200, 200)
+    instruction.Font = Enum.Font.GothamBold
+    instruction.TextSize = 14
+    instruction.Parent = bg
 end
 
 function MinigameController.Start(callback)
@@ -122,8 +134,10 @@ function MinigameController.Start(callback)
         
         if barStart < targetEnd and barEnd > targetStart then
             progress = progress + (FILL_RATE * dt)
+            bar.BackgroundColor3 = Color3.fromRGB(100, 255, 100) -- Green feedback
         else
             progress = math.max(0, progress - (DECAY_RATE * dt))
+            bar.BackgroundColor3 = Color3.fromRGB(255, 255, 255) -- White default
         end
         
 

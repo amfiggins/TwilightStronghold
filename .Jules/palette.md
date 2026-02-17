@@ -34,3 +34,7 @@
 ## 2027-01-15 - Context-Aware Actions & Details
 **Learning:** Generic buttons (e.g., "Unequip Weapon") confuse users when the context (which weapon?) is unclear or the button is irrelevant (nothing equipped).
 **Action:** Use context-aware labels (e.g., "Unequip Void Slayer") and conditionally render action buttons to reduce cognitive load and clutter.
+
+## 2027-02-12 - Instruction & Feedback in Minigames
+**Learning:** Users often assume controls for simple minigames (e.g., "Hold SPACE") are intuitive, but without explicit instructions and real-time visual feedback (like color changes), they feel frustrated and "in the dark".
+**Action:** Always include a persistent instruction label and distinct visual state changes (color/size) when the user is performing the correct action to reinforce success.
