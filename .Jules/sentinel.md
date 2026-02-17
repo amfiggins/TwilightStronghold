@@ -57,3 +57,9 @@
 **Vulnerability:** `ResourceManager` accepted any `BasePart` or `Model` in the Workspace as a valid resource node if it was within distance, allowing exploiters to gather/destroy arbitrary map geometry by sending non-interactive parts.
 **Learning:** Checking `IsDescendantOf(Workspace)` and distance is insufficient for interaction security. The server must also verify the object has the specific *component* (e.g., `ProximityPrompt`, `ClickDetector`) that designates it as interactable.
 **Prevention:** For any interaction claiming to be triggered by a client, explicitly check for the existence and `Enabled` state of the server-side interaction object (e.g., `part:FindFirstChild("Gather"):IsA("ProximityPrompt")`) before processing.
+
+## 2024-05-26 - Missing Rate Limiting on Building Placement
+
+**Vulnerability:** The `BuildingSystem` allowed clients to fire `PlaceStructure` events infinitely fast, enabling players to spam structure placement requests. This could lead to a Denial of Service (DoS) by overwhelming the server with physics and validation checks, or spawning thousands of parts if resources allowed.
+**Learning:** Even if an action has a resource cost, the request processing itself (distance checks, CFrame validation) consumes server CPU. Malicious clients can flood these requests without valid resources to degrade server performance.
+**Prevention:** Implement a server-side cooldown (e.g., `BUILD_COOLDOWN`) for all high-frequency interactions. Track the last execution time per player and silently reject requests that occur too frequently.

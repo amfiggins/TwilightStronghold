@@ -4,12 +4,16 @@
 ]]
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Players = game:GetService("Players")
 local PlayerDataHandler = require(script.Parent.PlayerDataHandler)
 local GameConfig = require(ReplicatedStorage.Shared.GameConfig)
 
 local BuildingSystem = {}
 
 local MAX_BUILD_DISTANCE = 20 -- Maximum distance in studs to allow building
+local BUILD_COOLDOWN = 0.5 -- Seconds between builds to prevent DoS
+
+local lastBuildTimes = {} -- [UserId] = timestamp
 
 -- Helper: Validate CFrame for NaNs and Inf
 local function isValidCFrame(cf)
@@ -36,9 +40,23 @@ function BuildingSystem.Init()
     PlaceStructureEvent.OnServerEvent:Connect(function(player, structureType, cframe)
         BuildingSystem.PlaceStructure(player, structureType, cframe)
     end)
+
+    Players.PlayerRemoving:Connect(function(player)
+        lastBuildTimes[player.UserId] = nil
+    end)
 end
 
 function BuildingSystem.PlaceStructure(player, structureType, cframe)
+    -- 0. Security: Rate Limiting
+    local now = os.clock()
+    local lastBuild = lastBuildTimes[player.UserId] or 0
+
+    if (now - lastBuild) < BUILD_COOLDOWN then
+        -- Silently fail or warn if excessive (prevents log flooding)
+        return
+    end
+    lastBuildTimes[player.UserId] = now
+
     -- 1. Validate Cost Existence
     local cost = GameConfig.StructureCosts[structureType]
     if not cost then return end
