@@ -43,14 +43,15 @@ end
 
 local function findNearestPlayer(position)
     local nearestPlayer = nil
-    local minDistance = math.huge
+    local minDistanceSq = math.huge
 
     for _, player in ipairs(Players:GetPlayers()) do
         local character = player.Character
         if character and character.PrimaryPart then
-            local distance = (character.PrimaryPart.Position - position).Magnitude
-            if distance < minDistance then
-                minDistance = distance
+            local offset = character.PrimaryPart.Position - position
+            local distSq = offset:Dot(offset) -- Optimization: Squared distance avoids sqrt
+            if distSq < minDistanceSq then
+                minDistanceSq = distSq
                 nearestPlayer = player
             end
         end
@@ -121,31 +122,52 @@ function WaveManager.SpawnEnemy(difficulty)
         -- Optimization: Reuse Path object to avoid allocation in loop
         local path = PathfindingService:CreatePath()
 
+        -- Optimization: Reuse RaycastParams for LOS checks
+        local rayParams = RaycastParams.new()
+        rayParams.FilterDescendantsInstances = {enemy}
+        rayParams.FilterType = Enum.RaycastFilterType.Exclude
+
         while enemy.Parent and humanoid and humanoid.Health > 0 do
             local targetPlayer = findNearestPlayer(rootPart.Position)
 
             if targetPlayer and targetPlayer.Character and targetPlayer.Character.PrimaryPart then
                 local targetPos = targetPlayer.Character.PrimaryPart.Position
 
-                -- Compute path (Reuses the 'path' object)
-                local success, errorMessage = pcall(path.ComputeAsync, path, rootPart.Position, targetPos)
+                -- Optimization: Check LOS for close targets to skip expensive pathfinding
+                local offset = targetPos - rootPart.Position
+                local distSq = offset:Dot(offset)
+                local hasLOS = false
 
-                if success and path.Status == Enum.PathStatus.Success then
-                    local waypoints = path:GetWaypoints()
+                if distSq < 900 then -- 30 studs squared
+                    local rayResult = workspace:Raycast(rootPart.Position, offset, rayParams)
+                    if not rayResult or rayResult.Instance:IsDescendantOf(targetPlayer.Character) then
+                        hasLOS = true
+                    end
+                end
 
-                    -- Move to the second waypoint (the first one is the current position)
-                    if #waypoints >= 2 then
-                        humanoid:MoveTo(waypoints[2].Position)
+                if hasLOS then
+                    humanoid:MoveTo(targetPos)
+                else
+                    -- Compute path (Reuses the 'path' object)
+                    local success, errorMessage = pcall(path.ComputeAsync, path, rootPart.Position, targetPos)
+
+                    if success and path.Status == Enum.PathStatus.Success then
+                        local waypoints = path:GetWaypoints()
+
+                        -- Move to the second waypoint (the first one is the current position)
+                        if #waypoints >= 2 then
+                            humanoid:MoveTo(waypoints[2].Position)
+                        else
+                            -- Fallback: Move directly to target if very close
+                            humanoid:MoveTo(targetPos)
+                        end
                     else
-                        -- Fallback: Move directly to target if very close
+                        if not success then
+                            warn("[WaveManager] Path computation failed:", errorMessage)
+                        end
+                        -- Fallback: Try moving directly to target
                         humanoid:MoveTo(targetPos)
                     end
-                else
-                    if not success then
-                        warn("[WaveManager] Path computation failed:", errorMessage)
-                    end
-                    -- Fallback: Try moving directly to target
-                    humanoid:MoveTo(targetPos)
                 end
             end
 
