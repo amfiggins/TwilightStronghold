@@ -171,9 +171,15 @@ local function createButton(text, onClick, rarityColor, isEquipped, rarityName, 
     end
 
     local function updateState(isHovered)
-        if isEquipped then return end
-        btn.BackgroundColor3 = isHovered and Color3.fromRGB(80, 80, 80) or Color3.fromRGB(60, 60, 60)
+        -- Always show rarity on hover for scanability
         if rarityLabel then rarityLabel.Visible = isHovered end
+
+        if isEquipped then
+            -- Interactive feedback even for equipped items (Brighter Green)
+            btn.BackgroundColor3 = isHovered and Color3.fromRGB(40, 100, 40) or Color3.fromRGB(30, 80, 30)
+        else
+            btn.BackgroundColor3 = isHovered and Color3.fromRGB(80, 80, 80) or Color3.fromRGB(60, 60, 60)
+        end
     end
 
     btn.MouseEnter:Connect(function() updateState(true) end)
@@ -182,7 +188,10 @@ local function createButton(text, onClick, rarityColor, isEquipped, rarityName, 
     btn.SelectionLost:Connect(function() updateState(false) end)
     
     btn.MouseButton1Click:Connect(function()
-        if isEquipped then return end
+        if isEquipped then
+            showToast("Already equipped")
+            return
+        end
 
         btn.BackgroundColor3 = Color3.fromRGB(100, 255, 100)
         btn.TextColor3 = Color3.fromRGB(0, 0, 0)
@@ -301,7 +310,10 @@ local function populateLoadout()
                 -- Check if equipped
                 local isEquipped = (currentLoadout[slot] == item.ItemId)
 
-                createButton("Equip " .. itemDef.Name, function()
+                -- Cleaner text for equipped items (Status vs Action)
+                local btnText = isEquipped and itemDef.Name or "Equip " .. itemDef.Name
+
+                createButton(btnText, function()
                     LoadoutEvent:FireServer(slot, item.ItemId)
                     showToast("Equipped " .. itemDef.Name)
                     -- Don't auto-refresh immediately to keep UI stable, user can click Refresh if needed

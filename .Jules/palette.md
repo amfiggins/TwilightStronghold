@@ -34,3 +34,7 @@
 ## 2027-01-15 - Context-Aware Actions & Details
 **Learning:** Generic buttons (e.g., "Unequip Weapon") confuse users when the context (which weapon?) is unclear or the button is irrelevant (nothing equipped).
 **Action:** Use context-aware labels (e.g., "Unequip Void Slayer") and conditionally render action buttons to reduce cognitive load and clutter.
+
+## 2027-02-18 - Interactive Lists & Selection State
+**Learning:** Interactive lists where selected items become visually inert (no hover/focus state) confuse users who rely on hover for secondary information (like Rarity tooltips), breaking scanability.
+**Action:** Ensure selected/active states retain interactive feedback (hover brightness, tooltips) to maintain consistency and accessibility.
