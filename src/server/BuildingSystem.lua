@@ -4,12 +4,18 @@
 ]]
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Players = game:GetService("Players")
 local PlayerDataHandler = require(script.Parent.PlayerDataHandler)
 local GameConfig = require(ReplicatedStorage.Shared.GameConfig)
 
 local BuildingSystem = {}
 
 local MAX_BUILD_DISTANCE = 20 -- Maximum distance in studs to allow building
+local BUILD_COOLDOWN = 0.5 -- Seconds between builds
+local WALL_SIZE = Vector3.new(4, 8, 1) -- Standard wall dimensions
+local COLLISION_MARGIN = 0.1 -- Margin to allow flush placement
+
+local lastBuildTimes = {} -- [UserId] = timestamp
 
 -- Helper: Validate CFrame for NaNs and Inf
 local function isValidCFrame(cf)
@@ -36,9 +42,20 @@ function BuildingSystem.Init()
     PlaceStructureEvent.OnServerEvent:Connect(function(player, structureType, cframe)
         BuildingSystem.PlaceStructure(player, structureType, cframe)
     end)
+
+    Players.PlayerRemoving:Connect(function(player)
+        lastBuildTimes[player.UserId] = nil
+    end)
 end
 
 function BuildingSystem.PlaceStructure(player, structureType, cframe)
+    -- 0. Security: Rate Limiting
+    local lastBuild = lastBuildTimes[player.UserId] or 0
+    if os.clock() - lastBuild < BUILD_COOLDOWN then
+        warn(string.format("[BuildingSystem] Rate limit exceeded for %s", player.Name))
+        return
+    end
+
     -- 1. Validate Cost Existence
     local cost = GameConfig.StructureCosts[structureType]
     if not cost then return end
@@ -67,6 +84,12 @@ function BuildingSystem.PlaceStructure(player, structureType, cframe)
 
 
     -- Ensure no collision
+    local collisionSize = WALL_SIZE - Vector3.new(COLLISION_MARGIN, COLLISION_MARGIN, COLLISION_MARGIN)
+    local parts = workspace:GetPartBoundsInBox(cframe, collisionSize)
+    if #parts > 0 then
+        warn(string.format("[BuildingSystem] Collision detected for %s at %s", player.Name, tostring(cframe.Position)))
+        return
+    end
 
     -- 3. Deduct Cost
     local success = PlayerDataHandler.RemoveItem(player, cost.Resource, cost.Amount)
@@ -76,11 +99,12 @@ function BuildingSystem.PlaceStructure(player, structureType, cframe)
     end
     
     -- 4. Place It
+    lastBuildTimes[player.UserId] = os.clock()
     print(string.format("[BuildingSystem] %s placed a %s", player.Name, structureType))
     
     local structure = Instance.new("Part")
     structure.Name = structureType
-    structure.Size = Vector3.new(4, 8, 1) -- Wall dimensions
+    structure.Size = WALL_SIZE
     structure.Anchored = true
     structure.CFrame = cframe
     structure.BrickColor = BrickColor.new("Brown")
