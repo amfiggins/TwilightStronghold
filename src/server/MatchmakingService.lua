@@ -12,6 +12,7 @@ local PlayerDataHandler = require(script.Parent.PlayerDataHandler)
 
 local MatchmakingService = {}
 local queue = {} -- List of players waiting
+local lastJoinRequest = {} -- [Player] = tick()
 
 -- Remotes
 local Remotes = ReplicatedStorage:WaitForChild("Remotes")
@@ -31,6 +32,12 @@ function MatchmakingService.Init()
     JoinQueueEvent.OnServerEvent:Connect(function(player)
         MatchmakingService.JoinQueue(player)
     end)
+
+    -- Clean up on Player Removing
+    Players.PlayerRemoving:Connect(function(player)
+        MatchmakingService.LeaveQueue(player)
+        lastJoinRequest[player] = nil
+    end)
     
     -- Loop to check queue
     task.spawn(function()
@@ -42,6 +49,10 @@ function MatchmakingService.Init()
 end
 
 function MatchmakingService.JoinQueue(player)
+    -- Rate Limit: Prevent DoS/Spam
+    if os.clock() - (lastJoinRequest[player] or 0) < 1 then return end
+    lastJoinRequest[player] = os.clock()
+
     if table.find(queue, player) then return end
     
     table.insert(queue, player)

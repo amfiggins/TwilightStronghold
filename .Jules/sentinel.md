@@ -57,3 +57,9 @@
 **Vulnerability:** `ResourceManager` accepted any `BasePart` or `Model` in the Workspace as a valid resource node if it was within distance, allowing exploiters to gather/destroy arbitrary map geometry by sending non-interactive parts.
 **Learning:** Checking `IsDescendantOf(Workspace)` and distance is insufficient for interaction security. The server must also verify the object has the specific *component* (e.g., `ProximityPrompt`, `ClickDetector`) that designates it as interactable.
 **Prevention:** For any interaction claiming to be triggered by a client, explicitly check for the existence and `Enabled` state of the server-side interaction object (e.g., `part:FindFirstChild("Gather"):IsA("ProximityPrompt")`) before processing.
+
+## 2024-05-25 - Unthrottled Matchmaking DoS
+
+**Vulnerability:** `MatchmakingService` exposed a `JoinQueue` RemoteEvent without any rate limiting. This allowed clients to spam the event, potentially causing a Denial of Service (DoS) by flooding the server with requests and spawning excessive threads. Additionally, the service failed to clean up player data upon disconnection, leading to potential memory leaks and "zombie" players in the queue.
+**Learning:** Core game loops (like matchmaking) often prioritize functionality over security. Exposed RemoteEvents that trigger resource-intensive operations (like spawning threads or database calls) must always be throttled.
+**Prevention:** Implement server-side rate limiting (cooldowns) on all public RemoteEvents. Ensure that all systems tracking player state hook into `Players.PlayerRemoving` to clean up data and prevent logic errors involving disconnected players.
