@@ -43,3 +43,17 @@ Moved `PathfindingService:CreatePath()` outside the enemy AI loop in `WaveManage
 **Impact:**
 - Reduces memory allocation rate significantly during high enemy counts.
 - Reduces CPU time spent in object creation and garbage collection.
+
+## AI Optimization (WaveManager)
+### Raycast Line-of-Sight Check
+Added a `Raycast` check before `PathfindingService:ComputeAsync` in `WaveManager.SpawnEnemy`.
+
+**Rationale:**
+1. **Performance Cost:** `ComputeAsync` is computationally expensive (pathfinding algorithm + network overhead).
+2. **Observation:** Enemies often have a direct line of sight to the player, especially in close quarters (< 30 studs).
+3. **Solution:** If `Raycast` confirms a clear path, use `humanoid:MoveTo` directly, skipping pathfinding.
+
+**Impact:**
+- Significantly reduces CPU usage when enemies are chasing players in open areas.
+- Reduces network traffic associated with pathfinding requests.
+- Improves AI responsiveness in close combat.
