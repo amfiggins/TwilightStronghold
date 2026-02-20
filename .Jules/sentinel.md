@@ -57,3 +57,9 @@
 **Vulnerability:** `ResourceManager` accepted any `BasePart` or `Model` in the Workspace as a valid resource node if it was within distance, allowing exploiters to gather/destroy arbitrary map geometry by sending non-interactive parts.
 **Learning:** Checking `IsDescendantOf(Workspace)` and distance is insufficient for interaction security. The server must also verify the object has the specific *component* (e.g., `ProximityPrompt`, `ClickDetector`) that designates it as interactable.
 **Prevention:** For any interaction claiming to be triggered by a client, explicitly check for the existence and `Enabled` state of the server-side interaction object (e.g., `part:FindFirstChild("Gather"):IsA("ProximityPrompt")`) before processing.
+
+## 2024-05-25 - Recurring Vulnerability: Unchecked Action Frequency (Building System)
+
+**Vulnerability:** The `BuildingSystem` implemented distance and cost checks but failed to limit the *frequency* of `PlaceStructure` requests. This exposed the server to potential Denial of Service (DoS) and gameplay abuse (macro spamming).
+**Learning:** Security fixes must be applied systematically, not just to the module where the issue was first discovered. If `ResourceManager` needed a cooldown, likely *every* action-oriented RemoteEvent (Building, Crafting, Spell Casting) needs one too.
+**Prevention:** Establish a "Standard Operating Procedure" for all new RemoteEvents: Default to including a server-side cooldown check (`lastAction[player]`) unless explicitly proven unnecessary.
