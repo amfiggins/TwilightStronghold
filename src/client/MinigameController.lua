@@ -59,6 +59,18 @@ function MinigameController.Init()
     bar.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
     bar.Parent = bg
 
+    -- UX: Instruction Label
+    local instruction = Instance.new("TextLabel")
+    instruction.Name = "Instruction"
+    instruction.Text = "Hold SPACE"
+    instruction.Size = UDim2.new(1, 0, 0, 20)
+    instruction.Position = UDim2.new(0, 0, -0.8, 0)
+    instruction.BackgroundTransparency = 1
+    instruction.TextColor3 = Color3.fromRGB(255, 255, 255)
+    instruction.Font = Enum.Font.GothamBold
+    instruction.TextSize = 14
+    instruction.Parent = bg
+
     -- Progress Bar
     local progressBg = Instance.new("Frame")
     progressBg.Name = "ProgressBackground"
@@ -122,8 +134,10 @@ function MinigameController.Start(callback)
         
         if barStart < targetEnd and barEnd > targetStart then
             progress = progress + (FILL_RATE * dt)
+            bar.BackgroundColor3 = Color3.fromRGB(0, 255, 0) -- Feedback: Green
         else
             progress = math.max(0, progress - (DECAY_RATE * dt))
+            bar.BackgroundColor3 = Color3.fromRGB(255, 255, 255) -- Feedback: White
         end
         
 
