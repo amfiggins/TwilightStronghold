@@ -21,7 +21,18 @@ function LoadoutManager.Init()
 end
 
 function LoadoutManager.OnLoadoutRequest(player, slot, itemId)
-    print(string.format("[LoadoutManager] Request from %s: Set %s to %s", player.Name, tostring(slot), tostring(itemId)))
+    -- Sentinel: Input Sanitization (DoS Prevention & Type Safety)
+    -- 1. Validate 'slot' (Type: string, Length: <= 32)
+    if type(slot) ~= "string" or #slot > 32 then
+        return -- Silent fail to prevent log flooding
+    end
+
+    -- 2. Validate 'itemId' (Type: string/nil, Length: <= 64)
+    if itemId ~= nil and (type(itemId) ~= "string" or #itemId > 64) then
+        return -- Silent fail
+    end
+
+    print(string.format("[LoadoutManager] Request from %s: Set %s to %s", player.Name, slot, tostring(itemId)))
     
     -- Validation 1: Slot must be valid
     if slot ~= "Weapon" and slot ~= "BaseKit" then 
@@ -33,11 +44,6 @@ function LoadoutManager.OnLoadoutRequest(player, slot, itemId)
     -- Sentinel: Type checking is critical here. Clients can send any type (e.g. bool, table).
     -- If itemId is not nil, it must be a string and exist in the database.
     if itemId ~= nil then
-        if type(itemId) ~= "string" then
-            warn(string.format("[LoadoutManager] Security: Invalid itemId type (%s) from %s", type(itemId), player.Name))
-            return
-        end
-
         local itemDef = ItemDatabase.GetItem(itemId)
         if not itemDef then
             warn(string.format("[LoadoutManager] Invalid item ID: %s", itemId))

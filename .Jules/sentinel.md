@@ -57,3 +57,9 @@
 **Vulnerability:** `ResourceManager` accepted any `BasePart` or `Model` in the Workspace as a valid resource node if it was within distance, allowing exploiters to gather/destroy arbitrary map geometry by sending non-interactive parts.
 **Learning:** Checking `IsDescendantOf(Workspace)` and distance is insufficient for interaction security. The server must also verify the object has the specific *component* (e.g., `ProximityPrompt`, `ClickDetector`) that designates it as interactable.
 **Prevention:** For any interaction claiming to be triggered by a client, explicitly check for the existence and `Enabled` state of the server-side interaction object (e.g., `part:FindFirstChild("Gather"):IsA("ProximityPrompt")`) before processing.
+
+## 2024-05-25 - Log Flooding via Unvalidated Input
+
+**Vulnerability:** `LoadoutManager` logged user input using `print(string.format(...))` *before* validating its type or length. This allowed attackers to send massive strings (1MB+) to flood server logs (DoS) or exhaust memory.
+**Learning:** Logging unvalidated input is a security risk in itself. The act of "observing" malicious data can trigger resource exhaustion or format string vulnerabilities.
+**Prevention:** Always validate input type and length *before* logging it. Use silent returns for obvious malformed requests to avoid log spam.
