@@ -57,3 +57,15 @@
 **Vulnerability:** `ResourceManager` accepted any `BasePart` or `Model` in the Workspace as a valid resource node if it was within distance, allowing exploiters to gather/destroy arbitrary map geometry by sending non-interactive parts.
 **Learning:** Checking `IsDescendantOf(Workspace)` and distance is insufficient for interaction security. The server must also verify the object has the specific *component* (e.g., `ProximityPrompt`, `ClickDetector`) that designates it as interactable.
 **Prevention:** For any interaction claiming to be triggered by a client, explicitly check for the existence and `Enabled` state of the server-side interaction object (e.g., `part:FindFirstChild("Gather"):IsA("ProximityPrompt")`) before processing.
+
+## 2024-05-25 - Queue Integrity & Infinite Loops
+
+**Vulnerability:** `MatchmakingService` infinitely re-queued a squad when teleport failed due to a disconnected player, causing a server-side infinite loop. Additionally, disconnected players were not removed from the queue ("Ghost Players").
+**Learning:** Naive retry logic (e.g., "if fail, put back in queue") without validating the *cause* of failure or the *state* of the objects (players) can create infinite error loops. Relying solely on `TeleportAsync` to handle invalid players is insufficient.
+**Prevention:** Explicitly handle `Players.PlayerRemoving` to clean up system states. Always validate the state of objects (e.g., `player.Parent`) before retrying an operation.
+
+## 2024-05-25 - Missing Rate Limits on Queue
+
+**Vulnerability:** `JoinQueue` allowed unlimited requests, enabling DoS.
+**Learning:** All RemoteEvents that modify server state (like inserting into a table) must be rate-limited.
+**Prevention:** Implement server-side rate limiting (e.g., timestamps) for all client-triggered events.

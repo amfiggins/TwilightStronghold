@@ -12,6 +12,7 @@ local PlayerDataHandler = require(script.Parent.PlayerDataHandler)
 
 local MatchmakingService = {}
 local queue = {} -- List of players waiting
+local lastJoinTime = {} -- Map<Player, number> for rate limiting
 
 -- Remotes
 local Remotes = ReplicatedStorage:WaitForChild("Remotes")
@@ -32,6 +33,12 @@ function MatchmakingService.Init()
         MatchmakingService.JoinQueue(player)
     end)
     
+    -- Handle Player Disconnects
+    Players.PlayerRemoving:Connect(function(player)
+        MatchmakingService.LeaveQueue(player)
+        lastJoinTime[player] = nil
+    end)
+
     -- Loop to check queue
     task.spawn(function()
         while true do
@@ -44,6 +51,13 @@ end
 function MatchmakingService.JoinQueue(player)
     if table.find(queue, player) then return end
     
+    -- Rate Limit (1 second cooldown)
+    local now = os.clock()
+    if lastJoinTime[player] and (now - lastJoinTime[player] < 1) then
+        return
+    end
+    lastJoinTime[player] = now
+
     table.insert(queue, player)
     print(string.format("[Matchmaking] %s joined queue. (%d/%d)", player.Name, #queue, REQUIRED_PLAYERS))
     
@@ -59,7 +73,10 @@ function MatchmakingService.LeaveQueue(player)
     if idx then
         table.remove(queue, idx)
         print(string.format("[Matchmaking] %s left queue.", player.Name))
-        QueueUpdateEvent:FireClient(player, false, #queue, REQUIRED_PLAYERS)
+        -- Use pcall to safely fire client even if disconnecting
+        pcall(function()
+            QueueUpdateEvent:FireClient(player, false, #queue, REQUIRED_PLAYERS)
+        end)
     end
 end
 
@@ -83,6 +100,23 @@ function MatchmakingService.ProcessQueue()
         end
         
         task.spawn(function()
+            -- Filter out invalid players (Ghosts)
+            local validSquad = {}
+            for _, p in ipairs(squad) do
+                if p and p.Parent then
+                    table.insert(validSquad, p)
+                end
+            end
+
+            -- If we lost players due to disconnects, put valid ones back in queue and abort
+            if #validSquad < REQUIRED_PLAYERS then
+                warn("[Matchmaking] Squad incomplete due to disconnects. Re-queueing valid players.")
+                for _, p in ipairs(validSquad) do
+                    table.insert(queue, p)
+                end
+                return
+            end
+
             -- Prepare Teleport Options (Pass Data!)
             local teleportOptions = Instance.new("TeleportOptions")
             local teleportData = {
@@ -91,7 +125,7 @@ function MatchmakingService.ProcessQueue()
             }
 
             -- Collect Squad Info
-            for _, p in ipairs(squad) do
+            for _, p in ipairs(validSquad) do
                 table.insert(teleportData.SquadNames, p.Name)
                 -- Note: We rely on DataStores for main data, but we can pass Session ID here
             end
@@ -100,14 +134,17 @@ function MatchmakingService.ProcessQueue()
 
             -- Teleport
             local success, err = pcall(function()
-                TeleportService:TeleportAsync(GameConfig.PLACE_IDS.SurvivalZone, squad, teleportOptions)
+                TeleportService:TeleportAsync(GameConfig.PLACE_IDS.SurvivalZone, validSquad, teleportOptions)
             end)
 
             if not success then
                 warn("[Matchmaking] Teleport Failed: " .. tostring(err))
                 -- Re-queue players (simplified logic)
-                for _, p in ipairs(squad) do
-                    table.insert(queue, p)
+                -- Only re-queue valid players to prevent infinite loops with ghosts
+                for _, p in ipairs(validSquad) do
+                    if p and p.Parent then
+                        table.insert(queue, p)
+                    end
                 end
             end
         end)
