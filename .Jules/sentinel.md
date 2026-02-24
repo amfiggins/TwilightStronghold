@@ -57,3 +57,9 @@
 **Vulnerability:** `ResourceManager` accepted any `BasePart` or `Model` in the Workspace as a valid resource node if it was within distance, allowing exploiters to gather/destroy arbitrary map geometry by sending non-interactive parts.
 **Learning:** Checking `IsDescendantOf(Workspace)` and distance is insufficient for interaction security. The server must also verify the object has the specific *component* (e.g., `ProximityPrompt`, `ClickDetector`) that designates it as interactable.
 **Prevention:** For any interaction claiming to be triggered by a client, explicitly check for the existence and `Enabled` state of the server-side interaction object (e.g., `part:FindFirstChild("Gather"):IsA("ProximityPrompt")`) before processing.
+
+## 2024-05-26 - Structure Stacking & Rate Limit
+
+**Vulnerability:** The `BuildingSystem` lacked collision checks and rate limiting, allowing players to stack infinite structures in the same location (DoS / Physics Lag) or spam build requests faster than intended.
+**Learning:** Comments like `-- Ensure no collision` are not code. Critical game logic must be implemented, not just documented as TODOs. Trusting clients to place objects responsibly leads to griefing and performance degradation.
+**Prevention:** Implement server-side collision validation using `workspace:GetPartBoundsInBox` (excluding the player) and enforce a strict `BUILD_COOLDOWN` timestamp check for every placement request.

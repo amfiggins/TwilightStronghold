@@ -10,6 +10,11 @@ local GameConfig = require(ReplicatedStorage.Shared.GameConfig)
 local BuildingSystem = {}
 
 local MAX_BUILD_DISTANCE = 20 -- Maximum distance in studs to allow building
+local BUILD_COOLDOWN = 0.5    -- Seconds between builds
+local WALL_SIZE = Vector3.new(4, 8, 1) -- Standard wall dimensions
+local COLLISION_MARGIN = 0.1  -- Margin to allow flush placement
+
+local lastBuildTimes = {} -- [UserId] = timestamp
 
 -- Helper: Validate CFrame for NaNs and Inf
 local function isValidCFrame(cf)
@@ -36,9 +41,22 @@ function BuildingSystem.Init()
     PlaceStructureEvent.OnServerEvent:Connect(function(player, structureType, cframe)
         BuildingSystem.PlaceStructure(player, structureType, cframe)
     end)
+
+    -- Cleanup on leave
+    game.Players.PlayerRemoving:Connect(function(player)
+        lastBuildTimes[player.UserId] = nil
+    end)
 end
 
 function BuildingSystem.PlaceStructure(player, structureType, cframe)
+    -- 0. Rate Limiting
+    local now = os.clock()
+    local lastBuild = lastBuildTimes[player.UserId] or 0
+    if (now - lastBuild) < BUILD_COOLDOWN then
+        return -- Silent fail
+    end
+    lastBuildTimes[player.UserId] = now
+
     -- 1. Validate Cost Existence
     local cost = GameConfig.StructureCosts[structureType]
     if not cost then return end
@@ -64,9 +82,19 @@ function BuildingSystem.PlaceStructure(player, structureType, cframe)
         return
     end
 
-
-
     -- Ensure no collision
+    local overlapParams = OverlapParams.new()
+    overlapParams.FilterDescendantsInstances = {character}
+    overlapParams.FilterType = Enum.RaycastFilterType.Exclude
+
+    -- Use a slightly smaller box to allow flush placement
+    local checkSize = WALL_SIZE - Vector3.new(COLLISION_MARGIN, COLLISION_MARGIN, COLLISION_MARGIN)
+    local parts = workspace:GetPartBoundsInBox(cframe, checkSize, overlapParams)
+
+    if #parts > 0 then
+        -- warn(string.format("[BuildingSystem] %s tried to build inside an object.", player.Name))
+        return
+    end
 
     -- 3. Deduct Cost
     local success = PlayerDataHandler.RemoveItem(player, cost.Resource, cost.Amount)
@@ -80,7 +108,7 @@ function BuildingSystem.PlaceStructure(player, structureType, cframe)
     
     local structure = Instance.new("Part")
     structure.Name = structureType
-    structure.Size = Vector3.new(4, 8, 1) -- Wall dimensions
+    structure.Size = WALL_SIZE -- Wall dimensions
     structure.Anchored = true
     structure.CFrame = cframe
     structure.BrickColor = BrickColor.new("Brown")
