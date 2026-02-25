@@ -13,6 +13,9 @@ local WaveManager = {}
 -- Config
 local SPAWN_RATE = 5 -- Spawn an enemy every X seconds
 
+-- Optimization: Cache TweenInfo to avoid allocation
+local DEATH_TWEEN_INFO = TweenInfo.new(1, Enum.EasingStyle.Linear, Enum.EasingDirection.Out)
+
 -- Optimization: Cache template to avoid repeated Instance.new and property setting
 local enemyTemplate -- Template part for enemies
 function WaveManager.Init()
@@ -100,8 +103,8 @@ function WaveManager.SpawnEnemy(difficulty)
                 rootPart.Anchored = true -- Stop moving
                 rootPart.CanCollide = false
 
-                local tweenInfo = TweenInfo.new(1, Enum.EasingStyle.Linear, Enum.EasingDirection.Out)
-                local tween = TweenService:Create(rootPart, tweenInfo, {Transparency = 1})
+                -- Use cached TweenInfo
+                local tween = TweenService:Create(rootPart, DEATH_TWEEN_INFO, {Transparency = 1})
                 tween:Play()
 
                 tween.Completed:Wait()
@@ -121,31 +124,55 @@ function WaveManager.SpawnEnemy(difficulty)
         -- Optimization: Reuse Path object to avoid allocation in loop
         local path = PathfindingService:CreatePath()
 
+        -- Optimization: Raycast params for LOS check initialized once per enemy
+        local rayParams = RaycastParams.new()
+        rayParams.FilterType = Enum.RaycastFilterType.Exclude
+        rayParams.FilterDescendantsInstances = {enemy}
+
         while enemy.Parent and humanoid and humanoid.Health > 0 do
             local targetPlayer = findNearestPlayer(rootPart.Position)
 
             if targetPlayer and targetPlayer.Character and targetPlayer.Character.PrimaryPart then
                 local targetPos = targetPlayer.Character.PrimaryPart.Position
+                local currentPos = rootPart.Position
 
-                -- Compute path (Reuses the 'path' object)
-                local success, errorMessage = pcall(path.ComputeAsync, path, rootPart.Position, targetPos)
+                local distance = (targetPos - currentPos).Magnitude
+                local directPathFound = false
 
-                if success and path.Status == Enum.PathStatus.Success then
-                    local waypoints = path:GetWaypoints()
+                -- Optimization: Raycast check for close-range targets (< 30 studs)
+                -- Avoids expensive ComputeAsync when direct line of sight exists
+                if distance < 30 then
+                    local direction = (targetPos - currentPos)
+                    local rayResult = workspace:Raycast(currentPos, direction, rayParams)
 
-                    -- Move to the second waypoint (the first one is the current position)
-                    if #waypoints >= 2 then
-                        humanoid:MoveTo(waypoints[2].Position)
+                    -- If we hit nothing (clear) or hit the target character
+                    if not rayResult or (rayResult.Instance and rayResult.Instance:IsDescendantOf(targetPlayer.Character)) then
+                        humanoid:MoveTo(targetPos)
+                        directPathFound = true
+                    end
+                end
+
+                if not directPathFound then
+                    -- Compute path (Reuses the 'path' object)
+                    local success, errorMessage = pcall(path.ComputeAsync, path, currentPos, targetPos)
+
+                    if success and path.Status == Enum.PathStatus.Success then
+                        local waypoints = path:GetWaypoints()
+
+                        -- Move to the second waypoint (the first one is the current position)
+                        if #waypoints >= 2 then
+                            humanoid:MoveTo(waypoints[2].Position)
+                        else
+                            -- Fallback: Move directly to target if very close
+                            humanoid:MoveTo(targetPos)
+                        end
                     else
-                        -- Fallback: Move directly to target if very close
+                        if not success then
+                            warn("[WaveManager] Path computation failed:", errorMessage)
+                        end
+                        -- Fallback: Try moving directly to target
                         humanoid:MoveTo(targetPos)
                     end
-                else
-                    if not success then
-                        warn("[WaveManager] Path computation failed:", errorMessage)
-                    end
-                    -- Fallback: Try moving directly to target
-                    humanoid:MoveTo(targetPos)
                 end
             end
 
