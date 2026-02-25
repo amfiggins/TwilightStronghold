@@ -29,6 +29,9 @@ local DECAY_RATE = 0.2
 local FILL_RATE = 0.5
 local TARGET_SPEED = 0.5
 
+local COLOR_SUCCESS = Color3.fromRGB(0, 255, 100)
+local COLOR_NEUTRAL = Color3.fromRGB(255, 255, 255)
+
 function MinigameController.Init()
     -- Create UI Programmatically
     gui = Instance.new("ScreenGui")
@@ -43,8 +46,21 @@ function MinigameController.Init()
     bg.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
     bg.BorderSizePixel = 2
     bg.Visible = false
+    bg.ClipsDescendants = false
     bg.Parent = gui
     frame = bg
+
+    local label = Instance.new("TextLabel")
+    label.Name = "InstructionLabel"
+    label.Text = "Hold [SPACE]"
+    label.Size = UDim2.new(1, 0, 0, 30)
+    label.Position = UDim2.new(0, 0, -0.8, 0)
+    label.BackgroundTransparency = 1
+    label.TextColor3 = Color3.fromRGB(255, 255, 255)
+    label.TextStrokeTransparency = 0.5
+    label.Font = Enum.Font.GothamBold
+    label.TextSize = 20
+    label.Parent = bg
     
     target = Instance.new("Frame")
     target.Name = "Target"
@@ -120,10 +136,14 @@ function MinigameController.Start(callback)
         local targetStart = targetPosition
         local targetEnd = targetPosition + TARGET_SIZE
         
-        if barStart < targetEnd and barEnd > targetStart then
+        local isOverlapping = (barStart < targetEnd and barEnd > targetStart)
+
+        if isOverlapping then
             progress = progress + (FILL_RATE * dt)
+            bar.BackgroundColor3 = COLOR_SUCCESS
         else
             progress = math.max(0, progress - (DECAY_RATE * dt))
+            bar.BackgroundColor3 = COLOR_NEUTRAL
         end
         
 
