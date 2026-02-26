@@ -57,3 +57,9 @@
 **Vulnerability:** `ResourceManager` accepted any `BasePart` or `Model` in the Workspace as a valid resource node if it was within distance, allowing exploiters to gather/destroy arbitrary map geometry by sending non-interactive parts.
 **Learning:** Checking `IsDescendantOf(Workspace)` and distance is insufficient for interaction security. The server must also verify the object has the specific *component* (e.g., `ProximityPrompt`, `ClickDetector`) that designates it as interactable.
 **Prevention:** For any interaction claiming to be triggered by a client, explicitly check for the existence and `Enabled` state of the server-side interaction object (e.g., `part:FindFirstChild("Gather"):IsA("ProximityPrompt")`) before processing.
+
+## 2024-05-25 - Rate Limiting Construction
+
+**Vulnerability:** The `BuildingSystem` allowed clients to spam the `PlaceStructure` remote event without restriction, enabling Denial-of-Service (DoS) and potential game balance exploits.
+**Learning:** Checking resource costs and distance is insufficient to prevent high-frequency abuse. Every action that modifies the game state must have a rate limit (cooldown) enforced on the server.
+**Prevention:** Implement a per-player timestamp check (`os.clock() - lastTime < COOLDOWN`) at the entry point of sensitive functions. Always clean up tracking data on `PlayerRemoving` to prevent memory leaks.
