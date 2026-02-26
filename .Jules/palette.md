@@ -34,3 +34,7 @@
 ## 2027-01-15 - Context-Aware Actions & Details
 **Learning:** Generic buttons (e.g., "Unequip Weapon") confuse users when the context (which weapon?) is unclear or the button is irrelevant (nothing equipped).
 **Action:** Use context-aware labels (e.g., "Unequip Void Slayer") and conditionally render action buttons to reduce cognitive load and clutter.
+
+## 2027-02-14 - Persistent Instructions for Minigames
+**Learning:** Users fail to engage with minigames when controls (like "Hold SPACE") are implicit or only shown once. Persistent, visible instructions are critical for accessibility and usability.
+**Action:** Always include a persistent instruction label for any custom interaction mechanic, positioned near the focal point.

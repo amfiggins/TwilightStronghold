@@ -29,6 +29,9 @@ local DECAY_RATE = 0.2
 local FILL_RATE = 0.5
 local TARGET_SPEED = 0.5
 
+local COLOR_SUCCESS = Color3.fromRGB(0, 255, 0)
+local COLOR_NEUTRAL = Color3.fromRGB(255, 255, 255)
+
 function MinigameController.Init()
     -- Create UI Programmatically
     gui = Instance.new("ScreenGui")
@@ -45,6 +48,19 @@ function MinigameController.Init()
     bg.Visible = false
     bg.Parent = gui
     frame = bg
+
+    -- Micro-UX: Instruction Label
+    local instruction = Instance.new("TextLabel")
+    instruction.Name = "Instruction"
+    instruction.Text = "Hold SPACE"
+    instruction.Size = UDim2.new(1, 0, 0, 20)
+    instruction.Position = UDim2.new(0, 0, 0, -25)
+    instruction.BackgroundTransparency = 1
+    instruction.TextColor3 = Color3.fromRGB(255, 255, 255)
+    instruction.TextStrokeTransparency = 0
+    instruction.Font = Enum.Font.GothamBold
+    instruction.TextSize = 14
+    instruction.Parent = bg
     
     target = Instance.new("Frame")
     target.Name = "Target"
@@ -122,8 +138,10 @@ function MinigameController.Start(callback)
         
         if barStart < targetEnd and barEnd > targetStart then
             progress = progress + (FILL_RATE * dt)
+            bar.BackgroundColor3 = COLOR_SUCCESS
         else
             progress = math.max(0, progress - (DECAY_RATE * dt))
+            bar.BackgroundColor3 = COLOR_NEUTRAL
         end
         
 
