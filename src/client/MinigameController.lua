@@ -28,6 +28,8 @@ local TARGET_SIZE = 0.15
 local DECAY_RATE = 0.2
 local FILL_RATE = 0.5
 local TARGET_SPEED = 0.5
+local COLOR_SUCCESS = Color3.fromRGB(0, 255, 100)
+local COLOR_NEUTRAL = Color3.fromRGB(255, 255, 255)
 
 function MinigameController.Init()
     -- Create UI Programmatically
@@ -56,7 +58,7 @@ function MinigameController.Init()
     bar = Instance.new("Frame")
     bar.Name = "Bar"
     bar.Size = UDim2.new(BAR_SIZE, 0, 1, 0)
-    bar.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    bar.BackgroundColor3 = COLOR_NEUTRAL
     bar.Parent = bg
 
     -- Progress Bar
@@ -71,9 +73,25 @@ function MinigameController.Init()
     progressFill = Instance.new("Frame")
     progressFill.Name = "ProgressFill"
     progressFill.Size = UDim2.new(0, 0, 1, 0)
-    progressFill.BackgroundColor3 = Color3.fromRGB(0, 255, 100)
+    progressFill.BackgroundColor3 = COLOR_SUCCESS
     progressFill.BorderSizePixel = 0
     progressFill.Parent = progressBg
+
+    -- Instruction Label
+    local instructions = Instance.new("TextLabel")
+    instructions.Name = "Instructions"
+    instructions.Text = "Hold SPACE"
+    instructions.Size = UDim2.new(1, 0, 0, 20)
+    instructions.Position = UDim2.new(0, 0, -0.6, 0)
+    instructions.BackgroundTransparency = 1
+    instructions.TextColor3 = Color3.fromRGB(255, 255, 255)
+    instructions.Font = Enum.Font.GothamBold
+    instructions.TextSize = 14
+    instructions.TextStrokeTransparency = 0
+    instructions.Parent = bg
+
+    -- Ensure instruction is visible even if outside clip
+    bg.ClipsDescendants = false
 end
 
 function MinigameController.Start(callback)
@@ -87,6 +105,7 @@ function MinigameController.Start(callback)
     if progressFill then
         progressFill.Size = UDim2.new(0, 0, 1, 0)
     end
+    bar.BackgroundColor3 = COLOR_NEUTRAL
     
     -- Game Loop
     local connection
@@ -122,8 +141,10 @@ function MinigameController.Start(callback)
         
         if barStart < targetEnd and barEnd > targetStart then
             progress = progress + (FILL_RATE * dt)
+            bar.BackgroundColor3 = COLOR_SUCCESS
         else
             progress = math.max(0, progress - (DECAY_RATE * dt))
+            bar.BackgroundColor3 = COLOR_NEUTRAL
         end
         
 
