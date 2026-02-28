@@ -374,10 +374,29 @@ function PlayerDataHandler.RemoveItem(player, itemId, quantity)
     -- Deduct
     local newQty = currentQty - quantity
     if newQty <= 0 then
-        -- Remove slot
-        table.remove(data.Inventory, slotIndex)
-        -- Indices shifted, we must rebuild lookup (O(N))
-        rebuildLookup(userId)
+        -- Remove slot (O(1) Swap-Remove)
+        local lastIndex = #data.Inventory
+        if slotIndex < lastIndex then
+            local movedSlot = data.Inventory[lastIndex]
+            data.Inventory[slotIndex] = movedSlot
+            -- Update lookup for the moved item if it was pointing to the old lastIndex
+            if lookup and lookup[movedSlot.ItemId] == lastIndex then
+                lookup[movedSlot.ItemId] = slotIndex
+            end
+        end
+        data.Inventory[lastIndex] = nil
+
+        -- Update lookup for the removed item
+        if lookup and lookup[itemId] == slotIndex then
+            lookup[itemId] = nil
+            -- Find next occurrence (if any) to preserve "first found" logic
+            for i = 1, #data.Inventory do
+                if data.Inventory[i].ItemId == itemId then
+                    lookup[itemId] = i
+                    break
+                end
+            end
+        end
     else
         -- Update slot
         slot.Qty = newQty
