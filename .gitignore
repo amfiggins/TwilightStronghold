@@ -11,3 +11,7 @@
 # System
 .DS_Store
 Thumbs.db
+
+# Lua build
+lua-5.4.6/
+lua.tar.gz
