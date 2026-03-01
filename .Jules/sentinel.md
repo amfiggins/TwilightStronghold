@@ -57,3 +57,9 @@
 **Vulnerability:** `ResourceManager` accepted any `BasePart` or `Model` in the Workspace as a valid resource node if it was within distance, allowing exploiters to gather/destroy arbitrary map geometry by sending non-interactive parts.
 **Learning:** Checking `IsDescendantOf(Workspace)` and distance is insufficient for interaction security. The server must also verify the object has the specific *component* (e.g., `ProximityPrompt`, `ClickDetector`) that designates it as interactable.
 **Prevention:** For any interaction claiming to be triggered by a client, explicitly check for the existence and `Enabled` state of the server-side interaction object (e.g., `part:FindFirstChild("Gather"):IsA("ProximityPrompt")`) before processing.
+
+## 2024-05-26 - DoS via Unbounded Instance Creation (Missing Rate Limit)
+
+**Vulnerability:** `BuildingSystem` lacked server-side rate limiting on the `PlaceStructure` RemoteEvent. An exploiter could fire this event thousands of times per second. Even if the player lacked resources, the resulting `warn()` logs would flood the server console, causing significant lag. If they had resources, it would lead to unbounded `Instance.new` creation, crashing the server.
+**Learning:** Any RemoteEvent that performs expensive operations (like `Instance.new`) or generates log output (`warn`) MUST have a strict rate limit. Furthermore, hitting the rate limit should fail *silently* (e.g., return `false, "RateLimited"`) to prevent the rate limit itself from becoming a log-flooding vector.
+**Prevention:** Implement a `COOLDOWN` threshold using `os.clock()` for every user action. Reject excessive requests silently.
