@@ -374,10 +374,34 @@ function PlayerDataHandler.RemoveItem(player, itemId, quantity)
     -- Deduct
     local newQty = currentQty - quantity
     if newQty <= 0 then
-        -- Remove slot
-        table.remove(data.Inventory, slotIndex)
-        -- Indices shifted, we must rebuild lookup (O(N))
-        rebuildLookup(userId)
+        -- Remove slot (O(1) Swap-Remove)
+        local inventory = data.Inventory
+        local lastIndex = #inventory
+
+        if slotIndex == lastIndex then
+            -- Simply remove if it's the last element
+            inventory[lastIndex] = nil
+        else
+            -- Swap with the last element
+            local lastSlot = inventory[lastIndex]
+            inventory[slotIndex] = lastSlot
+            inventory[lastIndex] = nil
+
+            -- Update lookup for the swapped element if it was pointing to the last index
+            if lookup[lastSlot.ItemId] == lastIndex then
+                lookup[lastSlot.ItemId] = slotIndex
+            end
+        end
+
+        -- Find the next occurrence if there are duplicates (like unstackable items).
+        -- If it's stackable (most common), there's only 1 so this loop exits immediately.
+        lookup[itemId] = nil
+        for i = slotIndex, #inventory do
+            if inventory[i].ItemId == itemId then
+                lookup[itemId] = i
+                break
+            end
+        end
     else
         -- Update slot
         slot.Qty = newQty

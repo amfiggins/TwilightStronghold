@@ -1,0 +1,3 @@
+## 2024-03-01 - [O(1) Array Removal in Lua]
+**Learning:** `table.remove` in Lua forces an O(N) shift of all subsequent elements to maintain array continuity. In high-frequency systems (like inventory management or queues), this overhead scales linearly with array size. When order does not strictly matter, or can be managed via external sorting logic, a "Swap-Remove" strategy (swapping the target element with the last element and nilling the tail) reduces removal to O(1) time complexity. Additionally, avoiding `table.remove` prevents the necessity to synchronously iterate and rebuild `O(N)` secondary lookup indices.
+**Action:** Use Swap-Remove over `table.remove` for fast removals from large arrays or high-frequency loops where element order is not critical.
