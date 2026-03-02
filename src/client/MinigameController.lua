@@ -98,6 +98,7 @@ function MinigameController.Start(callback)
     successCallback = callback
     progress = 0
     barPosition = 0.5
+    bar.BackgroundColor3 = COLOR_NEUTRAL
     
     frame.Visible = true
     if progressFill then
