@@ -31,6 +31,11 @@ function MatchmakingService.Init()
     JoinQueueEvent.OnServerEvent:Connect(function(player)
         MatchmakingService.JoinQueue(player)
     end)
+
+    -- Sentinel: Prevent ghost players from staying in the queue
+    Players.PlayerRemoving:Connect(function(player)
+        MatchmakingService.LeaveQueue(player)
+    end)
     
     -- Loop to check queue
     task.spawn(function()
@@ -107,7 +112,10 @@ function MatchmakingService.ProcessQueue()
                 warn("[Matchmaking] Teleport Failed: " .. tostring(err))
                 -- Re-queue players (simplified logic)
                 for _, p in ipairs(squad) do
-                    table.insert(queue, p)
+                    -- Sentinel: Prevent infinite retry DoS by checking if player is still in game
+                    if p and p.Parent then
+                        table.insert(queue, p)
+                    end
                 end
             end
         end)

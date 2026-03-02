@@ -57,3 +57,9 @@
 **Vulnerability:** `ResourceManager` accepted any `BasePart` or `Model` in the Workspace as a valid resource node if it was within distance, allowing exploiters to gather/destroy arbitrary map geometry by sending non-interactive parts.
 **Learning:** Checking `IsDescendantOf(Workspace)` and distance is insufficient for interaction security. The server must also verify the object has the specific *component* (e.g., `ProximityPrompt`, `ClickDetector`) that designates it as interactable.
 **Prevention:** For any interaction claiming to be triggered by a client, explicitly check for the existence and `Enabled` state of the server-side interaction object (e.g., `part:FindFirstChild("Gather"):IsA("ProximityPrompt")`) before processing.
+
+## 2026-03-02 - Infinite Retry DoS (Ghost Player)
+
+**Vulnerability:** The `MatchmakingService` handled teleport failures by re-queuing the entire squad. However, if a player disconnected, `TeleportAsync` would fail, and the disconnected player was unconditionally re-queued. This created an infinite retry loop since the ghost player remained in the queue and continuously triggered matches that would immediately fail.
+**Learning:** Player disconnects can leave ghost data in server-side state (like queues) if not explicitly cleaned up via `PlayerRemoving`. Furthermore, disconnected `Player` instances may remain as Lua references but will have their `Parent` set to `nil`.
+**Prevention:** Always hook `Players.PlayerRemoving` to clean up server state (queues, arrays). When using player instances in long-running tasks or fallbacks, verify they are still active in the game by checking `player and player.Parent`.
