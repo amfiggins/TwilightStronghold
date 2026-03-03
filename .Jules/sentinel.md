@@ -57,3 +57,9 @@
 **Vulnerability:** `ResourceManager` accepted any `BasePart` or `Model` in the Workspace as a valid resource node if it was within distance, allowing exploiters to gather/destroy arbitrary map geometry by sending non-interactive parts.
 **Learning:** Checking `IsDescendantOf(Workspace)` and distance is insufficient for interaction security. The server must also verify the object has the specific *component* (e.g., `ProximityPrompt`, `ClickDetector`) that designates it as interactable.
 **Prevention:** For any interaction claiming to be triggered by a client, explicitly check for the existence and `Enabled` state of the server-side interaction object (e.g., `part:FindFirstChild("Gather"):IsA("ProximityPrompt")`) before processing.
+
+## 2024-05-26 - DoS via Disconnected Queue Players
+
+**Vulnerability:** `MatchmakingService` queued players and retried teleports infinitely if a teleport failed. However, it didn't remove disconnected players from the queue or check their connection status upon requeueing, allowing a single disconnected player to cause an endless teleport failure loop (DoS) for the entire squad.
+**Learning:** Asynchronous queues or multi-step processes that rely on connected clients must continuously validate the `Player` object's validity (e.g., `p.Parent ~= nil`) or bind to `Players.PlayerRemoving`. Ghost objects can permanently stall logic.
+**Prevention:** Always bind `Players.PlayerRemoving` to remove disconnected users from active queues, and verify a player is still connected (`if p.Parent then`) before re-adding them to a queue after an asynchronous failure.
