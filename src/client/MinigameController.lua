@@ -29,6 +29,10 @@ local DECAY_RATE = 0.2
 local FILL_RATE = 0.5
 local TARGET_SPEED = 0.5
 
+-- Visual Constants
+local COLOR_SUCCESS = Color3.fromRGB(100, 255, 100)
+local COLOR_NEUTRAL = Color3.fromRGB(255, 255, 255)
+
 function MinigameController.Init()
     -- Create UI Programmatically
     gui = Instance.new("ScreenGui")
@@ -43,8 +47,22 @@ function MinigameController.Init()
     bg.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
     bg.BorderSizePixel = 2
     bg.Visible = false
+    bg.ClipsDescendants = false
     bg.Parent = gui
     frame = bg
+
+    -- Micro-UX: Instruction Label
+    local instruction = Instance.new("TextLabel")
+    instruction.Name = "Instruction"
+    instruction.Size = UDim2.new(1, 0, 0, 20)
+    instruction.Position = UDim2.new(0, 0, 0, -25) -- Above the bar
+    instruction.BackgroundTransparency = 1
+    instruction.Text = "Hold [SPACE] to move bar into green zone"
+    instruction.TextColor3 = Color3.fromRGB(255, 255, 255)
+    instruction.TextStrokeTransparency = 0
+    instruction.Font = Enum.Font.GothamBold
+    instruction.TextSize = 14
+    instruction.Parent = bg
     
     target = Instance.new("Frame")
     target.Name = "Target"
@@ -107,23 +125,27 @@ function MinigameController.Start(callback)
         -- Move Target (Random/Sine wave in future, just static/slow for now)
         -- targetPosition = 0.5 + math.sin(tick()) * 0.3
         
-        -- Update UI
-        bar.Position = UDim2.new(barPosition, 0, 0, 0)
-        target.Position = UDim2.new(targetPosition, 0, 0, 0)
-        if progressFill then
-            progressFill.Size = UDim2.new(math.clamp(progress, 0, 1), 0, 1, 0)
-        end
-        
         -- Check Overlap
         local barStart = barPosition
         local barEnd = barPosition + BAR_SIZE
         local targetStart = targetPosition
         local targetEnd = targetPosition + TARGET_SIZE
         
-        if barStart < targetEnd and barEnd > targetStart then
+        local isOverlapping = (barStart < targetEnd and barEnd > targetStart)
+
+        if isOverlapping then
             progress = progress + (FILL_RATE * dt)
+            bar.BackgroundColor3 = COLOR_SUCCESS -- Immediate visual feedback
         else
             progress = math.max(0, progress - (DECAY_RATE * dt))
+            bar.BackgroundColor3 = COLOR_NEUTRAL
+        end
+
+        -- Update UI (Optimized with UDim2.fromScale)
+        bar.Position = UDim2.fromScale(barPosition, 0)
+        target.Position = UDim2.fromScale(targetPosition, 0)
+        if progressFill then
+            progressFill.Size = UDim2.fromScale(math.clamp(progress, 0, 1), 1)
         end
         
 
