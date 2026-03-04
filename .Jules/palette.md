@@ -34,3 +34,7 @@
 ## 2027-01-15 - Context-Aware Actions & Details
 **Learning:** Generic buttons (e.g., "Unequip Weapon") confuse users when the context (which weapon?) is unclear or the button is irrelevant (nothing equipped).
 **Action:** Use context-aware labels (e.g., "Unequip Void Slayer") and conditionally render action buttons to reduce cognitive load and clutter.
+
+## 2027-04-18 - Implicit vs Explicit Interaction Design
+**Learning:** Players often fail to recognize interactive minigame elements when instructions are implicit or rely solely on standard patterns, leading to frustration. Furthermore, lack of immediate visual feedback during interaction reduces perceived responsiveness.
+**Action:** Always provide explicit, persistently visible instructions (e.g., "Hold SPACE") with high contrast for custom interactions, and ensure real-time visual state changes (like color shifts) occur precisely when success conditions are met.
