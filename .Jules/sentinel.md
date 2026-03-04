@@ -57,3 +57,9 @@
 **Vulnerability:** `ResourceManager` accepted any `BasePart` or `Model` in the Workspace as a valid resource node if it was within distance, allowing exploiters to gather/destroy arbitrary map geometry by sending non-interactive parts.
 **Learning:** Checking `IsDescendantOf(Workspace)` and distance is insufficient for interaction security. The server must also verify the object has the specific *component* (e.g., `ProximityPrompt`, `ClickDetector`) that designates it as interactable.
 **Prevention:** For any interaction claiming to be triggered by a client, explicitly check for the existence and `Enabled` state of the server-side interaction object (e.g., `part:FindFirstChild("Gather"):IsA("ProximityPrompt")`) before processing.
+
+## 2026-03-04 - Missing Rate Limiting on Configuration Endpoints (Loadout)
+
+**Vulnerability:** The `LoadoutManager` accepted client configuration requests (`SetLoadout` RemoteEvent) without any rate limiting. Attackers could spam this event to cause excessive server-side validation checks and log flooding, leading to a Denial of Service (DoS).
+**Learning:** Even if an endpoint doesn't perform heavy computations or database writes (like giving/taking resources), it still consumes CPU for validation (table lookups, string formatting) and can cause I/O blocking if it triggers a `warn()` or `print()` on every invalid request.
+**Prevention:** All RemoteEvents exposed to the client must have some form of rate limiting. For low-impact events, silently failing (e.g., returning `false, "RateLimited"`) rather than warning is crucial to avoid log-flooding vulnerabilities.

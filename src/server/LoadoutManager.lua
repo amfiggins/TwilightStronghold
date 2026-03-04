@@ -4,11 +4,15 @@
 ]]
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Players = game:GetService("Players")
 local PlayerDataHandler = require(script.Parent.PlayerDataHandler)
 local GameConfig = require(ReplicatedStorage.Shared.GameConfig)
 local ItemDatabase = require(ReplicatedStorage.Shared.ItemDatabase)
 
 local LoadoutManager = {}
+
+local LOADOUT_COOLDOWN = 0.5
+local lastRequestTimes = {} -- [UserId] = timestamp
 
 -- Create Remotes
 local Remotes = ReplicatedStorage:WaitForChild("Remotes")
@@ -17,10 +21,23 @@ LoadoutEvent.Name = "SetLoadout"
 
 function LoadoutManager.Init()
     LoadoutEvent.OnServerEvent:Connect(LoadoutManager.OnLoadoutRequest)
+
+    Players.PlayerRemoving:Connect(function(player)
+        lastRequestTimes[player.UserId] = nil
+    end)
+
     print("[LoadoutManager] Initialized. Listening for Loadout events.")
 end
 
 function LoadoutManager.OnLoadoutRequest(player, slot, itemId)
+    -- 0. Security: Rate Limiting
+    local now = os.clock()
+    local lastRequest = lastRequestTimes[player.UserId] or 0
+    if (now - lastRequest) < LOADOUT_COOLDOWN then
+        return false, "RateLimited" -- Silently fail to prevent log flooding DoS
+    end
+    lastRequestTimes[player.UserId] = now
+
     print(string.format("[LoadoutManager] Request from %s: Set %s to %s", player.Name, tostring(slot), tostring(itemId)))
     
     -- Validation 1: Slot must be valid
