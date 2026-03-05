@@ -57,3 +57,9 @@
 **Vulnerability:** `ResourceManager` accepted any `BasePart` or `Model` in the Workspace as a valid resource node if it was within distance, allowing exploiters to gather/destroy arbitrary map geometry by sending non-interactive parts.
 **Learning:** Checking `IsDescendantOf(Workspace)` and distance is insufficient for interaction security. The server must also verify the object has the specific *component* (e.g., `ProximityPrompt`, `ClickDetector`) that designates it as interactable.
 **Prevention:** For any interaction claiming to be triggered by a client, explicitly check for the existence and `Enabled` state of the server-side interaction object (e.g., `part:FindFirstChild("Gather"):IsA("ProximityPrompt")`) before processing.
+
+## 2024-05-26 - Missing Rate Limiting on Building Systems
+
+**Vulnerability:** `BuildingSystem` allowed clients to rapidly fire `PlaceStructure` events, potentially overwhelming the server with distance/CFrame checks and logging warnings, creating a Denial of Service (DoS) vulnerability.
+**Learning:** Any RemoteEvent that accepts client input, especially those performing math or logging warnings on failure, must have rate limiting to prevent spam attacks, even if the primary actions are otherwise validated. Silent failures on rate-limit hits prevent log flooding.
+**Prevention:** Track request timestamps per player and enforce a reasonable cooldown threshold on the server for all RemoteEvents. Return silently if the rate limit is exceeded rather than logging a warning.
