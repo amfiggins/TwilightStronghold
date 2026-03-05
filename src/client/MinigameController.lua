@@ -85,7 +85,7 @@ function MinigameController.Start(callback)
     
     frame.Visible = true
     if progressFill then
-        progressFill.Size = UDim2.new(0, 0, 1, 0)
+        progressFill.Size = UDim2.fromScale(0, 1)
     end
     
     -- Game Loop
@@ -107,11 +107,11 @@ function MinigameController.Start(callback)
         -- Move Target (Random/Sine wave in future, just static/slow for now)
         -- targetPosition = 0.5 + math.sin(tick()) * 0.3
         
-        -- Update UI
-        bar.Position = UDim2.new(barPosition, 0, 0, 0)
-        target.Position = UDim2.new(targetPosition, 0, 0, 0)
+        -- Update UI (Optimized using fromScale instead of new)
+        bar.Position = UDim2.fromScale(barPosition, 0)
+        target.Position = UDim2.fromScale(targetPosition, 0)
         if progressFill then
-            progressFill.Size = UDim2.new(math.clamp(progress, 0, 1), 0, 1, 0)
+            progressFill.Size = UDim2.fromScale(math.clamp(progress, 0, 1), 1)
         end
         
         -- Check Overlap
