@@ -28,6 +28,8 @@ local TARGET_SIZE = 0.15
 local DECAY_RATE = 0.2
 local FILL_RATE = 0.5
 local TARGET_SPEED = 0.5
+local COLOR_SUCCESS = Color3.fromRGB(0, 255, 100)
+local COLOR_NEUTRAL = Color3.fromRGB(255, 255, 255)
 
 function MinigameController.Init()
     -- Create UI Programmatically
@@ -43,8 +45,22 @@ function MinigameController.Init()
     bg.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
     bg.BorderSizePixel = 2
     bg.Visible = false
+    bg.ClipsDescendants = false
     bg.Parent = gui
     frame = bg
+
+    -- Instruction Label
+    local instruction = Instance.new("TextLabel")
+    instruction.Name = "Instruction"
+    instruction.Text = "Hold SPACE"
+    instruction.Size = UDim2.new(1, 0, 0, 24)
+    instruction.Position = UDim2.new(0, 0, 0, -30)
+    instruction.BackgroundTransparency = 1
+    instruction.TextColor3 = Color3.fromRGB(255, 255, 255)
+    instruction.TextStrokeTransparency = 0
+    instruction.Font = Enum.Font.GothamBold
+    instruction.TextSize = 18
+    instruction.Parent = bg
     
     target = Instance.new("Frame")
     target.Name = "Target"
@@ -108,10 +124,10 @@ function MinigameController.Start(callback)
         -- targetPosition = 0.5 + math.sin(tick()) * 0.3
         
         -- Update UI
-        bar.Position = UDim2.new(barPosition, 0, 0, 0)
-        target.Position = UDim2.new(targetPosition, 0, 0, 0)
+        bar.Position = UDim2.fromScale(barPosition, 0)
+        target.Position = UDim2.fromScale(targetPosition, 0)
         if progressFill then
-            progressFill.Size = UDim2.new(math.clamp(progress, 0, 1), 0, 1, 0)
+            progressFill.Size = UDim2.fromScale(math.clamp(progress, 0, 1), 1)
         end
         
         -- Check Overlap
@@ -122,8 +138,10 @@ function MinigameController.Start(callback)
         
         if barStart < targetEnd and barEnd > targetStart then
             progress = progress + (FILL_RATE * dt)
+            bar.BackgroundColor3 = COLOR_SUCCESS
         else
             progress = math.max(0, progress - (DECAY_RATE * dt))
+            bar.BackgroundColor3 = COLOR_NEUTRAL
         end
         
 
