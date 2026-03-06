@@ -39,6 +39,9 @@ function MatchmakingService.Init()
             MatchmakingService.ProcessQueue()
         end
     end)
+
+    -- Security: Remove disconnected players from queue to prevent "ghost" players from stalling matchmaking
+    Players.PlayerRemoving:Connect(MatchmakingService.LeaveQueue)
 end
 
 function MatchmakingService.JoinQueue(player)
@@ -107,7 +110,10 @@ function MatchmakingService.ProcessQueue()
                 warn("[Matchmaking] Teleport Failed: " .. tostring(err))
                 -- Re-queue players (simplified logic)
                 for _, p in ipairs(squad) do
-                    table.insert(queue, p)
+                    -- Security: Only re-queue players who are still connected to prevent infinite teleport loop DoS
+                    if p and p.Parent ~= nil then
+                        table.insert(queue, p)
+                    end
                 end
             end
         end)

@@ -57,3 +57,10 @@
 **Vulnerability:** `ResourceManager` accepted any `BasePart` or `Model` in the Workspace as a valid resource node if it was within distance, allowing exploiters to gather/destroy arbitrary map geometry by sending non-interactive parts.
 **Learning:** Checking `IsDescendantOf(Workspace)` and distance is insufficient for interaction security. The server must also verify the object has the specific *component* (e.g., `ProximityPrompt`, `ClickDetector`) that designates it as interactable.
 **Prevention:** For any interaction claiming to be triggered by a client, explicitly check for the existence and `Enabled` state of the server-side interaction object (e.g., `part:FindFirstChild("Gather"):IsA("ProximityPrompt")`) before processing.
+
+## 2023-10-27 - [MatchmakingService] Fix DoS vulnerability from infinite re-queueing
+**Vulnerability:** A critical Denial of Service (DoS) vulnerability existed in `MatchmakingService.lua`. When teleporting players, if a teleport failed, the entire squad was blindly re-queued. If a player had disconnected before or during the teleport, their `Player` object remained in the table without a valid connection (`Parent == nil`), causing consecutive teleport attempts to instantly fail, endlessly re-queueing the squad, and effectively halting the matchmaking server indefinitely.
+**Learning:** Asynchronous queues or operations that process player objects across yields (like teleport requests) must explicitly validate the player's connection state to prevent stalling logic with disconnected 'ghost' players.
+**Prevention:**
+1. Always bind tracking queues to `Players.PlayerRemoving` to maintain state accurately.
+2. When performing batch processing on player objects over yielding calls, verify `player and player.Parent ~= nil` before attempting an action or entering a fallback/retry loop.
