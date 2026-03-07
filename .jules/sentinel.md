@@ -1,0 +1,4 @@
+## 2024-05-18 - [DoS via Disconnected Players in Queues]
+ **Vulnerability:** Players who disconnected while in the Matchmaking queue remained in the queue table indefinitely. Furthermore, upon a `TeleportAsync` failure, disconnected players would be re-queued without checking their connection status, leading to an infinite retry loop that could stall the matchmaking system (DoS).
+ **Learning:** Asynchronous queues and multi-step server processes must continuously validate player connection state (`player.Parent ~= nil`) and explicitly bind to `Players.PlayerRemoving` to clear up state and prevent memory leaks and stall vulnerabilities caused by "ghost" players.
+ **Prevention:** Always attach a `Players.PlayerRemoving` listener when adding user IDs or player objects to global tracking structures (like matchmaking queues, rate limiters, or session caches). Validate player existence before re-processing them in async loops.
