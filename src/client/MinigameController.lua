@@ -108,10 +108,11 @@ function MinigameController.Start(callback)
         -- targetPosition = 0.5 + math.sin(tick()) * 0.3
         
         -- Update UI
-        bar.Position = UDim2.new(barPosition, 0, 0, 0)
-        target.Position = UDim2.new(targetPosition, 0, 0, 0)
+        -- Optimization: Use UDim2.fromScale instead of UDim2.new in hot loops to skip unused offset parsing
+        bar.Position = UDim2.fromScale(barPosition, 0)
+        target.Position = UDim2.fromScale(targetPosition, 0)
         if progressFill then
-            progressFill.Size = UDim2.new(math.clamp(progress, 0, 1), 0, 1, 0)
+            progressFill.Size = UDim2.fromScale(math.clamp(progress, 0, 1), 1)
         end
         
         -- Check Overlap
