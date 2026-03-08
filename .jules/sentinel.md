@@ -1,0 +1,4 @@
+## 2024-03-08 - Asynchronous Queue State Validation
+**Vulnerability:** Disconnected "ghost" players could remain in the matchmaking queue and stall the logic when teleporting failed, potentially causing a Denial of Service via an infinite retry loop.
+**Learning:** Asynchronous queues and multi-step processes must continuously validate player connection state (e.g., checking `p.Parent ~= nil`) and properly bind to `Players.PlayerRemoving` to clear entries.
+**Prevention:** Always connect to `Players.PlayerRemoving` for stateful queue systems and re-validate instance existence (like `player.Parent`) inside async callbacks before acting on them.

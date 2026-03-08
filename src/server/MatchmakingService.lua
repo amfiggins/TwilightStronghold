@@ -32,6 +32,11 @@ function MatchmakingService.Init()
         MatchmakingService.JoinQueue(player)
     end)
     
+    -- Handle players leaving the game
+    Players.PlayerRemoving:Connect(function(player)
+        MatchmakingService.LeaveQueue(player)
+    end)
+
     -- Loop to check queue
     task.spawn(function()
         while true do
@@ -107,7 +112,10 @@ function MatchmakingService.ProcessQueue()
                 warn("[Matchmaking] Teleport Failed: " .. tostring(err))
                 -- Re-queue players (simplified logic)
                 for _, p in ipairs(squad) do
-                    table.insert(queue, p)
+                    -- Security: Only re-queue players who are still connected
+                    if p.Parent ~= nil then
+                        table.insert(queue, p)
+                    end
                 end
             end
         end)
