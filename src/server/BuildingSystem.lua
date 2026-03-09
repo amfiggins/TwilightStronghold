@@ -4,12 +4,15 @@
 ]]
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Players = game:GetService("Players")
 local PlayerDataHandler = require(script.Parent.PlayerDataHandler)
 local GameConfig = require(ReplicatedStorage.Shared.GameConfig)
 
 local BuildingSystem = {}
 
 local MAX_BUILD_DISTANCE = 20 -- Maximum distance in studs to allow building
+local BUILD_COOLDOWN = 0.5
+local lastBuildTimes = {}
 
 -- Helper: Validate CFrame for NaNs and Inf
 local function isValidCFrame(cf)
@@ -36,18 +39,30 @@ function BuildingSystem.Init()
     PlaceStructureEvent.OnServerEvent:Connect(function(player, structureType, cframe)
         BuildingSystem.PlaceStructure(player, structureType, cframe)
     end)
+
+    Players.PlayerRemoving:Connect(function(player)
+        lastBuildTimes[player.UserId] = nil
+    end)
 end
 
 function BuildingSystem.PlaceStructure(player, structureType, cframe)
+    -- 0. Security: Rate Limiting
+    local now = os.clock()
+    local lastBuild = lastBuildTimes[player.UserId] or 0
+
+    if (now - lastBuild) < BUILD_COOLDOWN then
+        return false, "RateLimited"
+    end
+    lastBuildTimes[player.UserId] = now
+
     -- 1. Validate Cost Existence
     local cost = GameConfig.StructureCosts[structureType]
-    if not cost then return end
+    if not cost then return false, "InvalidStructure" end
     
     -- 2. Validate Placement (Anti-Cheat)
     -- Ensure cframe is valid (Type Check & Finite numbers only - DoS Prevention)
     if not isValidCFrame(cframe) then
-        warn(string.format("[BuildingSystem] Invalid or Malformed CFrame (NaN/Inf) received from %s", player.Name))
-        return
+        return false, "InvalidCFrame"
     end
 
     -- Ensure player is close to `cframe.Position`
@@ -55,13 +70,12 @@ function BuildingSystem.PlaceStructure(player, structureType, cframe)
     local rootPart = character and character.PrimaryPart
 
     if not rootPart then
-        return -- Cannot build if dead or spawning
+        return false, "PlayerDead" -- Cannot build if dead or spawning
     end
 
     local dist = (rootPart.Position - cframe.Position).Magnitude
     if dist > MAX_BUILD_DISTANCE then
-        warn(string.format("[BuildingSystem] Suspicious build: %s is too far (%.1f studs)", player.Name, dist))
-        return
+        return false, "TooFar"
     end
 
 
@@ -71,8 +85,7 @@ function BuildingSystem.PlaceStructure(player, structureType, cframe)
     -- 3. Deduct Cost
     local success = PlayerDataHandler.RemoveItem(player, cost.Resource, cost.Amount)
     if not success then
-        warn(string.format("[BuildingSystem] %s failed to build %s: Insufficient resources.", player.Name, structureType))
-        return
+        return false, "InsufficientResources"
     end
     
     -- 4. Place It
@@ -86,6 +99,7 @@ function BuildingSystem.PlaceStructure(player, structureType, cframe)
     structure.BrickColor = BrickColor.new("Brown")
     structure.Parent = workspace
 
+    return true, "Success"
 end
 
 return BuildingSystem
