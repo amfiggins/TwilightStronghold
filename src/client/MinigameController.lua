@@ -74,6 +74,20 @@ function MinigameController.Init()
     progressFill.BackgroundColor3 = Color3.fromRGB(0, 255, 100)
     progressFill.BorderSizePixel = 0
     progressFill.Parent = progressBg
+
+    -- Micro-UX: Instruction Label
+    local instruction = Instance.new("TextLabel")
+    instruction.Text = "Hold <b>SPACE</b> to align"
+    instruction.RichText = true
+    instruction.Size = UDim2.new(1, 0, 0, 30)
+    instruction.AnchorPoint = Vector2.new(0, 1) -- Bottom-Left
+    instruction.Position = UDim2.new(0, 0, 0, -5) -- 5px above
+    instruction.BackgroundTransparency = 1
+    instruction.TextColor3 = Color3.fromRGB(255, 255, 255)
+    instruction.TextStrokeTransparency = 0.5
+    instruction.Font = Enum.Font.GothamBold
+    instruction.TextSize = 18
+    instruction.Parent = bg
 end
 
 function MinigameController.Start(callback)
