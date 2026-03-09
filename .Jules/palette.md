@@ -34,3 +34,7 @@
 ## 2027-01-15 - Context-Aware Actions & Details
 **Learning:** Generic buttons (e.g., "Unequip Weapon") confuse users when the context (which weapon?) is unclear or the button is irrelevant (nothing equipped).
 **Action:** Use context-aware labels (e.g., "Unequip Void Slayer") and conditionally render action buttons to reduce cognitive load and clutter.
+
+## 2027-02-15 - Continuous Interaction Feedback
+**Learning:** Continuous interactions (like holding spacebar in a minigame) without persistent instructions and immediate visual state feedback leave users unsure if their input is registering, causing confusion and frustration.
+**Action:** Always provide explicit, persistent instruction labels (e.g., "Hold SPACE") and immediate visual feedback (e.g., color changes) for continuous actions to ensure the interface feels responsive and intuitive.
