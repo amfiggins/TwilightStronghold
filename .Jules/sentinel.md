@@ -57,3 +57,9 @@
 **Vulnerability:** `ResourceManager` accepted any `BasePart` or `Model` in the Workspace as a valid resource node if it was within distance, allowing exploiters to gather/destroy arbitrary map geometry by sending non-interactive parts.
 **Learning:** Checking `IsDescendantOf(Workspace)` and distance is insufficient for interaction security. The server must also verify the object has the specific *component* (e.g., `ProximityPrompt`, `ClickDetector`) that designates it as interactable.
 **Prevention:** For any interaction claiming to be triggered by a client, explicitly check for the existence and `Enabled` state of the server-side interaction object (e.g., `part:FindFirstChild("Gather"):IsA("ProximityPrompt")`) before processing.
+
+## 2024-05-26 - DoS via RemoteEvent Spam and Log-Flooding in BuildingSystem
+
+**Vulnerability:** The `BuildingSystem` lacked server-side rate limiting on the `PlaceStructure` RemoteEvent. An attacker could rapidly spam this event, causing the server to perform expensive CFrame validation, distance checks, and log excessive warnings, leading to server lag and potential crash (Denial of Service).
+**Learning:** Client-side delays (animations, UI cooldowns) do not constrain exploiters. Every RemoteEvent must have server-side cooldown enforcement, and high-frequency rate-limit triggers should silently fail rather than logging to avoid log-flooding vulnerabilities.
+**Prevention:** Track the last execution timestamp for each player and enforce a `COOLDOWN` threshold on the server. Reject requests that occur too frequently, returning silently (e.g. `return false, "RateLimited"`). Use `Players.PlayerRemoving` to clear cooldown tracking data to prevent memory leaks.
