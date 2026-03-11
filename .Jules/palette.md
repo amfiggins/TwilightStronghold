@@ -38,3 +38,7 @@
 ## 2027-02-14 - Minigame Instruction Visibility
 **Learning:** Players often struggle with minigames because key mechanics (like "Hold SPACE") are assumed knowledge rather than explicitly taught.
 **Action:** Always include persistent, high-contrast instruction text (e.g., "Hold SPACE") directly within the minigame UI to eliminate ambiguity.
+
+## 2027-03-01 - Continuous Alignment Feedback
+**Learning:** Players struggle with continuous alignment minigames when they are unsure if they are in the "success" zone due to visual ambiguity (e.g., matching a moving bar to a static target).
+**Action:** Always provide discrete, immediate visual feedback (like changing a color to green) when a continuous action enters a valid or successful state.
