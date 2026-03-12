@@ -38,3 +38,7 @@
 ## 2027-02-14 - Minigame Instruction Visibility
 **Learning:** Players often struggle with minigames because key mechanics (like "Hold SPACE") are assumed knowledge rather than explicitly taught.
 **Action:** Always include persistent, high-contrast instruction text (e.g., "Hold SPACE") directly within the minigame UI to eliminate ambiguity.
+
+## 2027-03-01 - Dynamic Visual Feedback in Minigames
+**Learning:** In continuous minigames (like holding a button to align a bar), relying solely on a generic progress bar filling up isn't enough immediate feedback. Users need to know exactly *when* they are scoring points.
+**Action:** Always provide direct, immediate visual feedback (e.g., changing color from neutral to success) on the overlapping elements to clearly communicate scoring states.
