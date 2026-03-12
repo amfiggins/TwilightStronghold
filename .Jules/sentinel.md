@@ -57,3 +57,9 @@
 **Vulnerability:** `ResourceManager` accepted any `BasePart` or `Model` in the Workspace as a valid resource node if it was within distance, allowing exploiters to gather/destroy arbitrary map geometry by sending non-interactive parts.
 **Learning:** Checking `IsDescendantOf(Workspace)` and distance is insufficient for interaction security. The server must also verify the object has the specific *component* (e.g., `ProximityPrompt`, `ClickDetector`) that designates it as interactable.
 **Prevention:** For any interaction claiming to be triggered by a client, explicitly check for the existence and `Enabled` state of the server-side interaction object (e.g., `part:FindFirstChild("Gather"):IsA("ProximityPrompt")`) before processing.
+
+## 2024-05-26 - DoS via RemoteEvent Spam (Missing Rate Limit)
+
+**Vulnerability:** `BuildingSystem` lacked a rate limit for structure placement. A malicious client could rapidly fire the `PlaceStructure` RemoteEvent, flooding the server with placement calculations, exhausting server resources, and causing a Denial of Service (DoS) for all players.
+**Learning:** Any RemoteEvent handling complex logic or object instantiation must enforce strict server-side rate limiting. Silent returns (e.g., returning `false, "RateLimited"` instead of `warn()`) are critical for rate limiters to prevent the logging system itself from becoming a secondary DoS vector (log flooding). Furthermore, tracking variables (`lastBuildTimes`) must be explicitly cleared in `PlayerRemoving` to prevent memory leaks as players join and leave.
+**Prevention:** Implement a server-side cooldown per player for object creation events. Use silent returns for rate limit rejections and bind cleanup logic to `Players.PlayerRemoving`.
