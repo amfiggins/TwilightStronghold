@@ -99,7 +99,7 @@ function MinigameController.Start(callback)
     
     frame.Visible = true
     if progressFill then
-        progressFill.Size = UDim2.new(0, 0, 1, 0)
+        progressFill.Size = UDim2.fromScale(0, 1)
     end
     
     -- Game Loop
@@ -122,10 +122,12 @@ function MinigameController.Start(callback)
         -- targetPosition = 0.5 + math.sin(tick()) * 0.3
         
         -- Update UI
-        bar.Position = UDim2.new(barPosition, 0, 0, 0)
-        target.Position = UDim2.new(targetPosition, 0, 0, 0)
+        -- Optimization (Bolt): Using UDim2.fromScale() instead of UDim2.new() in RenderStepped hot loop
+        -- to skip unused property parsing (Offset) and optimize main thread execution time.
+        bar.Position = UDim2.fromScale(barPosition, 0)
+        target.Position = UDim2.fromScale(targetPosition, 0)
         if progressFill then
-            progressFill.Size = UDim2.new(math.clamp(progress, 0, 1), 0, 1, 0)
+            progressFill.Size = UDim2.fromScale(math.clamp(progress, 0, 1), 1)
         end
         
         -- Check Overlap

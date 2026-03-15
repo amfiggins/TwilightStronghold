@@ -1,0 +1,3 @@
+## 2024-05-15 - [Optimize UDim2 allocations]
+**Learning:** `UDim2.fromScale(x, y)` and `UDim2.fromOffset(x, y)` should be used in hot paths (like `RenderStepped` loops) instead of `UDim2.new()` to skip unused property parsing and optimize main thread performance.
+**Action:** Always prefer `UDim2.fromScale` or `UDim2.fromOffset` when setting pure scale or offset properties, especially inside performance-critical `RenderStepped` loops.
