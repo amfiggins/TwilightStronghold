@@ -67,3 +67,8 @@
 **Vulnerability:** The `PlaceStructure` RemoteEvent endpoint in `BuildingSystem.lua` lacked rate limiting, allowing clients to spam the server with rapid placement requests. This could lead to a log-flooding Denial of Service (DoS) vulnerability or performance degradation.
 **Learning:** Security-critical rate limiting on RemoteEvents prefers silent returns (e.g., `return false, "RateLimited"`) over `warn()` logging to prevent log-flooding DoS vulnerabilities. Additionally, per-user rate limiters must explicitly connect to `Players.PlayerRemoving` to clear tracking tables and prevent long-term memory leaks.
 **Prevention:** Always implement a cooldown check (e.g., `now - lastRequest < COOLDOWN`) for client-facing endpoints and manage associated memory cleanly when users disconnect.
+
+## 2024-05-24 - DoS Vulnerability in Asynchronous Queues
+**Vulnerability:** A Denial of Service (DoS) vulnerability was discovered in the matchmaking queue system where disconnected players ("ghosts") were not properly removed or validated during asynchronous operations (like teleportation failures).
+**Learning:** In asynchronous Roblox workflows, such as teleportation or long-running computations, a player's connection state (`player.Parent ~= nil`) is not guaranteed. If disconnected players remain in tracking arrays (e.g., `queue`), they can trigger infinite retry loops or stall multi-step processes for the entire server.
+**Prevention:** Always connect to `Players.PlayerRemoving` to clear players from active queues and tracking tables. Additionally, before performing state updates after a `task.wait()` or `pcall` (like re-queuing a player after a failed teleport), explicitly verify the player object is still valid and connected (`if player and player.Parent then`).
