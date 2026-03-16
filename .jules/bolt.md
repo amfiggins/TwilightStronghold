@@ -1,0 +1,3 @@
+## 2024-03-16 - Avoiding Table Allocation Overhead from Tuple Returns
+**Learning:** In Luau, functions that return tuples (like `CFrame:GetComponents()`) can cause unnecessary garbage collection (GC) pressure if wrapped in a table literal (e.g., `{cf:GetComponents()}`) merely to iterate over them. This is especially problematic in hot paths or frequently called validation functions.
+**Action:** Always capture tuple returns directly into local variables (e.g., `local x, y, z, ... = cf:GetComponents()`) to avoid allocating temporary tables, thereby reducing GC overhead and improving performance.

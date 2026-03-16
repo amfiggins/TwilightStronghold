@@ -13,13 +13,23 @@ local BuildingSystem = {}
 local function isValidCFrame(cf)
     if typeof(cf) ~= "CFrame" then return false end
 
-    local components = {cf:GetComponents()}
-    for _, v in ipairs(components) do
-        -- Check for NaN (v ~= v) and Infinity
-        if v ~= v or math.abs(v) == math.huge then
-            return false
-        end
-    end
+    -- Optimization: Avoid table allocation by reading components directly into local variables
+    local x, y, z, r00, r01, r02, r10, r11, r12, r20, r21, r22 = cf:GetComponents()
+
+    -- Check for NaN (v ~= v) and Infinity
+    if x ~= x or math.abs(x) == math.huge then return false end
+    if y ~= y or math.abs(y) == math.huge then return false end
+    if z ~= z or math.abs(z) == math.huge then return false end
+    if r00 ~= r00 or math.abs(r00) == math.huge then return false end
+    if r01 ~= r01 or math.abs(r01) == math.huge then return false end
+    if r02 ~= r02 or math.abs(r02) == math.huge then return false end
+    if r10 ~= r10 or math.abs(r10) == math.huge then return false end
+    if r11 ~= r11 or math.abs(r11) == math.huge then return false end
+    if r12 ~= r12 or math.abs(r12) == math.huge then return false end
+    if r20 ~= r20 or math.abs(r20) == math.huge then return false end
+    if r21 ~= r21 or math.abs(r21) == math.huge then return false end
+    if r22 ~= r22 or math.abs(r22) == math.huge then return false end
+
     return true
 end
 
