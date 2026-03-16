@@ -38,3 +38,7 @@
 ## 2027-02-14 - Minigame Instruction Visibility
 **Learning:** Players often struggle with minigames because key mechanics (like "Hold SPACE") are assumed knowledge rather than explicitly taught.
 **Action:** Always include persistent, high-contrast instruction text (e.g., "Hold SPACE") directly within the minigame UI to eliminate ambiguity.
+
+## 2027-03-16 - Immediate Visual Confirmation for Continuous Interactions
+**Learning:** Continuous progress interactions (like filling a minigame bar) feel unresponsive or ambiguous if the user cannot immediately discern the exact boundary of the success state (e.g., target overlap) just by looking at the interaction object itself.
+**Action:** Dynamically change the color of the interacting UI element (like a moving bar) precisely when it enters a success state to provide immediate visual confirmation and build trust in the mechanics.
