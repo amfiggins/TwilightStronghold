@@ -40,6 +40,10 @@ local sessionData = {}
 -- Optimization: Maps ItemId to the *first* index in inventory for O(1) checks.
 local sessionInventoryLookup = {}
 
+-- Rate Limiting cache for GetPlayerData
+local GET_DATA_COOLDOWN = 1.0
+local lastGetDataTimes = {}
+
 -- Helper: Deep Copy Table
 local function deepCopy(orig)
     local original_type = type(orig)
@@ -127,6 +131,14 @@ function PlayerDataHandler.Init()
     GetPlayerData.Parent = Remotes
 
     GetPlayerData.OnServerInvoke = function(player)
+        local now = os.clock()
+        local lastGet = lastGetDataTimes[player.UserId] or 0
+        if (now - lastGet) < GET_DATA_COOLDOWN then
+            warn(string.format("[Data] %s is rate limited from GetPlayerData", player.Name))
+            return nil
+        end
+        lastGetDataTimes[player.UserId] = now
+
         local start = os.clock()
         local data = PlayerDataHandler.Get(player)
         -- Poll until data exists or timeout (5 seconds)
@@ -214,6 +226,7 @@ function PlayerDataHandler.OnPlayerRemoving(player)
     PlayerDataHandler.Save(player)
     sessionData[player.UserId] = nil
     sessionInventoryLookup[player.UserId] = nil
+    lastGetDataTimes[player.UserId] = nil
 end
 
 function PlayerDataHandler.Save(player)
