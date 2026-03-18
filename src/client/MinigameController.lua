@@ -97,6 +97,9 @@ function MinigameController.Start(callback)
     progress = 0
     barPosition = 0.5
     
+    -- Reset visual state
+    bar.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+
     frame.Visible = true
     if progressFill then
         progressFill.Size = UDim2.new(0, 0, 1, 0)
@@ -136,8 +139,10 @@ function MinigameController.Start(callback)
         
         if barStart < targetEnd and barEnd > targetStart then
             progress = progress + (FILL_RATE * dt)
+            bar.BackgroundColor3 = Color3.fromRGB(0, 255, 100) -- Visual feedback: Green
         else
             progress = math.max(0, progress - (DECAY_RATE * dt))
+            bar.BackgroundColor3 = Color3.fromRGB(255, 255, 255) -- Reset to White
         end
         
 
