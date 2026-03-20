@@ -16,6 +16,9 @@ local ItemDatabase = require(ReplicatedStorage.Shared.ItemDatabase)
 local PlayerDataHandler = {}
 local PlayerDataStore = DataStoreService:GetDataStore("PlayerData_" .. GameConfig.GAME_VERSION)
 
+local lastGetDataTimes = {}
+local GET_DATA_COOLDOWN = 1
+
 -- Default Data Schema
 local DEFAULT_DATA = {
     Stats = {
@@ -127,6 +130,13 @@ function PlayerDataHandler.Init()
     GetPlayerData.Parent = Remotes
 
     GetPlayerData.OnServerInvoke = function(player)
+        local now = os.clock()
+        local lastRequest = lastGetDataTimes[player.UserId] or 0
+        if now - lastRequest < GET_DATA_COOLDOWN then
+            return nil, "RateLimited"
+        end
+        lastGetDataTimes[player.UserId] = now
+
         local start = os.clock()
         local data = PlayerDataHandler.Get(player)
         -- Poll until data exists or timeout (5 seconds)
@@ -214,6 +224,7 @@ function PlayerDataHandler.OnPlayerRemoving(player)
     PlayerDataHandler.Save(player)
     sessionData[player.UserId] = nil
     sessionInventoryLookup[player.UserId] = nil
+    lastGetDataTimes[player.UserId] = nil
 end
 
 function PlayerDataHandler.Save(player)
