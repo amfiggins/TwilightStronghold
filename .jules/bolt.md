@@ -1,0 +1,3 @@
+## 2024-05-18 - CFrame:GetComponents() Array Allocation
+**Learning:** Wrapping Luau tuple returns (such as `CFrame:GetComponents()`) in a table literal (e.g., `{cf:GetComponents()}`) causes unnecessary heap allocations and GC pressure. They should be captured directly into local variables.
+**Action:** When working with functions that return multiple values, unpack them directly into local variables (like `local x, y, z, ... = cf:GetComponents()`) instead of wrapping them in a table to iterate over them.
