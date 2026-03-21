@@ -101,6 +101,7 @@ function MinigameController.Start(callback)
     if progressFill then
         progressFill.Size = UDim2.new(0, 0, 1, 0)
     end
+    bar.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
     
     -- Game Loop
     local connection
@@ -136,8 +137,10 @@ function MinigameController.Start(callback)
         
         if barStart < targetEnd and barEnd > targetStart then
             progress = progress + (FILL_RATE * dt)
+            bar.BackgroundColor3 = Color3.fromRGB(0, 255, 100)
         else
             progress = math.max(0, progress - (DECAY_RATE * dt))
+            bar.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
         end
         
 
