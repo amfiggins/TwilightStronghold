@@ -1,0 +1,3 @@
+## 2025-03-22 - [Avoid table allocation for Luau tuple returns]
+**Learning:** Wrapping tuple returns (like `CFrame:GetComponents()`) in a table literal (e.g., `{cf:GetComponents()}`) to iterate over them causes unnecessary heap allocations and GC pressure.
+**Action:** Capture tuple returns directly into local variables (e.g. `local x, y, z, ... = cf:GetComponents()`), especially in hot paths like validation functions, to prevent GC overhead.

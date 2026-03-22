@@ -17,13 +17,24 @@ local lastBuildTimes = {}
 local function isValidCFrame(cf)
     if typeof(cf) ~= "CFrame" then return false end
 
-    local components = {cf:GetComponents()}
-    for _, v in ipairs(components) do
-        -- Check for NaN (v ~= v) and Infinity
-        if v ~= v or math.abs(v) == math.huge then
-            return false
-        end
-    end
+    -- Optimization: Extract components into local variables instead of allocating a table.
+    -- This avoids unnecessary heap allocation and GC pressure in a hot path.
+    local x, y, z, R00, R01, R02, R10, R11, R12, R20, R21, R22 = cf:GetComponents()
+
+    -- Check for NaN (v ~= v) and Infinity
+    if x ~= x or math.abs(x) == math.huge then return false end
+    if y ~= y or math.abs(y) == math.huge then return false end
+    if z ~= z or math.abs(z) == math.huge then return false end
+    if R00 ~= R00 or math.abs(R00) == math.huge then return false end
+    if R01 ~= R01 or math.abs(R01) == math.huge then return false end
+    if R02 ~= R02 or math.abs(R02) == math.huge then return false end
+    if R10 ~= R10 or math.abs(R10) == math.huge then return false end
+    if R11 ~= R11 or math.abs(R11) == math.huge then return false end
+    if R12 ~= R12 or math.abs(R12) == math.huge then return false end
+    if R20 ~= R20 or math.abs(R20) == math.huge then return false end
+    if R21 ~= R21 or math.abs(R21) == math.huge then return false end
+    if R22 ~= R22 or math.abs(R22) == math.huge then return false end
+
     return true
 end
 
