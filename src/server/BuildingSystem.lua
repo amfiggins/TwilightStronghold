@@ -74,9 +74,11 @@ function BuildingSystem.PlaceStructure(player, structureType, cframe)
         return false, "PlayerDead" -- Cannot build if dead or spawning
     end
 
-    local dist = (rootPart.Position - cframe.Position).Magnitude
-    if dist > GameConfig.MAX_BUILD_DISTANCE then
-        warn(string.format("[BuildingSystem] Suspicious build: %s is too far (%.1f studs)", player.Name, dist))
+    -- ⚡ Bolt: Use squared distance for validation to avoid .Magnitude overhead
+    local delta = rootPart.Position - cframe.Position
+    local distSq = delta.X^2 + delta.Y^2 + delta.Z^2
+    if distSq > (GameConfig.MAX_BUILD_DISTANCE * GameConfig.MAX_BUILD_DISTANCE) then
+        warn(string.format("[BuildingSystem] Suspicious build: %s is too far (%.1f studs)", player.Name, math.sqrt(distSq)))
         return false, "TooFar"
     end
 
