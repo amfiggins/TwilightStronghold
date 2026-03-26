@@ -43,14 +43,16 @@ end
 
 local function findNearestPlayer(position)
     local nearestPlayer = nil
-    local minDistance = math.huge
+    -- Optimization: Use squared distance to avoid square roots
+    local minDistanceSq = math.huge
 
     for _, player in ipairs(Players:GetPlayers()) do
         local character = player.Character
         if character and character.PrimaryPart then
-            local distance = (character.PrimaryPart.Position - position).Magnitude
-            if distance < minDistance then
-                minDistance = distance
+            local delta = character.PrimaryPart.Position - position
+            local distanceSq = delta.X^2 + delta.Y^2 + delta.Z^2
+            if distanceSq < minDistanceSq then
+                minDistanceSq = distanceSq
                 nearestPlayer = player
             end
         end
@@ -132,23 +134,25 @@ function WaveManager.SpawnEnemy(difficulty)
 
             if targetPlayer and targetPlayer.Character and targetPlayer.Character.PrimaryPart then
                 local targetPos = targetPlayer.Character.PrimaryPart.Position
-                local dist = (targetPos - rootPart.Position).Magnitude
+                -- Optimization: Use squared distance to avoid square roots
+                local direction = targetPos - rootPart.Position
+                local distSq = direction.X^2 + direction.Y^2 + direction.Z^2
 
                 -- Optimization: Throttle updates based on distance
-                if dist > 100 then
+                if distSq > 10000 then -- 100^2
                     updateRate = 2.0
-                elseif dist > 50 then
+                elseif distSq > 2500 then -- 50^2
                     updateRate = 1.0
                 end
 
                 local usePathfinding = true
 
                 -- Optimization: Use direct movement if close and clear Line of Sight
-                if dist < 30 then
+                if distSq < 900 then -- 30^2
                     -- Update filter to include target character (so we don't hit it)
                     rayParams.FilterDescendantsInstances = {enemy, targetPlayer.Character}
 
-                    local direction = targetPos - rootPart.Position
+                    -- direction is already calculated above
                     local result = workspace:Raycast(rootPart.Position, direction, rayParams)
 
                     if not result then
