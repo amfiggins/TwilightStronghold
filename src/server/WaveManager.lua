@@ -43,14 +43,15 @@ end
 
 local function findNearestPlayer(position)
     local nearestPlayer = nil
-    local minDistance = math.huge
+    local minDistanceSq = math.huge
 
     for _, player in ipairs(Players:GetPlayers()) do
         local character = player.Character
         if character and character.PrimaryPart then
-            local distance = (character.PrimaryPart.Position - position).Magnitude
-            if distance < minDistance then
-                minDistance = distance
+            local delta = character.PrimaryPart.Position - position
+            local distSq = delta.X^2 + delta.Y^2 + delta.Z^2
+            if distSq < minDistanceSq then
+                minDistanceSq = distSq
                 nearestPlayer = player
             end
         end
@@ -132,19 +133,20 @@ function WaveManager.SpawnEnemy(difficulty)
 
             if targetPlayer and targetPlayer.Character and targetPlayer.Character.PrimaryPart then
                 local targetPos = targetPlayer.Character.PrimaryPart.Position
-                local dist = (targetPos - rootPart.Position).Magnitude
+                local delta = targetPos - rootPart.Position
+                local distSq = delta.X^2 + delta.Y^2 + delta.Z^2
 
                 -- Optimization: Throttle updates based on distance
-                if dist > 100 then
+                if distSq > 10000 then
                     updateRate = 2.0
-                elseif dist > 50 then
+                elseif distSq > 2500 then
                     updateRate = 1.0
                 end
 
                 local usePathfinding = true
 
                 -- Optimization: Use direct movement if close and clear Line of Sight
-                if dist < 30 then
+                if distSq < 900 then
                     -- Update filter to include target character (so we don't hit it)
                     rayParams.FilterDescendantsInstances = {enemy, targetPlayer.Character}
 
