@@ -38,3 +38,7 @@
 ## 2027-02-14 - Minigame Instruction Visibility
 **Learning:** Players often struggle with minigames because key mechanics (like "Hold SPACE") are assumed knowledge rather than explicitly taught.
 **Action:** Always include persistent, high-contrast instruction text (e.g., "Hold SPACE") directly within the minigame UI to eliminate ambiguity.
+
+## 2026-03-28 - Continuous Input Feedback
+**Learning:** Continuous input actions (like keeping a bar in a target zone) lack clarity if only the overall progress bar moves. Users need immediate visual confirmation on the input element itself to know they are in the 'sweet spot'.
+**Action:** Always change the visual state (e.g., BackgroundColor3) of the active input element during continuous success states, and remember to explicitly reset it on initialization.
