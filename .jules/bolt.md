@@ -1,0 +1,3 @@
+## 2024-05-20 - Distance Calculation Optimization
+**Learning:** In Roblox Luau, checking distance using `.Magnitude` performs an implicit and expensive square root (`math.sqrt`) operation. When only comparing against a distance threshold (e.g., `< maxDistance`), calculating the squared distance (`delta.X^2 + delta.Y^2 + delta.Z^2 < maxDistance^2`) is ~2.5x to ~3x faster because it avoids the square root.
+**Action:** Always use squared distance comparisons (`delta.X^2 + delta.Y^2 + delta.Z^2 < thresholdSq`) instead of `.Magnitude` in hot paths like AI loops (`WaveManager.lua`) and frequent validations (`BuildingSystem.lua`, `ResourceManager.lua`).
