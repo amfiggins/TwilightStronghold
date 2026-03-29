@@ -38,3 +38,6 @@
 ## 2027-02-14 - Minigame Instruction Visibility
 **Learning:** Players often struggle with minigames because key mechanics (like "Hold SPACE") are assumed knowledge rather than explicitly taught.
 **Action:** Always include persistent, high-contrast instruction text (e.g., "Hold SPACE") directly within the minigame UI to eliminate ambiguity.
+## 2025-02-14 - Active Element Feedback
+**Learning:** Users lack confidence when overlapping elements in minigames without immediate, per-frame visual confirmation (like a color change on the active bar) even if the progress bar is filling.
+**Action:** Always provide explicit, high-contrast visual feedback directly on the active user-controlled element when it enters a 'success' or 'active' state.
