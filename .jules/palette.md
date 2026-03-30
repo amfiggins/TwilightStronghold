@@ -38,3 +38,7 @@
 ## 2027-02-14 - Minigame Instruction Visibility
 **Learning:** Players often struggle with minigames because key mechanics (like "Hold SPACE") are assumed knowledge rather than explicitly taught.
 **Action:** Always include persistent, high-contrast instruction text (e.g., "Hold SPACE") directly within the minigame UI to eliminate ambiguity.
+
+## 2027-03-30 - Resetting Visual States
+**Learning:** When using colors to indicate visual feedback states (like progress overlap) during active gameplay loops, failing to explicitly reset those states in the initialization function causes subsequent sessions to start with a visual bug.
+**Action:** Always explicitly reset visual feedback states to their default values in the `Start()` initialization function of repeatable client-side UI controllers.
