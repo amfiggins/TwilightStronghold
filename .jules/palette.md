@@ -38,3 +38,7 @@
 ## 2027-02-14 - Minigame Instruction Visibility
 **Learning:** Players often struggle with minigames because key mechanics (like "Hold SPACE") are assumed knowledge rather than explicitly taught.
 **Action:** Always include persistent, high-contrast instruction text (e.g., "Hold SPACE") directly within the minigame UI to eliminate ambiguity.
+
+## 2026-03-31 - Matchmaking Queue State Visualization
+**Learning:** Players were joining the Survival Portal matchmaking queue but had no visual confirmation of their status or the current queue size, leading to repeated interactions and confusion.
+**Action:** Always provide explicit visual confirmation (e.g., a toast notification) when a player enters or exits a matchmaking queue, displaying their current status and required player count.
