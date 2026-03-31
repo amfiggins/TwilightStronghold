@@ -48,9 +48,11 @@ local function findNearestPlayer(position)
     for _, player in ipairs(Players:GetPlayers()) do
         local character = player.Character
         if character and character.PrimaryPart then
-            local distance = (character.PrimaryPart.Position - position).Magnitude
-            if distance < minDistance then
-                minDistance = distance
+            -- Optimization: Use squared distance to avoid expensive square root
+            local delta = character.PrimaryPart.Position - position
+            local distSqr = delta.X * delta.X + delta.Y * delta.Y + delta.Z * delta.Z
+            if distSqr < minDistance then
+                minDistance = distSqr
                 nearestPlayer = player
             end
         end
@@ -132,19 +134,21 @@ function WaveManager.SpawnEnemy(difficulty)
 
             if targetPlayer and targetPlayer.Character and targetPlayer.Character.PrimaryPart then
                 local targetPos = targetPlayer.Character.PrimaryPart.Position
-                local dist = (targetPos - rootPart.Position).Magnitude
+                local delta = targetPos - rootPart.Position
+                -- Optimization: Use squared distance to avoid expensive square root
+                local distSqr = delta.X * delta.X + delta.Y * delta.Y + delta.Z * delta.Z
 
                 -- Optimization: Throttle updates based on distance
-                if dist > 100 then
+                if distSqr > 10000 then -- 100^2
                     updateRate = 2.0
-                elseif dist > 50 then
+                elseif distSqr > 2500 then -- 50^2
                     updateRate = 1.0
                 end
 
                 local usePathfinding = true
 
                 -- Optimization: Use direct movement if close and clear Line of Sight
-                if dist < 30 then
+                if distSqr < 900 then -- 30^2
                     -- Update filter to include target character (so we don't hit it)
                     rayParams.FilterDescendantsInstances = {enemy, targetPlayer.Character}
 
