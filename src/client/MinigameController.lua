@@ -15,6 +15,7 @@ local frame = nil
 local bar = nil
 local target = nil
 local progressFill = nil
+local instructionLabel = nil
 
 local isPlaying = false
 local progress = 0
@@ -76,18 +77,26 @@ function MinigameController.Init()
     progressFill.Parent = progressBg
 
     -- Micro-UX: Instruction Label
-    local instruction = Instance.new("TextLabel")
-    instruction.Text = "Hold <b>SPACE</b> to align"
-    instruction.RichText = true
-    instruction.Size = UDim2.new(1, 0, 0, 30)
-    instruction.AnchorPoint = Vector2.new(0, 1) -- Bottom-Left
-    instruction.Position = UDim2.new(0, 0, 0, -5) -- 5px above
-    instruction.BackgroundTransparency = 1
-    instruction.TextColor3 = Color3.fromRGB(255, 255, 255)
-    instruction.TextStrokeTransparency = 0.5
-    instruction.Font = Enum.Font.GothamBold
-    instruction.TextSize = 18
-    instruction.Parent = bg
+    instructionLabel = Instance.new("TextLabel")
+
+    if UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled then
+        instructionLabel.Text = "Hold <b>TAP</b> to align"
+    elseif UserInputService.GamepadEnabled then
+        instructionLabel.Text = "Hold <b>(A) BUTTON</b> to align"
+    else
+        instructionLabel.Text = "Hold <b>SPACE</b> or <b>CLICK</b> to align"
+    end
+
+    instructionLabel.RichText = true
+    instructionLabel.Size = UDim2.new(1, 0, 0, 30)
+    instructionLabel.AnchorPoint = Vector2.new(0, 1) -- Bottom-Left
+    instructionLabel.Position = UDim2.new(0, 0, 0, -5) -- 5px above
+    instructionLabel.BackgroundTransparency = 1
+    instructionLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+    instructionLabel.TextStrokeTransparency = 0.5
+    instructionLabel.Font = Enum.Font.GothamBold
+    instructionLabel.TextSize = 18
+    instructionLabel.Parent = bg
 end
 
 function MinigameController.Start(callback)
@@ -111,8 +120,23 @@ function MinigameController.Start(callback)
             return
         end
         
-        -- Logic: Move Bar with Spacebar
-        if UserInputService:IsKeyDown(Enum.KeyCode.Space) then
+        -- Logic: Move Bar with Spacebar/Click/Touch/Gamepad
+        local isInputActive = UserInputService:IsKeyDown(Enum.KeyCode.Space) or
+                              UserInputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton1)
+
+        if UserInputService.TouchEnabled then
+            isInputActive = isInputActive or (#UserInputService:GetTouches() > 0)
+        end
+
+        -- Only check gamepad if there are connected gamepads
+        if UserInputService.GamepadEnabled then
+            local connectedGamepads = UserInputService:GetConnectedGamepads()
+            if #connectedGamepads > 0 then
+                isInputActive = isInputActive or UserInputService:IsGamepadButtonDown(connectedGamepads[1], Enum.KeyCode.ButtonA)
+            end
+        end
+
+        if isInputActive then
             barPosition = math.min(1 - BAR_SIZE, barPosition + (1.5 * dt))
         else
             barPosition = math.max(0, barPosition - (1.0 * dt))
