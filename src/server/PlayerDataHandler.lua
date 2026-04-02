@@ -14,6 +14,7 @@ local GameConfig = require(ReplicatedStorage.Shared.GameConfig)
 local ItemDatabase = require(ReplicatedStorage.Shared.ItemDatabase)
 
 local PlayerDataHandler = {}
+local lastGetTimes = {}
 local PlayerDataStore = DataStoreService:GetDataStore("PlayerData_" .. GameConfig.GAME_VERSION)
 
 -- Default Data Schema
@@ -127,6 +128,13 @@ function PlayerDataHandler.Init()
     GetPlayerData.Parent = Remotes
 
     GetPlayerData.OnServerInvoke = function(player)
+        -- Security: Rate Limiting
+        local now = os.clock()
+        if now - (lastGetTimes[player.UserId] or 0) < 1.0 then
+            return nil
+        end
+        lastGetTimes[player.UserId] = now
+
         local start = os.clock()
         local data = PlayerDataHandler.Get(player)
         -- Poll until data exists or timeout (5 seconds)
@@ -214,6 +222,7 @@ function PlayerDataHandler.OnPlayerRemoving(player)
     PlayerDataHandler.Save(player)
     sessionData[player.UserId] = nil
     sessionInventoryLookup[player.UserId] = nil
+    lastGetTimes[player.UserId] = nil
 end
 
 function PlayerDataHandler.Save(player)
