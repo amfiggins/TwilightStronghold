@@ -38,3 +38,7 @@
 ## 2027-02-14 - Minigame Instruction Visibility
 **Learning:** Players often struggle with minigames because key mechanics (like "Hold SPACE") are assumed knowledge rather than explicitly taught.
 **Action:** Always include persistent, high-contrast instruction text (e.g., "Hold SPACE") directly within the minigame UI to eliminate ambiguity.
+
+## 2027-02-20 - Multi-platform Input Feedback
+**Learning:** Hardcoding instructions (like "Hold SPACE") and input detection (like `IsKeyDown`) creates accessibility barriers for Mobile and Console users in minigames.
+**Action:** Always implement dynamic multi-platform input detection using `UserInputService:IsMouseButtonPressed` and `IsGamepadButtonDown`, and dynamically update instructional text based on `GetLastInputType()`.
