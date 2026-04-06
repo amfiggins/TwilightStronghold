@@ -38,3 +38,6 @@
 ## 2027-02-14 - Minigame Instruction Visibility
 **Learning:** Players often struggle with minigames because key mechanics (like "Hold SPACE") are assumed knowledge rather than explicitly taught.
 **Action:** Always include persistent, high-contrast instruction text (e.g., "Hold SPACE") directly within the minigame UI to eliminate ambiguity.
+## 2025-04-06 - [Input Accessibility]
+**Learning:** Hardcoding 'Spacebar' in minigames blocks mobile/console users. IsMouseButtonPressed doesn't capture touches implicitly, requiring explicit touch state tracking.
+**Action:** Always implement context-aware multi-platform inputs (Keyboard/Mouse/Touch/Gamepad) in UI minigames to ensure full accessibility.
