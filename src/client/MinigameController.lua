@@ -22,6 +22,9 @@ local barPosition = 0
 local targetPosition = 0.5
 local successCallback = nil
 
+local instructionLabel = nil
+local activeTouches = 0
+
 -- Constants
 local BAR_SIZE = 0.2 -- 20% of the area
 local TARGET_SIZE = 0.15
@@ -77,7 +80,7 @@ function MinigameController.Init()
 
     -- Micro-UX: Instruction Label
     local instruction = Instance.new("TextLabel")
-    instruction.Text = "Hold <b>SPACE</b> to align"
+    instruction.Text = "Hold to align"
     instruction.RichText = true
     instruction.Size = UDim2.new(1, 0, 0, 30)
     instruction.AnchorPoint = Vector2.new(0, 1) -- Bottom-Left
@@ -88,6 +91,30 @@ function MinigameController.Init()
     instruction.Font = Enum.Font.GothamBold
     instruction.TextSize = 18
     instruction.Parent = bg
+    instructionLabel = instruction
+
+    -- Multi-platform input tracking
+    UserInputService.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.Keyboard or input.UserInputType == Enum.UserInputType.MouseButton1 then
+            instructionLabel.Text = "Hold <b>SPACE</b> or <b>CLICK</b>"
+        elseif input.UserInputType == Enum.UserInputType.Touch then
+            instructionLabel.Text = "Hold <b>SCREEN</b>"
+        elseif input.UserInputType.Name:match("Gamepad") then
+            instructionLabel.Text = "Hold <b>R2</b>/<b>A</b>"
+        end
+    end)
+
+    UserInputService.TouchStarted:Connect(function()
+        activeTouches = activeTouches + 1
+    end)
+
+    UserInputService.TouchEnded:Connect(function()
+        activeTouches = math.max(0, activeTouches - 1)
+    end)
+
+    UserInputService.TouchCanceled:Connect(function()
+        activeTouches = math.max(0, activeTouches - 1)
+    end)
 end
 
 function MinigameController.Start(callback)
@@ -111,8 +138,20 @@ function MinigameController.Start(callback)
             return
         end
         
-        -- Logic: Move Bar with Spacebar
-        if UserInputService:IsKeyDown(Enum.KeyCode.Space) then
+        -- Logic: Move Bar with Multi-platform Input
+        local isInputActive = false
+        if UserInputService:IsKeyDown(Enum.KeyCode.Space) or UserInputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton1) or activeTouches > 0 then
+            isInputActive = true
+        else
+            for _, gamepad in ipairs(UserInputService:GetConnectedGamepads()) do
+                if UserInputService:IsGamepadButtonDown(gamepad, Enum.KeyCode.ButtonR2) or UserInputService:IsGamepadButtonDown(gamepad, Enum.KeyCode.ButtonA) then
+                    isInputActive = true
+                    break
+                end
+            end
+        end
+
+        if isInputActive then
             barPosition = math.min(1 - BAR_SIZE, barPosition + (1.5 * dt))
         else
             barPosition = math.max(0, barPosition - (1.0 * dt))
