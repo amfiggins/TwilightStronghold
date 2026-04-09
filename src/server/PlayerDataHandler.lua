@@ -39,6 +39,7 @@ local sessionData = {}
 -- Runtime inventory lookup cache: [UserId] = { [ItemId] = slotIndex }
 -- Optimization: Maps ItemId to the *first* index in inventory for O(1) checks.
 local sessionInventoryLookup = {}
+local lastDataRequestTimes = {}
 
 -- Helper: Deep Copy Table
 local function deepCopy(orig)
@@ -128,6 +129,15 @@ function PlayerDataHandler.Init()
 
     GetPlayerData.OnServerInvoke = function(player)
         local start = os.clock()
+
+        -- Security: Rate Limit requests to prevent thread exhaustion DoS
+        local lastRequest = lastDataRequestTimes[player.UserId] or 0
+        if (start - lastRequest) < 1.0 then
+            -- Silent return to prevent log spam vulnerability
+            return nil
+        end
+        lastDataRequestTimes[player.UserId] = start
+
         local data = PlayerDataHandler.Get(player)
         -- Poll until data exists or timeout (5 seconds)
         while not data and (os.clock() - start) < 5 do
@@ -214,6 +224,7 @@ function PlayerDataHandler.OnPlayerRemoving(player)
     PlayerDataHandler.Save(player)
     sessionData[player.UserId] = nil
     sessionInventoryLookup[player.UserId] = nil
+    lastDataRequestTimes[player.UserId] = nil
 end
 
 function PlayerDataHandler.Save(player)
