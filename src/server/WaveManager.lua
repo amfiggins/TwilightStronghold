@@ -48,9 +48,14 @@ local function findNearestPlayer(position)
     for _, player in ipairs(Players:GetPlayers()) do
         local character = player.Character
         if character and character.PrimaryPart then
-            local distance = (character.PrimaryPart.Position - position).Magnitude
-            if distance < minDistance then
-                minDistance = distance
+            local targetPos = character.PrimaryPart.Position
+            local dx = targetPos.X - position.X
+            local dy = targetPos.Y - position.Y
+            local dz = targetPos.Z - position.Z
+            local distanceSq = dx * dx + dy * dy + dz * dz
+
+            if distanceSq < minDistance then
+                minDistance = distanceSq
                 nearestPlayer = player
             end
         end
@@ -132,19 +137,22 @@ function WaveManager.SpawnEnemy(difficulty)
 
             if targetPlayer and targetPlayer.Character and targetPlayer.Character.PrimaryPart then
                 local targetPos = targetPlayer.Character.PrimaryPart.Position
-                local dist = (targetPos - rootPart.Position).Magnitude
+                local dx = targetPos.X - rootPart.Position.X
+                local dy = targetPos.Y - rootPart.Position.Y
+                local dz = targetPos.Z - rootPart.Position.Z
+                local distSq = dx * dx + dy * dy + dz * dz
 
                 -- Optimization: Throttle updates based on distance
-                if dist > 100 then
+                if distSq > 10000 then -- 100^2
                     updateRate = 2.0
-                elseif dist > 50 then
+                elseif distSq > 2500 then -- 50^2
                     updateRate = 1.0
                 end
 
                 local usePathfinding = true
 
                 -- Optimization: Use direct movement if close and clear Line of Sight
-                if dist < 30 then
+                if distSq < 900 then -- 30^2
                     -- Update filter to include target character (so we don't hit it)
                     rayParams.FilterDescendantsInstances = {enemy, targetPlayer.Character}
 

@@ -1,0 +1,3 @@
+## 2026-04-09 - Roblox Distance Calculations Optimization
+**Learning:** In Luau/Roblox, using `Vector3.Magnitude` implicitly triggers a square root operation. In tight AI loops (e.g., `findNearestPlayer` and AI distance checks in `WaveManager`), comparing squared distances by directly multiplying component differences (`dx*dx + dy*dy + dz*dz`) is significantly faster.
+**Action:** When finding nearest entities or comparing distance thresholds, avoid `.Magnitude` and `math.sqrt`. Instead, calculate the squared distance manually (`dx*dx + dy*dy + dz*dz`) and compare it against the squared threshold (`threshold * threshold`).
