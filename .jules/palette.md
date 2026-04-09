@@ -38,3 +38,7 @@
 ## 2027-02-14 - Minigame Instruction Visibility
 **Learning:** Players often struggle with minigames because key mechanics (like "Hold SPACE") are assumed knowledge rather than explicitly taught.
 **Action:** Always include persistent, high-contrast instruction text (e.g., "Hold SPACE") directly within the minigame UI to eliminate ambiguity.
+
+## 2024-04-09 - Platform-Agnostic Inputs & Explicit Touch Tracking
+**Learning:** Hardcoding PC-specific instructions (like "SPACE") and relying solely on implicit touch/mouse input fails on mobile and console. `IsMouseButtonPressed` does not reliably handle touch input implicitly on all platforms.
+**Action:** Initialize instructional text with a platform-agnostic phrase (e.g., "Hold to align") to prevent misleading mobile/console users before their first input triggers a dynamic update. Explicitly track active touch states via `TouchStarted`, `TouchEnded`, and `TouchCanceled` (while checking `gameProcessed` to avoid UI interference) to guarantee reliable cross-platform interaction.
