@@ -38,3 +38,7 @@
 ## 2027-02-14 - Minigame Instruction Visibility
 **Learning:** Players often struggle with minigames because key mechanics (like "Hold SPACE") are assumed knowledge rather than explicitly taught.
 **Action:** Always include persistent, high-contrast instruction text (e.g., "Hold SPACE") directly within the minigame UI to eliminate ambiguity.
+
+## 2027-02-14 - Minigame Instruction Visibility (Update)
+**Learning:** Hardcoding input strings (like "Hold SPACE") assumes PC usage, confusing mobile and console users.
+**Action:** Initialize instructional text to a platform-agnostic default (e.g. "Hold to align") and dynamically update it with the correct button hints based on `UserInputService.LastInputTypeChanged`.
