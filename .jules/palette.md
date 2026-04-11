@@ -38,3 +38,15 @@
 ## 2027-02-14 - Minigame Instruction Visibility
 **Learning:** Players often struggle with minigames because key mechanics (like "Hold SPACE") are assumed knowledge rather than explicitly taught.
 **Action:** Always include persistent, high-contrast instruction text (e.g., "Hold SPACE") directly within the minigame UI to eliminate ambiguity.
+
+## 2027-02-28 - Multi-Platform Input Feedback
+**Learning:** Hardcoded PC-specific inputs block mobile and console players, and that we must always implement multi-platform input validation.
+**Action:** Always implement multi-platform input validation using a combination of `UserInputService:IsKeyDown`, `IsMouseButtonPressed`, `IsGamepadButtonDown`, and explicit touch state tracking, and update instructions dynamically.
+
+## 2027-02-28 - Ignoring Hallucinated Methods
+**Learning:** Automated code review suggested using `UserInputService:GetTouches()` which is a hallucinated method that causes runtime errors.
+**Action:** Ignore the conflicting suggestion and adhere to the explicit memory guidelines to check `if not gameProcessed then` in all three touch handlers.
+
+## 2027-02-28 - Roblox Touch Event Hallucinations
+**Learning:** `UserInputService.TouchStarted`, `TouchEnded`, and `TouchCanceled` are hallucinated methods that cause runtime errors. Instead, touch events are handled via `InputBegan` and `InputEnded` checking for `Enum.UserInputType.Touch`.
+**Action:** When tracking touch events, always use `UserInputService.InputBegan` and `UserInputService.InputEnded` with `input.UserInputType == Enum.UserInputType.Touch`.
