@@ -78,8 +78,10 @@ function ResourceManager.OnGatherRequest(player, resourceNode)
         return -- Invalid resource node type
     end
 
-    if (rootPart.Position - nodePos).Magnitude > MAX_GATHER_DISTANCE then
-        warn(string.format("[ResourceManager] Suspicious gather: %s is too far (%.1f studs)", player.Name, (rootPart.Position - nodePos).Magnitude))
+    local delta = rootPart.Position - nodePos
+    local distSq = delta.X * delta.X + delta.Y * delta.Y + delta.Z * delta.Z
+    if distSq > MAX_GATHER_DISTANCE * MAX_GATHER_DISTANCE then
+        warn(string.format("[ResourceManager] Suspicious gather: %s is too far (%.1f studs)", player.Name, math.sqrt(distSq)))
         return
     end
 

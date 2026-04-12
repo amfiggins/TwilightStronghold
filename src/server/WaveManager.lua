@@ -48,9 +48,10 @@ local function findNearestPlayer(position)
     for _, player in ipairs(Players:GetPlayers()) do
         local character = player.Character
         if character and character.PrimaryPart then
-            local distance = (character.PrimaryPart.Position - position).Magnitude
-            if distance < minDistance then
-                minDistance = distance
+            local delta = character.PrimaryPart.Position - position
+            local distSq = delta.X * delta.X + delta.Y * delta.Y + delta.Z * delta.Z
+            if distSq < minDistance then
+                minDistance = distSq
                 nearestPlayer = player
             end
         end
@@ -132,19 +133,20 @@ function WaveManager.SpawnEnemy(difficulty)
 
             if targetPlayer and targetPlayer.Character and targetPlayer.Character.PrimaryPart then
                 local targetPos = targetPlayer.Character.PrimaryPart.Position
-                local dist = (targetPos - rootPart.Position).Magnitude
+                local delta = targetPos - rootPart.Position
+                local distSq = delta.X * delta.X + delta.Y * delta.Y + delta.Z * delta.Z
 
-                -- Optimization: Throttle updates based on distance
-                if dist > 100 then
+                -- Optimization: Throttle updates based on distance (using squared distances: 10000, 2500)
+                if distSq > 10000 then
                     updateRate = 2.0
-                elseif dist > 50 then
+                elseif distSq > 2500 then
                     updateRate = 1.0
                 end
 
                 local usePathfinding = true
 
-                -- Optimization: Use direct movement if close and clear Line of Sight
-                if dist < 30 then
+                -- Optimization: Use direct movement if close and clear Line of Sight (30 squared = 900)
+                if distSq < 900 then
                     -- Update filter to include target character (so we don't hit it)
                     rayParams.FilterDescendantsInstances = {enemy, targetPlayer.Character}
 
