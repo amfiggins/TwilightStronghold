@@ -38,3 +38,7 @@
 ## 2027-02-14 - Minigame Instruction Visibility
 **Learning:** Players often struggle with minigames because key mechanics (like "Hold SPACE") are assumed knowledge rather than explicitly taught.
 **Action:** Always include persistent, high-contrast instruction text (e.g., "Hold SPACE") directly within the minigame UI to eliminate ambiguity.
+
+## 2026-04-16 - Multi-platform Minigame Instructions
+**Learning:** Hardcoding keyboard instructions (e.g. "Hold SPACE") on UI components blocks mobile/console users from understanding interactions. Relying on default platform methods without explicit input state tracking can lead to runtime issues or incorrect checks.
+**Action:** Always initialize instructions with platform-agnostic phrasing ("Hold to align"), track touch inputs carefully with `InputBegan`/`InputEnded` avoiding hallucinated methods, and update UI dynamically based on `LastInputTypeChanged`.
