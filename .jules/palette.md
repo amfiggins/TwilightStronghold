@@ -38,3 +38,6 @@
 ## 2027-02-14 - Minigame Instruction Visibility
 **Learning:** Players often struggle with minigames because key mechanics (like "Hold SPACE") are assumed knowledge rather than explicitly taught.
 **Action:** Always include persistent, high-contrast instruction text (e.g., "Hold SPACE") directly within the minigame UI to eliminate ambiguity.
+## 2027-02-15 - Context-Aware Minigame Instructions
+**Learning:** Hardcoding instructions like "Hold SPACE" blocks mobile and console players from understanding mechanics. Default instructions must be platform-agnostic, and dynamic updates require tracking explicit touch states without relying on hallucinated API methods.
+**Action:** Always initialize instructions with platform-agnostic text (e.g., "Hold to align") and dynamically update using `InputBegan` tracking `UserInputType.Touch`, while avoiding `GetTouches()` due to engine limitations.
