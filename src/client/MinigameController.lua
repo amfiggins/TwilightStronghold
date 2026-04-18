@@ -16,6 +16,9 @@ local bar = nil
 local target = nil
 local progressFill = nil
 
+local instructionLabel = nil
+local activeTouches = 0
+
 local isPlaying = false
 local progress = 0
 local barPosition = 0
@@ -77,7 +80,7 @@ function MinigameController.Init()
 
     -- Micro-UX: Instruction Label
     local instruction = Instance.new("TextLabel")
-    instruction.Text = "Hold <b>SPACE</b> to align"
+    instruction.Text = "Hold to align"
     instruction.RichText = true
     instruction.Size = UDim2.new(1, 0, 0, 30)
     instruction.AnchorPoint = Vector2.new(0, 1) -- Bottom-Left
@@ -88,6 +91,22 @@ function MinigameController.Init()
     instruction.Font = Enum.Font.GothamBold
     instruction.TextSize = 18
     instruction.Parent = bg
+    instructionLabel = instruction
+
+    -- Track touches securely
+    UserInputService.InputBegan:Connect(function(input, gameProcessed)
+        if gameProcessed then return end
+        if input.UserInputType == Enum.UserInputType.Touch then
+            activeTouches = activeTouches + 1
+        end
+    end)
+
+    UserInputService.InputEnded:Connect(function(input, gameProcessed)
+        if gameProcessed then return end
+        if input.UserInputType == Enum.UserInputType.Touch then
+            activeTouches = math.max(0, activeTouches - 1)
+        end
+    end)
 end
 
 function MinigameController.Start(callback)
@@ -111,8 +130,29 @@ function MinigameController.Start(callback)
             return
         end
         
-        -- Logic: Move Bar with Spacebar
+        -- Logic: Move Bar with Multi-platform Support
+        local isInputting = false
+
         if UserInputService:IsKeyDown(Enum.KeyCode.Space) then
+            isInputting = true
+            instructionLabel.Text = "Hold <b>SPACE</b> to align"
+        elseif UserInputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton1) then
+            isInputting = true
+            instructionLabel.Text = "Hold <b>CLICK</b> to align"
+        elseif activeTouches > 0 then
+            isInputting = true
+            instructionLabel.Text = "Hold <b>TOUCH</b> to align"
+        end
+
+        for _, gamepad in ipairs(UserInputService:GetConnectedGamepads()) do
+            if UserInputService:IsGamepadButtonDown(gamepad, Enum.KeyCode.ButtonA) then
+                isInputting = true
+                instructionLabel.Text = "Hold <b>A</b> to align"
+                break
+            end
+        end
+
+        if isInputting then
             barPosition = math.min(1 - BAR_SIZE, barPosition + (1.5 * dt))
         else
             barPosition = math.max(0, barPosition - (1.0 * dt))
