@@ -38,3 +38,6 @@
 ## 2027-02-14 - Minigame Instruction Visibility
 **Learning:** Players often struggle with minigames because key mechanics (like "Hold SPACE") are assumed knowledge rather than explicitly taught.
 **Action:** Always include persistent, high-contrast instruction text (e.g., "Hold SPACE") directly within the minigame UI to eliminate ambiguity.
+## 2024-04-21 - Multi-Platform Minigame Input
+**Learning:** Hardcoding PC-specific inputs (like Spacebar) in minigames blocks mobile and console players, causing terrible UX. `UserInputService:IsMouseButtonPressed` does not reliably handle touch input.
+**Action:** Always implement explicit touch tracking via `InputBegan`/`InputEnded` and provide context-aware instruction text that updates dynamically via `LastInputTypeChanged`. Never use the hallucinated method `GetTouches()`.
