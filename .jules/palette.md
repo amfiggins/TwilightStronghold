@@ -38,3 +38,7 @@
 ## 2027-02-14 - Minigame Instruction Visibility
 **Learning:** Players often struggle with minigames because key mechanics (like "Hold SPACE") are assumed knowledge rather than explicitly taught.
 **Action:** Always include persistent, high-contrast instruction text (e.g., "Hold SPACE") directly within the minigame UI to eliminate ambiguity.
+
+## 2027-02-28 - Hardcoded PC Inputs Block Accessibility
+**Learning:** Hardcoding input instructions like "Hold SPACE" and checking only for `Enum.KeyCode.Space` blocks mobile and console players from participating in minigames. Mobile touch needs specific active touch tracking as `IsMouseButtonPressed` does not reliably cover it.
+**Action:** Always implement multi-platform validation (Touch, Gamepad, Mouse, Keyboard) and update instruction text dynamically based on `UserInputService:GetLastInputType()`.

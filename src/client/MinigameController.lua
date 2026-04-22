@@ -21,6 +21,23 @@ local progress = 0
 local barPosition = 0
 local targetPosition = 0.5
 local successCallback = nil
+local activeTouches = 0
+local activeGamepad = nil
+
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    if input.UserInputType.Name:match("Gamepad") then
+        activeGamepad = input.UserInputType
+    end
+    if not gameProcessed and input.UserInputType == Enum.UserInputType.Touch then
+        activeTouches = activeTouches + 1
+    end
+end)
+
+UserInputService.InputEnded:Connect(function(input, gameProcessed)
+    if input.UserInputType == Enum.UserInputType.Touch then
+        activeTouches = math.max(0, activeTouches - 1)
+    end
+end)
 
 -- Constants
 local BAR_SIZE = 0.2 -- 20% of the area
@@ -77,7 +94,14 @@ function MinigameController.Init()
 
     -- Micro-UX: Instruction Label
     local instruction = Instance.new("TextLabel")
-    instruction.Text = "Hold <b>SPACE</b> to align"
+    local lastInput = UserInputService:GetLastInputType()
+    if lastInput == Enum.UserInputType.Touch then
+        instruction.Text = "Hold <b>SCREEN</b> to align"
+    elseif lastInput.Name:match("Gamepad") then
+        instruction.Text = "Hold <b>RT</b> to align"
+    else
+        instruction.Text = "Hold <b>SPACE</b> or <b>CLICK</b> to align"
+    end
     instruction.RichText = true
     instruction.Size = UDim2.new(1, 0, 0, 30)
     instruction.AnchorPoint = Vector2.new(0, 1) -- Bottom-Left
@@ -111,8 +135,13 @@ function MinigameController.Start(callback)
             return
         end
         
-        -- Logic: Move Bar with Spacebar
-        if UserInputService:IsKeyDown(Enum.KeyCode.Space) then
+        -- Logic: Move Bar with Multi-platform Input
+        local isInputActive = UserInputService:IsKeyDown(Enum.KeyCode.Space) or
+                              UserInputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton1) or
+                              (activeGamepad and UserInputService:IsGamepadButtonDown(activeGamepad, Enum.KeyCode.ButtonR2)) or
+                              activeTouches > 0
+
+        if isInputActive then
             barPosition = math.min(1 - BAR_SIZE, barPosition + (1.5 * dt))
         else
             barPosition = math.max(0, barPosition - (1.0 * dt))
