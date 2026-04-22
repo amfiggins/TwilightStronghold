@@ -39,6 +39,7 @@ local sessionData = {}
 -- Runtime inventory lookup cache: [UserId] = { [ItemId] = slotIndex }
 -- Optimization: Maps ItemId to the *first* index in inventory for O(1) checks.
 local sessionInventoryLookup = {}
+local lastGetPlayerDataRequest = {}
 
 -- Helper: Deep Copy Table
 local function deepCopy(orig)
@@ -127,6 +128,13 @@ function PlayerDataHandler.Init()
     GetPlayerData.Parent = Remotes
 
     GetPlayerData.OnServerInvoke = function(player)
+        local now = os.clock()
+        local lastReq = lastGetPlayerDataRequest[player.UserId] or 0
+        if (now - lastReq) < 1.0 then
+            return nil
+        end
+        lastGetPlayerDataRequest[player.UserId] = now
+
         local start = os.clock()
         local data = PlayerDataHandler.Get(player)
         -- Poll until data exists or timeout (5 seconds)
@@ -214,6 +222,7 @@ function PlayerDataHandler.OnPlayerRemoving(player)
     PlayerDataHandler.Save(player)
     sessionData[player.UserId] = nil
     sessionInventoryLookup[player.UserId] = nil
+    lastGetPlayerDataRequest[player.UserId] = nil
 end
 
 function PlayerDataHandler.Save(player)
@@ -256,7 +265,7 @@ function PlayerDataHandler.AddItem(player, itemId, quantity)
     end
     local lookup = sessionInventoryLookup[userId]
     quantity = quantity or 1
-    if type(quantity) ~= "number" or quantity <= 0 then
+    if type(quantity) ~= "number" or quantity ~= quantity or quantity == math.huge or quantity <= 0 then
         return false, "InvalidQuantity"
     end
     
@@ -309,7 +318,7 @@ function PlayerDataHandler.AddCurrency(player, currencyType, amount)
     local data = sessionData[player.UserId]
     if not data then return false end
     
-    if type(amount) ~= "number" or amount <= 0 then
+    if type(amount) ~= "number" or amount ~= amount or amount == math.huge or amount <= 0 then
         return false
     end
 
@@ -348,7 +357,7 @@ function PlayerDataHandler.RemoveItem(player, itemId, quantity)
     if not data then return false end
 
     quantity = quantity or 1
-    if type(quantity) ~= "number" or quantity <= 0 then
+    if type(quantity) ~= "number" or quantity ~= quantity or quantity == math.huge or quantity <= 0 then
         return false
     end
 

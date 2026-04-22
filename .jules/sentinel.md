@@ -72,3 +72,8 @@
 **Vulnerability:** A Denial of Service (DoS) vulnerability was discovered in the matchmaking queue system where disconnected players ("ghosts") were not properly removed or validated during asynchronous operations (like teleportation failures).
 **Learning:** In asynchronous Roblox workflows, such as teleportation or long-running computations, a player's connection state (`player.Parent ~= nil`) is not guaranteed. If disconnected players remain in tracking arrays (e.g., `queue`), they can trigger infinite retry loops or stall multi-step processes for the entire server.
 **Prevention:** Always connect to `Players.PlayerRemoving` to clear players from active queues and tracking tables. Additionally, before performing state updates after a `task.wait()` or `pcall` (like re-queuing a player after a failed teleport), explicitly verify the player object is still valid and connected (`if player and player.Parent then`).
+
+## 2024-05-26 - NaN/Inf Exploit in Economy and DoS in RemoteFunction
+**Vulnerability:** `PlayerDataHandler` failed to reject `NaN` and `math.huge` for quantity, bypassing `quantity <= 0` checks. Additionally, `GetPlayerData.OnServerInvoke` lacked rate limits, allowing DoS via Thread Exhaustion.
+**Learning:** `NaN <= 0` evaluates to false. Also, yielding RemoteFunctions must implement non-yielding rate limits immediately upon invocation.
+**Prevention:** Explicitly check for `NaN` (`x ~= x`) and `math.huge` for all numerical inputs. Ensure all client-facing endpoints have an `os.clock()` rate limit.
