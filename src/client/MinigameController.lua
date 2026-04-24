@@ -134,10 +134,16 @@ function MinigameController.Start(callback)
         local targetStart = targetPosition
         local targetEnd = targetPosition + TARGET_SIZE
         
-        if barStart < targetEnd and barEnd > targetStart then
+        local isOverlapping = barStart < targetEnd and barEnd > targetStart
+
+        if isOverlapping then
             progress = progress + (FILL_RATE * dt)
+            target.BackgroundColor3 = Color3.fromRGB(0, 255, 100)
+            target.BackgroundTransparency = 0.3
         else
             progress = math.max(0, progress - (DECAY_RATE * dt))
+            target.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+            target.BackgroundTransparency = 0.6
         end
         
 

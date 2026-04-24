@@ -38,3 +38,7 @@
 ## 2027-02-14 - Minigame Instruction Visibility
 **Learning:** Players often struggle with minigames because key mechanics (like "Hold SPACE") are assumed knowledge rather than explicitly taught.
 **Action:** Always include persistent, high-contrast instruction text (e.g., "Hold SPACE") directly within the minigame UI to eliminate ambiguity.
+
+## 2027-04-24 - Active Zone Feedback in Minigames
+**Learning:** Minigames requiring precision (like keeping a bar in a target zone) feel ambiguous if the target zone's visual state doesn't react to success/failure overlap.
+**Action:** Always add reactive visual feedback (e.g., color or transparency changes) to target zones when overlapping to confirm to the player they are succeeding.
