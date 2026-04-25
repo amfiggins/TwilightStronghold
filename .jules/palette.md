@@ -38,3 +38,7 @@
 ## 2027-02-14 - Minigame Instruction Visibility
 **Learning:** Players often struggle with minigames because key mechanics (like "Hold SPACE") are assumed knowledge rather than explicitly taught.
 **Action:** Always include persistent, high-contrast instruction text (e.g., "Hold SPACE") directly within the minigame UI to eliminate ambiguity.
+
+## 2024-04-25 - Continuous Action Micro-feedback
+**Learning:** Continuous action minigames require immediate visual feedback on the interaction element itself (like color changing upon successful overlap) to feel responsive and satisfying.
+**Action:** Always map primary interaction states (e.g. overlapping vs missing) to distinct visual changes (like color) to reduce cognitive load during fast-paced UI interactions.

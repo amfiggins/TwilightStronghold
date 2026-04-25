@@ -96,6 +96,9 @@ function MinigameController.Start(callback)
     successCallback = callback
     progress = 0
     barPosition = 0.5
+    if bar then
+        bar.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    end
     
     frame.Visible = true
     if progressFill then
@@ -136,8 +139,10 @@ function MinigameController.Start(callback)
         
         if barStart < targetEnd and barEnd > targetStart then
             progress = progress + (FILL_RATE * dt)
+            bar.BackgroundColor3 = Color3.fromRGB(150, 255, 150)
         else
             progress = math.max(0, progress - (DECAY_RATE * dt))
+            bar.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
         end
         
 
