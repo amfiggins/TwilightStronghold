@@ -43,14 +43,17 @@ end
 
 local function findNearestPlayer(position)
     local nearestPlayer = nil
-    local minDistance = math.huge
+    local minDistanceSq = math.huge
 
     for _, player in ipairs(Players:GetPlayers()) do
         local character = player.Character
         if character and character.PrimaryPart then
-            local distance = (character.PrimaryPart.Position - position).Magnitude
-            if distance < minDistance then
-                minDistance = distance
+            local dx = character.PrimaryPart.Position.X - position.X
+            local dy = character.PrimaryPart.Position.Y - position.Y
+            local dz = character.PrimaryPart.Position.Z - position.Z
+            local distanceSq = dx * dx + dy * dy + dz * dz
+            if distanceSq < minDistanceSq then
+                minDistanceSq = distanceSq
                 nearestPlayer = player
             end
         end
@@ -132,19 +135,22 @@ function WaveManager.SpawnEnemy(difficulty)
 
             if targetPlayer and targetPlayer.Character and targetPlayer.Character.PrimaryPart then
                 local targetPos = targetPlayer.Character.PrimaryPart.Position
-                local dist = (targetPos - rootPart.Position).Magnitude
+                local dx = targetPos.X - rootPart.Position.X
+                local dy = targetPos.Y - rootPart.Position.Y
+                local dz = targetPos.Z - rootPart.Position.Z
+                local distSq = dx * dx + dy * dy + dz * dz
 
-                -- Optimization: Throttle updates based on distance
-                if dist > 100 then
+                -- Optimization: Throttle updates based on squared distance
+                if distSq > 10000 then -- 100^2
                     updateRate = 2.0
-                elseif dist > 50 then
+                elseif distSq > 2500 then -- 50^2
                     updateRate = 1.0
                 end
 
                 local usePathfinding = true
 
                 -- Optimization: Use direct movement if close and clear Line of Sight
-                if dist < 30 then
+                if distSq < 900 then -- 30^2
                     -- Update filter to include target character (so we don't hit it)
                     rayParams.FilterDescendantsInstances = {enemy, targetPlayer.Character}
 

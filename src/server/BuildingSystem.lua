@@ -17,13 +17,19 @@ local lastBuildTimes = {}
 local function isValidCFrame(cf)
     if typeof(cf) ~= "CFrame" then return false end
 
-    local components = {cf:GetComponents()}
-    for _, v in ipairs(components) do
-        -- Check for NaN (v ~= v) and Infinity
-        if v ~= v or math.abs(v) == math.huge then
-            return false
-        end
-    end
+    local x, y, z, r00, r01, r02, r10, r11, r12, r20, r21, r22 = cf:GetComponents()
+    if x ~= x or math.abs(x) == math.huge then return false end
+    if y ~= y or math.abs(y) == math.huge then return false end
+    if z ~= z or math.abs(z) == math.huge then return false end
+    if r00 ~= r00 or math.abs(r00) == math.huge then return false end
+    if r01 ~= r01 or math.abs(r01) == math.huge then return false end
+    if r02 ~= r02 or math.abs(r02) == math.huge then return false end
+    if r10 ~= r10 or math.abs(r10) == math.huge then return false end
+    if r11 ~= r11 or math.abs(r11) == math.huge then return false end
+    if r12 ~= r12 or math.abs(r12) == math.huge then return false end
+    if r20 ~= r20 or math.abs(r20) == math.huge then return false end
+    if r21 ~= r21 or math.abs(r21) == math.huge then return false end
+    if r22 ~= r22 or math.abs(r22) == math.huge then return false end
     return true
 end
 
@@ -74,9 +80,12 @@ function BuildingSystem.PlaceStructure(player, structureType, cframe)
         return false, "PlayerDead" -- Cannot build if dead or spawning
     end
 
-    local dist = (rootPart.Position - cframe.Position).Magnitude
-    if dist > GameConfig.MAX_BUILD_DISTANCE then
-        warn(string.format("[BuildingSystem] Suspicious build: %s is too far (%.1f studs)", player.Name, dist))
+    local dx = rootPart.Position.X - cframe.Position.X
+    local dy = rootPart.Position.Y - cframe.Position.Y
+    local dz = rootPart.Position.Z - cframe.Position.Z
+    local distSq = dx * dx + dy * dy + dz * dz
+    if distSq > GameConfig.MAX_BUILD_DISTANCE * GameConfig.MAX_BUILD_DISTANCE then
+        warn(string.format("[BuildingSystem] Suspicious build: %s is too far (%.1f studs)", player.Name, math.sqrt(distSq)))
         return false, "TooFar"
     end
 
