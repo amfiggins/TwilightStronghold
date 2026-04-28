@@ -38,3 +38,7 @@
 ## 2027-02-14 - Minigame Instruction Visibility
 **Learning:** Players often struggle with minigames because key mechanics (like "Hold SPACE") are assumed knowledge rather than explicitly taught.
 **Action:** Always include persistent, high-contrast instruction text (e.g., "Hold SPACE") directly within the minigame UI to eliminate ambiguity.
+
+## 2024-04-28 - Cross-Platform Input Accessibility
+**Learning:** Custom UI interactive elements (like minigames) that rely purely on keyboard inputs completely break the UX for mobile and console players, rendering the feature inaccessible on those platforms.
+**Action:** Always map primary actions to support `Enum.KeyCode.Space` (PC), `Enum.UserInputType.MouseButton1` (Mobile/PC Mouse), and `Enum.KeyCode.ButtonR2` (Console) using `UserInputService` to ensure a universally accessible experience.
