@@ -126,7 +126,18 @@ function PlayerDataHandler.Init()
     GetPlayerData.Name = "GetPlayerData"
     GetPlayerData.Parent = Remotes
 
+    local rateLimits = {}
+    local RATE_LIMIT = 0.5
+
     GetPlayerData.OnServerInvoke = function(player)
+        -- Security: Rate Limit requests to prevent thread exhaustion/DoS
+        local now = os.clock()
+        local lastReq = rateLimits[player.UserId] or 0
+        if (now - lastReq) < RATE_LIMIT then
+            return nil -- Silent fail
+        end
+        rateLimits[player.UserId] = now
+
         local start = os.clock()
         local data = PlayerDataHandler.Get(player)
         -- Poll until data exists or timeout (5 seconds)
@@ -138,7 +149,10 @@ function PlayerDataHandler.Init()
     end
 
     Players.PlayerAdded:Connect(PlayerDataHandler.OnPlayerAdded)
-    Players.PlayerRemoving:Connect(PlayerDataHandler.OnPlayerRemoving)
+    Players.PlayerRemoving:Connect(function(player)
+        rateLimits[player.UserId] = nil
+        PlayerDataHandler.OnPlayerRemoving(player)
+    end)
     
     -- Autosave Loop
     task.spawn(function()
