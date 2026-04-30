@@ -36,6 +36,7 @@ local DEFAULT_DATA = {
 
 -- Runtime session cache
 local sessionData = {}
+local lastDataRequests = {} -- Security: Rate limiting cache [UserId] = timestamp
 -- Runtime inventory lookup cache: [UserId] = { [ItemId] = slotIndex }
 -- Optimization: Maps ItemId to the *first* index in inventory for O(1) checks.
 local sessionInventoryLookup = {}
@@ -127,6 +128,14 @@ function PlayerDataHandler.Init()
     GetPlayerData.Parent = Remotes
 
     GetPlayerData.OnServerInvoke = function(player)
+        -- Security: Rate Limit to prevent Thread Exhaustion DoS
+        local now = os.clock()
+        local lastReq = lastDataRequests[player.UserId] or 0
+        if (now - lastReq) < 1.0 then
+            return nil
+        end
+        lastDataRequests[player.UserId] = now
+
         local start = os.clock()
         local data = PlayerDataHandler.Get(player)
         -- Poll until data exists or timeout (5 seconds)
@@ -214,6 +223,7 @@ function PlayerDataHandler.OnPlayerRemoving(player)
     PlayerDataHandler.Save(player)
     sessionData[player.UserId] = nil
     sessionInventoryLookup[player.UserId] = nil
+    lastDataRequests[player.UserId] = nil
 end
 
 function PlayerDataHandler.Save(player)
