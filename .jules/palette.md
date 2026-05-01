@@ -38,3 +38,7 @@
 ## 2027-02-14 - Minigame Instruction Visibility
 **Learning:** Players often struggle with minigames because key mechanics (like "Hold SPACE") are assumed knowledge rather than explicitly taught.
 **Action:** Always include persistent, high-contrast instruction text (e.g., "Hold SPACE") directly within the minigame UI to eliminate ambiguity.
+
+## 2025-01-24 - Cross-Platform Input Accessibility
+**Learning:** Hardcoding keyboard-only controls (like Spacebar) in interactive UI elements completely excludes mobile/touch and console players, making the feature inaccessible to a large portion of the player base.
+**Action:** Always support multiple input methods via `UserInputService` (e.g., Keyboard, MouseButton1, and Gamepad ButtonR2) when creating custom interactions or minigames to ensure cross-platform accessibility.

@@ -77,7 +77,7 @@ function MinigameController.Init()
 
     -- Micro-UX: Instruction Label
     local instruction = Instance.new("TextLabel")
-    instruction.Text = "Hold <b>SPACE</b> to align"
+    instruction.Text = "Hold <b>SPACE/CLICK/R2</b> to align"
     instruction.RichText = true
     instruction.Size = UDim2.new(1, 0, 0, 30)
     instruction.AnchorPoint = Vector2.new(0, 1) -- Bottom-Left
@@ -111,8 +111,12 @@ function MinigameController.Start(callback)
             return
         end
         
-        -- Logic: Move Bar with Spacebar
-        if UserInputService:IsKeyDown(Enum.KeyCode.Space) then
+        -- Logic: Move Bar with Spacebar, Mouse, or Gamepad
+        local isInputDown = UserInputService:IsKeyDown(Enum.KeyCode.Space)
+            or UserInputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton1)
+            or UserInputService:IsGamepadButtonDown(Enum.UserInputType.Gamepad1, Enum.KeyCode.ButtonR2)
+
+        if isInputDown then
             barPosition = math.min(1 - BAR_SIZE, barPosition + (1.5 * dt))
         else
             barPosition = math.max(0, barPosition - (1.0 * dt))
