@@ -1,0 +1,12 @@
+{
+  "luau-analyze": {
+    "globals": [
+      "game", "script", "workspace", "Instance", "Vector3", "Vector2", "Color3",
+      "UDim2", "CFrame", "Enum", "task", "math", "os", "type", "typeof", "print",
+      "warn", "error", "pcall", "require", "ipairs", "pairs", "setmetatable",
+      "getmetatable", "assert", "tostring", "tonumber", "tick", "coroutine", "table", "string",
+      "RaycastParams", "TweenInfo", "BrickColor", "Region3", "Faces", "ColorSequence",
+      "NumberSequence", "NumberSequenceKeypoint", "ColorSequenceKeypoint", "PhysicalProperties"
+    ]
+  }
+}
