@@ -1,0 +1,10 @@
+{
+  "luau-analyze": {
+    "globals": [
+      "game", "workspace", "Instance", "Vector3", "CFrame", "UDim2", "Color3",
+      "Enum", "Vector2", "TweenInfo", "tick", "task", "math", "string", "require",
+      "pcall", "warn", "print", "ipairs", "pairs", "tostring", "tonumber", "type",
+      "typeof", "script", "RaycastParams", "UDim", "delay", "spawn", "wait"
+    ]
+  }
+}
