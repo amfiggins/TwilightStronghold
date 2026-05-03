@@ -1,0 +1,5 @@
+{
+  "luau-analyze": {
+    "globals": ["game", "workspace", "Instance", "Vector3", "CFrame", "UDim2", "Vector2", "script", "setmetatable", "type", "tostring", "ipairs", "pairs", "tick", "BrickColor", "Color3", "require", "math", "os", "warn", "print", "task", "typeof", "pcall", "table"]
+  }
+}

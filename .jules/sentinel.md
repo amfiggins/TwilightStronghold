@@ -72,3 +72,8 @@
 **Vulnerability:** A Denial of Service (DoS) vulnerability was discovered in the matchmaking queue system where disconnected players ("ghosts") were not properly removed or validated during asynchronous operations (like teleportation failures).
 **Learning:** In asynchronous Roblox workflows, such as teleportation or long-running computations, a player's connection state (`player.Parent ~= nil`) is not guaranteed. If disconnected players remain in tracking arrays (e.g., `queue`), they can trigger infinite retry loops or stall multi-step processes for the entire server.
 **Prevention:** Always connect to `Players.PlayerRemoving` to clear players from active queues and tracking tables. Additionally, before performing state updates after a `task.wait()` or `pcall` (like re-queuing a player after a failed teleport), explicitly verify the player object is still valid and connected (`if player and player.Parent then`).
+
+## 2024-05-03 - NaN and Infinity Vulnerability in Luau
+**Vulnerability:** Numerical inputs (`quantity` or `amount`) could be set to `NaN` (0/0) or `Infinity` (`math.huge`). These values bypass standard checks like `amount <= 0` but corrupt data and calculations when added to inventory quantities or player currencies.
+**Learning:** In Luau, `typeof(NaN)` and `typeof(math.huge)` return `"number"`. `NaN <= 0` evaluates to `false` and `math.huge > 0` evaluates to `true`. Relying solely on `quantity > 0` or `quantity <= 0` allows these values to bypass validation.
+**Prevention:** Explicitly check for `NaN` (using `quantity ~= quantity`) and `math.huge` (using `quantity == math.huge`) alongside normal bounds checking to prevent these malicious values from entering the system.
