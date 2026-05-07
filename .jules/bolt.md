@@ -1,0 +1,3 @@
+## 2024-05-26 - Distance Calculation Optimization
+**Learning:** In Roblox Luau, replacing `.Magnitude` with explicit squared distance calculations (e.g., `delta.X * delta.X + delta.Y * delta.Y + delta.Z * delta.Z`) and comparing against squared thresholds significantly improves performance in hot loops by avoiding expensive square root math and C++ bridge crossings.
+**Action:** When writing hot loops that evaluate distances (like AI target selection or physics checks), always use squared distance math and compare against predefined squared thresholds instead of allocating and evaluating `.Magnitude`.
