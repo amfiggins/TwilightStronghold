@@ -38,3 +38,7 @@
 ## 2027-02-14 - Minigame Instruction Visibility
 **Learning:** Players often struggle with minigames because key mechanics (like "Hold SPACE") are assumed knowledge rather than explicitly taught.
 **Action:** Always include persistent, high-contrast instruction text (e.g., "Hold SPACE") directly within the minigame UI to eliminate ambiguity.
+
+## 2026-06-25 - Cross-Platform Minigame Inputs
+**Learning:** Roblox minigames often default to keyboard-only inputs (like Spacebar), making them inaccessible for mobile (touch/mouse) and console (gamepad) users.
+**Action:** Always support multiple input types (`Space`, `MouseButton1`, `ButtonR2`) via `UserInputService` to ensure cross-platform accessibility in interactive UI elements, and update on-screen instructions to reflect this.
