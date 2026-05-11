@@ -43,6 +43,9 @@ jobs:
         # This installs rojo (and any other tools listed in aftman.toml)
 
       # ── Build Lobby Place ─────────────────────────────────────────────────
+      - name: Create build directory
+        run: mkdir -p build
+
       - name: Build Lobby (.rbxl)
         if: ${{ github.event_name == 'push' || inputs.place == 'both' || inputs.place == 'lobby' }}
         run: rojo build default.project.json --output build/TwilightStronghold-Lobby.rbxl
