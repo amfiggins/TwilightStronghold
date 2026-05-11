@@ -374,10 +374,46 @@ function PlayerDataHandler.RemoveItem(player, itemId, quantity)
     -- Deduct
     local newQty = currentQty - quantity
     if newQty <= 0 then
-        -- Remove slot
-        table.remove(data.Inventory, slotIndex)
-        -- Indices shifted, we must rebuild lookup (O(N))
-        rebuildLookup(userId)
+        -- Remove slot efficiently (O(1) Swap-Remove) to avoid shifting array
+        local lastIndex = #data.Inventory
+        local lastItem = data.Inventory[lastIndex]
+
+        if slotIndex == lastIndex then
+            -- Removing the last item, no swap needed
+            table.remove(data.Inventory, lastIndex)
+            if lookup and lookup[itemId] == slotIndex then
+                lookup[itemId] = nil
+            end
+        else
+            -- Swap with last item
+            data.Inventory[slotIndex] = lastItem
+            table.remove(data.Inventory, lastIndex)
+
+            -- Update Lookup for the moved item
+            -- If the moved item was the primary instance (lookup pointed to lastIndex), update it
+            if lookup and lookup[lastItem.ItemId] == lastIndex then
+                lookup[lastItem.ItemId] = slotIndex
+            end
+
+            -- Update Lookup for the removed item
+            if lookup and lookup[itemId] == slotIndex then
+                -- We removed the primary instance.
+                lookup[itemId] = nil
+
+                -- Check if the moved item (now at slotIndex) is the same type, taking the spot
+                if lastItem.ItemId == itemId then
+                    lookup[itemId] = slotIndex
+                else
+                    -- Scan for new primary instance (Worst case O(N), but rare for stackables)
+                    for i, item in ipairs(data.Inventory) do
+                        if item.ItemId == itemId then
+                            lookup[itemId] = i
+                            break
+                        end
+                    end
+                end
+            end
+        end
     else
         -- Update slot
         slot.Qty = newQty
