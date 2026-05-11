@@ -267,7 +267,7 @@ function PlayerDataHandler.AddItem(player, itemId, quantity)
     end
     local lookup = sessionInventoryLookup[userId]
     quantity = quantity or 1
-    if type(quantity) ~= "number" or quantity <= 0 then
+    if type(quantity) ~= "number" or quantity <= 0 or quantity ~= quantity or quantity == math.huge then
         return false, "InvalidQuantity"
     end
     
@@ -320,7 +320,7 @@ function PlayerDataHandler.AddCurrency(player, currencyType, amount)
     local data = sessionData[player.UserId]
     if not data then return false end
     
-    if type(amount) ~= "number" or amount <= 0 then
+    if type(amount) ~= "number" or amount <= 0 or amount ~= amount or amount == math.huge then
         return false
     end
 
@@ -359,7 +359,7 @@ function PlayerDataHandler.RemoveItem(player, itemId, quantity)
     if not data then return false end
 
     quantity = quantity or 1
-    if type(quantity) ~= "number" or quantity <= 0 then
+    if type(quantity) ~= "number" or quantity <= 0 or quantity ~= quantity or quantity == math.huge then
         return false
     end
 
