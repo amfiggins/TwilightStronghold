@@ -1,0 +1,4 @@
+[tools]
+# Rojo: syncs filesystem scripts into Roblox Studio and builds .rbxl files
+# https://github.com/rojo-rbx/rojo/releases
+rojo = "rojo-rbx/rojo@7.4.4"

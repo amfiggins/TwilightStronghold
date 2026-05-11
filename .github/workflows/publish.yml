@@ -1,0 +1,91 @@
+name: Publish to Roblox
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      place:
+        description: "Which place to publish (lobby, survival, or both)"
+        required: false
+        default: "both"
+        type: choice
+        options:
+          - both
+          - lobby
+          - survival
+
+concurrency:
+  group: publish
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    name: Build & Publish
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      # ── Checkout ──────────────────────────────────────────────────────────
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # ── Install Rojo ──────────────────────────────────────────────────────
+      # Rojo builds the .rbxl file from the filesystem scripts
+      - name: Install Rojo
+        uses: ok-nick/setup-aftman@v0.4.2
+        # Aftman is the Roblox toolchain manager (like nvm but for Roblox tools)
+        # It reads aftman.toml to install the right Rojo version
+
+      - name: Install tools via Aftman
+        run: aftman install
+        # This installs rojo (and any other tools listed in aftman.toml)
+
+      # ── Build Lobby Place ─────────────────────────────────────────────────
+      - name: Build Lobby (.rbxl)
+        if: ${{ github.event_name == 'push' || inputs.place == 'both' || inputs.place == 'lobby' }}
+        run: rojo build default.project.json --output build/TwilightStronghold-Lobby.rbxl
+
+      # ── Build Survival Place ──────────────────────────────────────────────
+      # The survival zone uses the same scripts but a different project config
+      - name: Build Survival Zone (.rbxl)
+        if: ${{ github.event_name == 'push' || inputs.place == 'both' || inputs.place == 'survival' }}
+        run: rojo build survival.project.json --output build/TwilightStronghold-Survival.rbxl
+
+      # ── Publish Lobby to Roblox ───────────────────────────────────────────
+      - name: Publish Lobby to Roblox
+        if: ${{ github.event_name == 'push' || inputs.place == 'both' || inputs.place == 'lobby' }}
+        env:
+          ROBLOX_API_KEY: ${{ secrets.ROBLOX_API_KEY }}
+        run: |
+          curl --fail --silent --show-error \
+            --request POST \
+            --header "x-api-key: $ROBLOX_API_KEY" \
+            --header "Content-Type: application/octet-stream" \
+            --data-binary @build/TwilightStronghold-Lobby.rbxl \
+            "https://apis.roblox.com/universes/v1/${{ vars.UNIVERSE_ID }}/places/${{ vars.LOBBY_PLACE_ID }}/versions?versionType=Published"
+
+      # ── Publish Survival Zone to Roblox ──────────────────────────────────
+      - name: Publish Survival Zone to Roblox
+        if: ${{ github.event_name == 'push' || inputs.place == 'both' || inputs.place == 'survival' }}
+        env:
+          ROBLOX_API_KEY: ${{ secrets.ROBLOX_API_KEY }}
+        run: |
+          curl --fail --silent --show-error \
+            --request POST \
+            --header "x-api-key: $ROBLOX_API_KEY" \
+            --header "Content-Type: application/octet-stream" \
+            --data-binary @build/TwilightStronghold-Survival.rbxl \
+            "https://apis.roblox.com/universes/v1/${{ vars.UNIVERSE_ID }}/places/${{ vars.SURVIVAL_PLACE_ID }}/versions?versionType=Published"
+
+      # ── Summary ───────────────────────────────────────────────────────────
+      - name: Print summary
+        if: always()
+        run: |
+          echo "## Publish Summary" >> $GITHUB_STEP_SUMMARY
+          echo "- Commit: \`${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- Triggered by: \`${{ github.event_name }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- Universe ID: \`${{ vars.UNIVERSE_ID }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- Lobby Place ID: \`${{ vars.LOBBY_PLACE_ID }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- Survival Place ID: \`${{ vars.SURVIVAL_PLACE_ID }}\`" >> $GITHUB_STEP_SUMMARY
