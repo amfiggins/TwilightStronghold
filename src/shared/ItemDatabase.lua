@@ -17,6 +17,11 @@ local items = {
     -- Base Kits (Loadout Items)
     ["watchtower_kit"] = { Name = "Watchtower Blueprint", Type = "Kit", Rarity = "Rare", StructureId = "tower_01" },
 
+    -- Bags (Inventory Capacity Upgrades)
+    ["starter_bag"] = { Name = "Starter Bag", Type = "Bag", Rarity = "Common", Capacity = 10, Description = "A small bag.", Stackable = false },
+    ["leather_bag"] = { Name = "Leather Bag", Type = "Bag", Rarity = "Uncommon", Capacity = 20, Description = "A durable leather bag.", Stackable = false },
+    ["reinforced_bag"] = { Name = "Reinforced Bag", Type = "Bag", Rarity = "Rare", Capacity = 30, Description = "A reinforced bag with extra pockets.", Stackable = false },
+
     -- Resources
     ["wood_log"] = { Name = "Wood Log", Type = "Material", Rarity = "Common", Description = "Basic building material." },
     ["golden_wood"] = { Name = "Golden Wood", Type = "Material", Rarity = "Rare", Description = "Shiny wood." },

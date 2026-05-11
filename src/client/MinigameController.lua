@@ -120,6 +120,11 @@ function MinigameController.Start(callback)
     progress = 0
     barPosition = 0.5
     
+    -- Reset bar color on start
+    if bar then
+        bar.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    end
+    
     frame.Visible = true
     if progressFill then
         -- Optimization: Use fromScale instead of new
@@ -177,8 +182,16 @@ function MinigameController.Start(callback)
         
         if barStart < targetEnd and barEnd > targetStart then
             progress = progress + (FILL_RATE * dt)
+            -- Visual feedback: highlight bar when overlapping target
+            if bar then
+                bar.BackgroundColor3 = Color3.fromRGB(0, 255, 100)
+            end
         else
             progress = math.max(0, progress - (DECAY_RATE * dt))
+            -- Visual feedback: reset bar color when not overlapping
+            if bar then
+                bar.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+            end
         end
         
 

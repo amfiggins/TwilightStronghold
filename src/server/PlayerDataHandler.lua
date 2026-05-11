@@ -26,10 +26,12 @@ local DEFAULT_DATA = {
     },
     Inventory = {
         -- Format: { Content = "wood", Qty = 10 }, { ItemId = "void_sword", GUID = "..." }
+        { ItemId = "starter_bag", Qty = 1 }
     },
     Loadout = {
         Weapon = nil, -- Usage: ItemId (e.g. "void_sword")
-        BaseKit = nil
+        BaseKit = nil,
+        Bag = "starter_bag"
     },
     CodesRedeemed = {}
 }
@@ -255,6 +257,22 @@ function PlayerDataHandler.Get(player)
     return sessionData[player.UserId]
 end
 
+-- Public API to Get Max Inventory Slots (based on equipped bag)
+function PlayerDataHandler.GetMaxInventorySlots(player)
+    local data = sessionData[player.UserId]
+    if not data then return GameConfig.INVENTORY_CAPACITY end
+
+    local bagId = data.Loadout.Bag
+    if bagId then
+        local bagItem = ItemDatabase.GetItem(bagId)
+        if bagItem and bagItem.Capacity then
+            return bagItem.Capacity
+        end
+    end
+
+    return GameConfig.INVENTORY_CAPACITY
+end
+
 -- Public API to Add Item
 function PlayerDataHandler.AddItem(player, itemId, quantity)
     local userId = player.UserId
@@ -286,7 +304,7 @@ function PlayerDataHandler.AddItem(player, itemId, quantity)
             slot.Qty = (slot.Qty or 1) + quantity
         else
             -- Not found, Add new slot
-            if #data.Inventory >= GameConfig.INVENTORY_CAPACITY then
+            if #data.Inventory >= PlayerDataHandler.GetMaxInventorySlots(player) then
                 return false, "InventoryFull"
             end
             table.insert(data.Inventory, { ItemId = itemId, Qty = quantity })
@@ -295,7 +313,7 @@ function PlayerDataHandler.AddItem(player, itemId, quantity)
         end
     else
         -- Non-stackable logic: Items with unique GUIDs
-        if #data.Inventory + quantity <= GameConfig.INVENTORY_CAPACITY then
+        if #data.Inventory + quantity <= PlayerDataHandler.GetMaxInventorySlots(player) then
             for _ = 1, quantity do
                 table.insert(data.Inventory, {
                     ItemId = itemId,
@@ -439,8 +457,8 @@ function PlayerDataHandler.SetLoadout(player, slot, itemId)
     local data = sessionData[player.UserId]
     if not data then return false end
     
-    -- Slot must be "Weapon" or "BaseKit" based on our schema
-    if slot ~= "Weapon" and slot ~= "BaseKit" then return false end
+    -- Slot must be "Weapon" or "BaseKit" or "Bag" based on our schema
+    if slot ~= "Weapon" and slot ~= "BaseKit" and slot ~= "Bag" then return false end
     
     -- Verification: Does player own this item?
     if itemId and not PlayerDataHandler.GetItem(player, itemId) then

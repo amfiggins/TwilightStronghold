@@ -10,7 +10,7 @@ Shared.GAME_VERSION = "0.1.0-alpha"
 Shared.IS_SURVIVAL_MODE = false -- Toggle to true to test Survival Loop in Studio
 Shared.MAX_LOBBY_PLAYERS = 20
 Shared.MAX_SESSION_PLAYERS = 4 -- Survival squad size
-Shared.INVENTORY_CAPACITY = 30 -- Max unique slots
+Shared.INVENTORY_CAPACITY = 5 -- Fallback max unique slots (if no bag equipped)
 Shared.MAX_BUILD_DISTANCE = 20 -- Maximum distance in studs to allow building
 
 -- Place Configuration
