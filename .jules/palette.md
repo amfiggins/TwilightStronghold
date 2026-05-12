@@ -42,3 +42,7 @@
 ## 2027-04-01 - Matchmaking Queue Visibility
 **Learning:** Players joining a matchmaking queue via an interactable object (like a Portal) often feel uncertain if their action registered when the feedback is limited to console prints or delayed teleports.
 **Action:** Always provide immediate, on-screen visual confirmation (like a toast notification) indicating successful queue entry and current queue size.
+
+## 2024-05-12 - Visualizing Negative Progress
+**Learning:** When a user is interacting with a system that can both gain and lose progress (like an alignment minigame), visualizing only the positive gains leaves them confused when progress silently drops.
+**Action:** Always provide explicit visual feedback (e.g., turning a progress bar red) during negative progress states to clearly communicate failure mechanics.

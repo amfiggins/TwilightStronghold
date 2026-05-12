@@ -100,7 +100,13 @@ function MinigameController.Init()
     -- Micro-UX: Instruction Label
     local instruction = Instance.new("TextLabel")
     instructionLabel = instruction
-    instruction.Text = "<b>Hold to align</b>"
+    if UserInputService.TouchEnabled then
+        instruction.Text = "<b>Hold screen</b> to align"
+    elseif UserInputService.GamepadEnabled then
+        instruction.Text = "Hold <b>A Button</b> to align"
+    else
+        instruction.Text = "Hold <b>SPACE</b> or <b>Click</b> to align"
+    end
     instruction.RichText = true
     instruction.Size = UDim2.new(1, 0, 0, 30)
     instruction.AnchorPoint = Vector2.new(0, 1) -- Bottom-Left
@@ -129,6 +135,7 @@ function MinigameController.Start(callback)
     if progressFill then
         -- Optimization: Use fromScale instead of new
         progressFill.Size = UDim2.fromScale(0, 1)
+        progressFill.BackgroundColor3 = Color3.fromRGB(0, 255, 100)
     end
     
     -- Game Loop
@@ -186,11 +193,21 @@ function MinigameController.Start(callback)
             if bar then
                 bar.BackgroundColor3 = Color3.fromRGB(0, 255, 100)
             end
+            if progressFill then
+                progressFill.BackgroundColor3 = Color3.fromRGB(0, 255, 100)
+            end
         else
             progress = math.max(0, progress - (DECAY_RATE * dt))
             -- Visual feedback: reset bar color when not overlapping
             if bar then
                 bar.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+            end
+            if progressFill then
+                if progress > 0 then
+                    progressFill.BackgroundColor3 = Color3.fromRGB(255, 100, 100)
+                else
+                    progressFill.BackgroundColor3 = Color3.fromRGB(0, 255, 100)
+                end
             end
         end
         
