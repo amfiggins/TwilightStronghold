@@ -12,6 +12,7 @@ local PlayerDataHandler = require(script.Parent.PlayerDataHandler)
 
 local MatchmakingService = {}
 local queue = {} -- List of players waiting
+local queueSet = {} -- ⚡ Bolt: Companion dictionary for O(1) membership lookups
 
 -- Remotes
 local Remotes = ReplicatedStorage:WaitForChild("Remotes")
@@ -47,9 +48,10 @@ function MatchmakingService.Init()
 end
 
 function MatchmakingService.JoinQueue(player)
-    if table.find(queue, player) then return end
+    if queueSet[player] then return end
     
     table.insert(queue, player)
+    queueSet[player] = true
     print(string.format("[Matchmaking] %s joined queue. (%d/%d)", player.Name, #queue, REQUIRED_PLAYERS))
     
     -- Try to process queue immediately
@@ -60,9 +62,12 @@ function MatchmakingService.JoinQueue(player)
 end
 
 function MatchmakingService.LeaveQueue(player)
+    if not queueSet[player] then return end
+
     local idx = table.find(queue, player)
     if idx then
         table.remove(queue, idx)
+        queueSet[player] = nil
         print(string.format("[Matchmaking] %s left queue.", player.Name))
         QueueUpdateEvent:FireClient(player, false, #queue, REQUIRED_PLAYERS)
     end
@@ -82,9 +87,12 @@ function MatchmakingService.ProcessQueue()
             table.move(queue, REQUIRED_PLAYERS + 1, #queue, 1)
         end
 
-        -- Clear the old tail elements
+        -- Clear the old tail elements and update set
         for i = #queue, newSize + 1, -1 do
             queue[i] = nil
+        end
+        for _, p in ipairs(squad) do
+            queueSet[p] = nil
         end
         
         task.spawn(function()
@@ -115,6 +123,7 @@ function MatchmakingService.ProcessQueue()
                     -- Prevent re-queuing disconnected ghost players (DoS fix)
                     if p and p.Parent then
                         table.insert(queue, p)
+                        queueSet[p] = true
                     end
                 end
             end
