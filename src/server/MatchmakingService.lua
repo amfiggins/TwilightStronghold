@@ -12,6 +12,7 @@ local PlayerDataHandler = require(script.Parent.PlayerDataHandler)
 
 local MatchmakingService = {}
 local queue = {} -- List of players waiting
+local queueSet = {} -- ⚡ Bolt: O(1) membership lookup dictionary
 
 -- Remotes
 local Remotes = ReplicatedStorage:WaitForChild("Remotes")
@@ -47,9 +48,11 @@ function MatchmakingService.Init()
 end
 
 function MatchmakingService.JoinQueue(player)
-    if table.find(queue, player) then return end
+    -- ⚡ Bolt: O(1) membership check
+    if queueSet[player] then return end
     
     table.insert(queue, player)
+    queueSet[player] = true
     print(string.format("[Matchmaking] %s joined queue. (%d/%d)", player.Name, #queue, REQUIRED_PLAYERS))
     
     -- Try to process queue immediately
@@ -60,9 +63,13 @@ function MatchmakingService.JoinQueue(player)
 end
 
 function MatchmakingService.LeaveQueue(player)
+    -- ⚡ Bolt: Fast exit if not in queue
+    if not queueSet[player] then return end
+
     local idx = table.find(queue, player)
     if idx then
         table.remove(queue, idx)
+        queueSet[player] = nil
         print(string.format("[Matchmaking] %s left queue.", player.Name))
         QueueUpdateEvent:FireClient(player, false, #queue, REQUIRED_PLAYERS)
     end
@@ -87,6 +94,11 @@ function MatchmakingService.ProcessQueue()
             queue[i] = nil
         end
         
+        -- Clear from set
+        for _, p in ipairs(squad) do
+            queueSet[p] = nil
+        end
+
         task.spawn(function()
             -- Prepare Teleport Options (Pass Data!)
             local teleportOptions = Instance.new("TeleportOptions")
@@ -113,8 +125,9 @@ function MatchmakingService.ProcessQueue()
                 -- Re-queue players (simplified logic)
                 for _, p in ipairs(squad) do
                     -- Prevent re-queuing disconnected ghost players (DoS fix)
-                    if p and p.Parent then
+                    if p and p.Parent and not queueSet[p] then
                         table.insert(queue, p)
+                        queueSet[p] = true
                     end
                 end
             end
