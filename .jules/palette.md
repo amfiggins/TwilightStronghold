@@ -42,3 +42,7 @@
 ## 2027-04-01 - Matchmaking Queue Visibility
 **Learning:** Players joining a matchmaking queue via an interactable object (like a Portal) often feel uncertain if their action registered when the feedback is limited to console prints or delayed teleports.
 **Action:** Always provide immediate, on-screen visual confirmation (like a toast notification) indicating successful queue entry and current queue size.
+
+## 2027-05-14 - Meaningful Animation for Async States
+**Learning:** Text scaling animations on refresh buttons lack connection to the concept of "loading". Furthermore, children of rotated buttons will rotate as well if not correctly decoupled.
+**Action:** Always prefer spinning animations (TweenService Rotation) over static text scaling for "Refresh" interactions, and make sure to decouple tooltips by re-parenting them to stable containers.
