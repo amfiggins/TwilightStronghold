@@ -1,1 +1,5 @@
-{"luau-analyze": {"globals": ["game", "workspace", "Instance", "Vector3", "CFrame", "UDim2", "UDim", "Vector2", "script", "setmetatable", "type", "typeof", "tostring", "ipairs", "pairs", "tick", "BrickColor", "Color3", "Enum", "task", "math", "warn", "pcall", "require", "print", "TweenInfo", "RaycastParams", "os", "HttpService", "DataStoreService", "ReplicatedStorage", "Players", "TeleportService", "ProximityPromptService", "TweenService", "PathfindingService"]}}
+{
+    "globals": [
+        "game", "workspace", "Instance", "Vector3", "CFrame", "UDim2", "UDim", "Vector2", "script", "setmetatable", "type", "typeof", "tostring", "ipairs", "pairs", "tick", "BrickColor", "Color3", "Enum", "task", "math", "warn", "pcall", "require", "print", "TweenInfo", "RaycastParams", "os", "HttpService", "DataStoreService", "ReplicatedStorage", "Players", "TeleportService", "ProximityPromptService", "TweenService", "PathfindingService", "RunService", "ContextActionService", "UserInputService", "CollectionService", "Lighting", "SoundService", "StarterGui", "StarterPlayer", "Debris"
+    ]
+}
