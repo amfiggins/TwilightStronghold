@@ -78,3 +78,9 @@
 **Vulnerability:** Numerical inputs (`quantity`, `amount`) in `PlayerDataHandler.lua` were validated only with `type(x) ~= "number" or x <= 0`. In Luau, `NaN <= 0` evaluates to `false`, allowing `NaN` values to bypass validation and corrupt inventory data. `math.huge` also bypasses this check.
 **Learning:** Checking `x <= 0` is insufficient for validating positive numbers because `NaN` comparisons always return `false`. Both `NaN` and `math.huge` evaluate as "number" in type checks.
 **Prevention:** Always explicitly check for `NaN` (`x ~= x`) and `math.huge` (`x == math.huge`) when validating numbers that represent quantities or currency to prevent state corruption.
+
+## 2024-05-26 - Missing Rate Limiting on Matchmaking Queue
+
+**Vulnerability:** The `JoinQueueEvent` RemoteEvent in `MatchmakingService.lua` lacked a server-side rate limit. Malicious clients could spam this endpoint to cause excessive CPU usage from `table.find` array scans and flood the server logs, resulting in a log-flooding DoS.
+**Learning:** Every client-triggered state-change mechanism, even seemingly harmless ones like joining a queue, must enforce a rate limit to prevent intentional action spam and DoS conditions. Silent returns are crucial.
+**Prevention:** Implement an `os.clock()`-based rate limit for queue interactions and always clean up tracking entries via `Players.PlayerRemoving`.

@@ -12,6 +12,8 @@ local PlayerDataHandler = require(script.Parent.PlayerDataHandler)
 
 local MatchmakingService = {}
 local queue = {} -- List of players waiting
+local lastJoinTimes = {}
+local JOIN_COOLDOWN = 1.0
 
 -- Remotes
 local Remotes = ReplicatedStorage:WaitForChild("Remotes")
@@ -35,6 +37,7 @@ function MatchmakingService.Init()
     -- Remove players from queue when they disconnect
     Players.PlayerRemoving:Connect(function(player)
         MatchmakingService.LeaveQueue(player)
+        lastJoinTimes[player.UserId] = nil
     end)
 
     -- Loop to check queue
@@ -47,6 +50,13 @@ function MatchmakingService.Init()
 end
 
 function MatchmakingService.JoinQueue(player)
+    local now = os.clock()
+    local lastJoin = lastJoinTimes[player.UserId] or 0
+    if (now - lastJoin) < JOIN_COOLDOWN then
+        return false, "RateLimited"
+    end
+    lastJoinTimes[player.UserId] = now
+
     if table.find(queue, player) then return end
     
     table.insert(queue, player)
