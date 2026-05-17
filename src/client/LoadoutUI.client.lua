@@ -39,7 +39,8 @@ title.Parent = frame
 local refreshBtn = Instance.new("TextButton")
 refreshBtn.Text = "↻"
 refreshBtn.Size = UDim2.new(0, 30, 1, 0)
-refreshBtn.Position = UDim2.new(1, -30, 0, 0)
+refreshBtn.AnchorPoint = Vector2.new(0.5, 0.5)
+refreshBtn.Position = UDim2.new(1, -15, 0.5, 0)
 refreshBtn.BackgroundTransparency = 1
 refreshBtn.TextColor3 = Color3.fromRGB(200, 200, 200)
 refreshBtn.Font = Enum.Font.GothamBold
@@ -51,7 +52,7 @@ local refreshTooltip = Instance.new("TextLabel")
 refreshTooltip.Text = "Refresh Inventory"
 refreshTooltip.Size = UDim2.new(0, 120, 0, 24)
 refreshTooltip.AnchorPoint = Vector2.new(1, 0)
-refreshTooltip.Position = UDim2.new(1, 0, -1, -5) -- Above the button
+refreshTooltip.Position = UDim2.new(1, -30, -1, -5) -- Relative to title
 refreshTooltip.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
 refreshTooltip.TextColor3 = Color3.fromRGB(255, 255, 255)
 refreshTooltip.BorderSizePixel = 0
@@ -59,7 +60,7 @@ refreshTooltip.Font = Enum.Font.SourceSans
 refreshTooltip.TextSize = 12
 refreshTooltip.Visible = false
 refreshTooltip.ZIndex = 10
-refreshTooltip.Parent = refreshBtn
+refreshTooltip.Parent = title
 
 local function updateRefreshState(isActive)
     refreshBtn.TextColor3 = isActive and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(200, 200, 200)
@@ -204,12 +205,16 @@ local function createButton(text, onClick, rarityColor, isEquipped, rarityName, 
 end
 
 local isRefreshing = false
+local refreshRotateTween = nil
 
 -- Populate Inventory Buttons
 local function populateLoadout()
     if isRefreshing then return end
     isRefreshing = true
-    refreshBtn.Text = "..."
+
+    local tweenInfo = TweenInfo.new(1, Enum.EasingStyle.Linear, Enum.EasingDirection.InOut, -1)
+    refreshRotateTween = TweenService:Create(refreshBtn, tweenInfo, {Rotation = 360})
+    refreshRotateTween:Play()
 
     -- Clear List (preserve layout)
     for _, child in ipairs(listContainer:GetChildren()) do
@@ -247,7 +252,8 @@ local function populateLoadout()
         errorLabel.TextSize = 14
         errorLabel.Parent = listContainer
 
-        refreshBtn.Text = "↻"
+        if refreshRotateTween then refreshRotateTween:Cancel() end
+        refreshBtn.Rotation = 0
         isRefreshing = false
         return
     end
@@ -341,7 +347,8 @@ local function populateLoadout()
         emptyLabel.Parent = listContainer
     end
 
-    refreshBtn.Text = "↻"
+    if refreshRotateTween then refreshRotateTween:Cancel() end
+    refreshBtn.Rotation = 0
     isRefreshing = false
 end
 

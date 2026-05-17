@@ -42,3 +42,6 @@
 ## 2027-04-01 - Matchmaking Queue Visibility
 **Learning:** Players joining a matchmaking queue via an interactable object (like a Portal) often feel uncertain if their action registered when the feedback is limited to console prints or delayed teleports.
 **Action:** Always provide immediate, on-screen visual confirmation (like a toast notification) indicating successful queue entry and current queue size.
+## 2026-05-17 - Preserve visual affordance during async operations
+**Learning:** When improving UX during async loading operations, avoid replacing universally recognized icons (like '↻') with ambiguous text (like '...'). Instead, animate the existing icon (e.g., rotating it in place) to provide clear visual feedback while maintaining the element's visual affordance. Ensure the rotation correctly resets on completion or failure.
+**Action:** When applying rotation animations to UI elements in Roblox Luau, center the element's `AnchorPoint` (e.g., `Vector2.new(0.5, 0.5)`) and adjust its `Position` so it rotates in place. Additionally, decouple child tooltips by reparenting them to a stable container to prevent them from inheriting the rotation.
