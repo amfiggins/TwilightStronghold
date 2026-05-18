@@ -42,3 +42,6 @@
 ## 2027-04-01 - Matchmaking Queue Visibility
 **Learning:** Players joining a matchmaking queue via an interactable object (like a Portal) often feel uncertain if their action registered when the feedback is limited to console prints or delayed teleports.
 **Action:** Always provide immediate, on-screen visual confirmation (like a toast notification) indicating successful queue entry and current queue size.
+## 2024-05-18 - Animated Icons for Async Loading
+**Learning:** When improving UX during async loading operations, avoiding replacing universally recognized icons (like '↻') with ambiguous text (like '...') maintains visual affordance. However, when applying continuous rotation animations to UI elements in Roblox, child elements (like tooltips) will inherit the rotation, leading to a dizzying effect.
+**Action:** Always decouple child tooltips by re-parenting them to a stable container before applying rotation animations, and ensure the rotating element has a centered AnchorPoint (0.5, 0.5) to rotate in place.
