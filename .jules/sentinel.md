@@ -78,3 +78,7 @@
 **Vulnerability:** Numerical inputs (`quantity`, `amount`) in `PlayerDataHandler.lua` were validated only with `type(x) ~= "number" or x <= 0`. In Luau, `NaN <= 0` evaluates to `false`, allowing `NaN` values to bypass validation and corrupt inventory data. `math.huge` also bypasses this check.
 **Learning:** Checking `x <= 0` is insufficient for validating positive numbers because `NaN` comparisons always return `false`. Both `NaN` and `math.huge` evaluate as "number" in type checks.
 **Prevention:** Always explicitly check for `NaN` (`x ~= x`) and `math.huge` (`x == math.huge`) when validating numbers that represent quantities or currency to prevent state corruption.
+## 2024-05-26 - NaN Bypassing Distance Validation
+**Vulnerability:** Distance validation checks (e.g., `distSq > MAX`) evaluated to `false` when distance components were `NaN`, allowing exploiters to bypass gathering/building range restrictions by spoofing their location as `NaN`.
+**Learning:** Just like with inventory quantities, spatial constraints using `<` or `>` can be completely bypassed if the input results in `NaN`.
+**Prevention:** Always use inverted comparison logic (e.g., `if not (distSq <= MAX_DISTANCE_SQ) then`) which correctly evaluates to `true` when `distSq` is `NaN`, thereby securely blocking invalid distances.
