@@ -85,8 +85,8 @@ function BuildingSystem.PlaceStructure(player, structureType, cframe)
     local dy = rootPart.Position.Y - cframe.Position.Y
     local dz = rootPart.Position.Z - cframe.Position.Z
     local distSq = dx * dx + dy * dy + dz * dz
-    if distSq > GameConfig.MAX_BUILD_DISTANCE * GameConfig.MAX_BUILD_DISTANCE then
-        warn(string.format("[BuildingSystem] Suspicious build: %s is too far (%.1f studs)", player.Name, math.sqrt(distSq)))
+    if not (distSq <= GameConfig.MAX_BUILD_DISTANCE * GameConfig.MAX_BUILD_DISTANCE) then
+        warn(string.format("[BuildingSystem] Suspicious build: %s is too far (or NaN position)", player.Name))
         return false, "TooFar"
     end
 
