@@ -139,16 +139,16 @@ function WaveManager.SpawnEnemy(difficulty)
                 local distSq = delta.X * delta.X + delta.Y * delta.Y + delta.Z * delta.Z
 
                 -- Optimization: Throttle updates based on distance
-                if distSq > 10000 then -- 100^2
+                if not (distSq <= 10000) then -- 100^2
                     updateRate = 2.0
-                elseif distSq > 2500 then -- 50^2
+                elseif not (distSq <= 2500) then -- 50^2
                     updateRate = 1.0
                 end
 
                 local usePathfinding = true
 
                 -- Optimization: Use direct movement if close and clear Line of Sight
-                if distSq < 900 then -- 30^2
+                if distSq < 900 and distSq == distSq then -- 30^2, also block NaN
                     -- Update filter to include target character (so we don't hit it)
                     rayParams.FilterDescendantsInstances = {enemy, targetPlayer.Character}
 
