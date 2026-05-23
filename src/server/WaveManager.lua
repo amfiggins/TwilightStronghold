@@ -13,10 +13,27 @@ local WaveManager = {}
 -- Config
 local SPAWN_RATE = 5 -- Spawn an enemy every X seconds
 
+-- Optimization: Cache active players to avoid repeated allocations from Players:GetPlayers()
+local activePlayers = {}
+
 -- Optimization: Cache template to avoid repeated Instance.new and property setting
 local enemyTemplate -- Template part for enemies
 function WaveManager.Init()
     print("[WaveManager] Initializing...")
+
+    -- Initialize active players cache
+    for _, player in ipairs(Players:GetPlayers()) do
+        table.insert(activePlayers, player)
+    end
+    Players.PlayerAdded:Connect(function(player)
+        table.insert(activePlayers, player)
+    end)
+    Players.PlayerRemoving:Connect(function(player)
+        local index = table.find(activePlayers, player)
+        if index then
+            table.remove(activePlayers, index)
+        end
+    end)
 
     -- Create the template model once
     enemyTemplate = Instance.new("Model")
@@ -45,7 +62,7 @@ local function findNearestPlayer(position)
     local nearestPlayer = nil
     local minDistanceSq = math.huge
 
-    for _, player in ipairs(Players:GetPlayers()) do
+    for _, player in ipairs(activePlayers) do
         local character = player.Character
         if character and character.PrimaryPart then
             -- ⚡ Bolt: Fast squared distance calculation
