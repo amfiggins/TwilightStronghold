@@ -42,3 +42,6 @@
 ## 2027-04-01 - Matchmaking Queue Visibility
 **Learning:** Players joining a matchmaking queue via an interactable object (like a Portal) often feel uncertain if their action registered when the feedback is limited to console prints or delayed teleports.
 **Action:** Always provide immediate, on-screen visual confirmation (like a toast notification) indicating successful queue entry and current queue size.
+## 2024-05-24 - Animate known icons during async load
+**Learning:** Obfuscating a universally recognized icon like '↻' with '...' during async loads breaks the element's clear affordance and visual flow.
+**Action:** Instead of replacing text, apply an infinite rotation animation to the existing icon using TweenService to clearly indicate loading state while preserving spatial layout and context. When animating rotating elements, wrap the element and static siblings (like tooltips) in a shared transparent frame to prevent the children from adopting the rotation.
