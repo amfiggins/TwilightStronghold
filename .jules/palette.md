@@ -42,3 +42,7 @@
 ## 2027-04-01 - Matchmaking Queue Visibility
 **Learning:** Players joining a matchmaking queue via an interactable object (like a Portal) often feel uncertain if their action registered when the feedback is limited to console prints or delayed teleports.
 **Action:** Always provide immediate, on-screen visual confirmation (like a toast notification) indicating successful queue entry and current queue size.
+
+## 2024-05-20 - Animating UI Components with Children
+**Learning:** In Roblox UI, directly rotating a parent element (like a button) that contains child elements (like tooltips) causes the children to incorrectly inherit the transformation. Simply reparenting children out of context breaks logical organization.
+**Action:** Always wrap the rotating element and any static child elements in a shared, transparent `Frame` container to preserve their relative layout constraints and visual positioning without breaking the animation context.
