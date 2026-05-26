@@ -24,6 +24,22 @@ local successCallback = nil
 local instructionLabel = nil
 local activeTouches = 0
 
+-- ⚡ Bolt: Cache connected gamepads to prevent array allocation on every RenderStepped frame
+local connectedGamepads = UserInputService:GetConnectedGamepads()
+
+UserInputService.GamepadConnected:Connect(function(gamepad)
+    if not table.find(connectedGamepads, gamepad) then
+        table.insert(connectedGamepads, gamepad)
+    end
+end)
+
+UserInputService.GamepadDisconnected:Connect(function(gamepad)
+    local index = table.find(connectedGamepads, gamepad)
+    if index then
+        table.remove(connectedGamepads, index)
+    end
+end)
+
 UserInputService.InputBegan:Connect(function(input, gameProcessed)
     if gameProcessed then return end
     if input.UserInputType == Enum.UserInputType.Keyboard then
@@ -149,7 +165,7 @@ function MinigameController.Start(callback)
         elseif activeTouches > 0 then
             isInputActive = true
         else
-            for _, gamepad in ipairs(UserInputService:GetConnectedGamepads()) do
+            for _, gamepad in ipairs(connectedGamepads) do
                 if UserInputService:IsGamepadButtonDown(gamepad, Enum.KeyCode.ButtonA) then
                     isInputActive = true
                     break
