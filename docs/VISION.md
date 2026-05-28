@@ -288,7 +288,8 @@ This section reflects what is **actually in the repo** as of the last update. Up
 |---|---|---|
 | `ServerMain.server.lua` | Entry point. Loads PlayerData/Resource/Loadout always; branches on PlaceId or `IS_SURVIVAL_MODE` to load DayNight/Wave/Building (Survival) or Matchmaking (Lobby). | ✅ Real |
 | `PlayerDataHandler.lua` | DataStore-backed player data. Schema: `Stats {Rubies, Diamonds, Level, XP}`, `Inventory[]`, `Loadout {Weapon, BaseKit, Bag}`, `CodesRedeemed`. O(1) inventory lookup, swap-remove, NaN/`math.huge` validation, retry-with-backoff `GetAsync`, staggered autosave (60s window divided across players). | ✅ Mature |
-| `ResourceManager.lua` | `GatherResource` RemoteEvent handler. Validates rate limit (1s), distance (25 studs²), proximity prompt presence, maps node names to resource IDs via `NodeTypeMapping`, rolls rare drops, awards items, destroys node if `DestroyOnGather`. | ✅ Real |
+| `ResourceManager.lua` | `GatherResource` RemoteEvent handler. Validates rate limit (1s), distance (25 studs²), proximity prompt presence, maps node names to resource IDs via `NodeTypeMapping`, rolls rare drops, awards items, schedules respawn via `ResourceRespawn` if `DestroyOnGather`. | ✅ Real |
+| `ResourceRespawn.lua` | Snapshots gathered nodes into `ServerStorage.ResourceRespawnPool` and re-parents them back at the original CFrame 60–120s later. | ✅ Real (Phase 2.2) |
 | `BuildingSystem.lua` | `PlaceStructure` RemoteEvent. Rate limit (0.5s), NaN-CFrame validation, 20-stud range, deducts wood, spawns a flat Part. | 🟡 Skeletal |
 | `DayNightCycle.lua` | 1Hz tick. Day=300s, Night=120s. Fires `PhaseChanged` to clients. Calls `WaveManager.StartWave` on night start. Sets `Lighting.ClockTime` only. | 🟡 Basic |
 | `WaveManager.lua` | Spawns enemies during night, deals touch damage with per-player cooldown, despawns at dawn, registers/unregisters with `CombatSystem`. Pathfinding+raycast LOS shortcut, tiered update rates. | 🟡 Single enemy type |
@@ -336,7 +337,7 @@ Legend: ✅ implemented · 🟡 partial · ❌ missing
 | Feature | Status | Notes |
 |---|---|---|
 | Day/Night cycle | 🟡 | Basic; Day 150 milestone event fires; no countdown HUD _(wait, HUD landed in Phase 1.3 — see below)_ |
-| Resource gathering (wood/stone/fish) | ✅ | Solid security model; **nodes never respawn** |
+| Resource gathering (wood/stone/fish) | ✅ | Solid security model; nodes respawn 60–120s after gather (Phase 2.2) |
 | Building system | 🟡 | Wall/Tower stubs; no collision check, no persistence, no destruction |
 | Inventory | ✅ | O(1) lookup, bag capacity, swap-remove |
 | Loadout | 🟡 | Weapon/Kit work; **Bag-equip broken** end-to-end |
@@ -391,7 +392,7 @@ Tagged so we can sweep them as a batch.
 | BUG-3 | High | ~~`Verify*.server.lua` and `EnemySpawnBenchmark.lua` / `QueueBenchmark.lua` auto-run in production, including a duplicate `WaveManager.Init()`. Burns startup time and creates 10k parts.~~ **Fixed** in Phase 0 (moved to top-level `dev/` folder which Rojo does not sync). |
 | BUG-4 | High | ~~`PlayerDataHandler` has no `game:BindToClose` final flush — in-flight saves are dropped on shutdown.~~ **Fixed** in Phase 0 (BindToClose flushes all sessions in parallel with a 25s budget; skipped in Studio). |
 | BUG-5 | High | ~~No cross-server session lock — two servers can read/write the same player key during teleport handoff.~~ **Fixed** in Phase 0 (compare-and-swap session lock via `UpdateAsync` with 600s stale threshold and 5×6s teleport-handoff retries). |
-| BUG-6 | High | Resource nodes never respawn after gather. Empty world after a few minutes. |
+| BUG-6 | High | ~~Resource nodes never respawn after gather. Empty world after a few minutes.~~ **Fixed** in Phase 2.2 (`ResourceRespawn` snapshots gathered nodes into a holding folder, then re-parents them after 60–120s; preserves full hierarchy). |
 | BUG-7 | High | Built structures never persist across server restarts. |
 | BUG-8 | Critical-for-game | ~~Enemies cause no damage. Players cause no damage to enemies.~~ **Fixed** in Phase 1.1 (server-authoritative `CombatSystem` with weapon validation + range + cooldown; enemies deal touch damage with per-player cooldown; kill rewards split by damage contribution). |
 | BUG-9 | Low | ~~`survival.project.json` is byte-identical to `default.project.json` — pointless duplication.~~ **Fixed** in Phase 0 (deleted; CI builds once and publishes the same `.rbxl` to both Place IDs. Will reintroduce a differentiated project at Phase 2.1 when we add a real Forest Kingdom map). |
@@ -480,8 +481,8 @@ This plan sequences work so each phase produces a **playable, demonstrable build
 
 ### 2.2 Resource respawn
 
-- [ ] `src/server/ResourceRespawn.lua` (new). When `ResourceManager` destroys a node, queue a respawn for `60 + math.random(0, 60)` seconds. Keep a `respawnRegistry` table of `{nodeName, position, parent}` and reinstantiate from `ServerStorage.ResourceTemplates`. [BUG-6]
-- [ ] Author one `OakTree.rbxm`, `Boulder.rbxm`, `Pond.rbxm` template in `ServerStorage.ResourceTemplates`.
+- [x] `src/server/ResourceRespawn.lua` (new). When `ResourceManager` would destroy a node, snapshot it (Clone into `ServerStorage.ResourceRespawnPool`), destroy the world copy, and re-parent the snapshot back to its original parent at its original CFrame after `60..120` seconds. Snapshots include the full hierarchy (children, ProximityPrompts, attributes) so the respawned node is identical to the original. [BUG-6]
+- [x] `src/server/ResourceManager.lua`: replace `resourceNode:Destroy()` with `ResourceRespawn.Schedule(resourceNode)` in the `DestroyOnGather` branch.
 
 ### 2.3 Structure persistence
 
