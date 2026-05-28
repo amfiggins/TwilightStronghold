@@ -47,7 +47,7 @@ local function showNotification(text, color)
     local goal = {
         Position = UDim2.new(0.5, -100, 0.5, 0),
         TextTransparency = 1,
-        TextStrokeTransparency = 1
+        TextStrokeTransparency = 1,
     }
 
     local tween = TweenService:Create(label, info, goal)
@@ -66,12 +66,14 @@ QueueUpdateEvent.OnClientEvent:Connect(function(joined, queueSize, requiredPlaye
 end)
 
 ProximityPromptService.PromptTriggered:Connect(function(promptObject, triggerPlayer)
-    if triggerPlayer ~= player then return end
-    
+    if triggerPlayer ~= player then
+        return
+    end
+
     if promptObject.Name == "EnterSurvival" then
         print("[PortalController] Requesting to join queue...")
         JoinQueueEvent:FireServer()
-        
+
         -- Optional: Show Queue UI
         -- QueueUI.Show()
     end

@@ -91,7 +91,12 @@ function ResourceManager.OnGatherRequest(player, resourceNode)
     -- This prevents exploiters from gathering arbitrary parts in the workspace (e.g. decorative props).
     local prompt = resourceNode:FindFirstChild("Gather")
     if not prompt or not prompt:IsA("ProximityPrompt") or not prompt.Enabled then
-        warn(string.format("[ResourceManager] Invalid gather request from %s: Node has no active 'Gather' prompt.", player.Name))
+        warn(
+            string.format(
+                "[ResourceManager] Invalid gather request from %s: Node has no active 'Gather' prompt.",
+                player.Name
+            )
+        )
         return
     end
 
@@ -109,20 +114,20 @@ function ResourceManager.OnGatherRequest(player, resourceNode)
         warn(string.format("[ResourceManager] Unknown resource type: %s (Mapped from: %s)", resourceId, nodeName))
         return
     end
-    
+
     -- Logic: Roll for Rarity (The "Fisch" mechanic)
     local roll = math.random(1, 100)
     local itemAwarded = drop.Item
     local qty = math.random(drop.Min, drop.Max)
-    
+
     -- Generic Rare Drop Logic
     if drop.RareItem and drop.RareChance and roll > (100 - drop.RareChance) then
         itemAwarded = drop.RareItem
     end
-    
+
     -- Add Item
     local success, reason = PlayerDataHandler.AddItem(player, itemAwarded, qty)
-    
+
     if success then
         print(string.format("[ResourceManager] Awarded %s x%d to %s", itemAwarded, qty, player.Name))
 

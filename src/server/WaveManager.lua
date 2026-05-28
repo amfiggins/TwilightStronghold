@@ -79,17 +79,19 @@ end
 
 function WaveManager.StartWave(waveNumber)
     print(string.format("[WaveManager] Starting Wave %d...", waveNumber))
-    
+
     task.spawn(function()
         local DayNightCycle = require(script.Parent.DayNightCycle)
-        
+
         while DayNightCycle.Phase == "Night" do
             task.wait(SPAWN_RATE)
-            if DayNightCycle.Phase ~= "Night" then break end
-            
+            if DayNightCycle.Phase ~= "Night" then
+                break
+            end
+
             WaveManager.SpawnEnemy(waveNumber)
         end
-        
+
         print("[WaveManager] Wave Ended.")
     end)
 end
@@ -101,7 +103,7 @@ function WaveManager.SpawnEnemy(difficulty)
     end
 
     print(string.format("[WaveManager] Spawning Enemy (Lvl %d)", difficulty))
-    
+
     -- Optimization: Clone from template instead of creating new
     local enemy = enemyTemplate:Clone()
     local rootPart = enemy.PrimaryPart
@@ -119,7 +121,7 @@ function WaveManager.SpawnEnemy(difficulty)
                 rootPart.CanCollide = false
 
                 local tweenInfo = TweenInfo.new(1, Enum.EasingStyle.Linear, Enum.EasingDirection.Out)
-                local tween = TweenService:Create(rootPart, tweenInfo, {Transparency = 1})
+                local tween = TweenService:Create(rootPart, tweenInfo, { Transparency = 1 })
                 tween:Play()
 
                 tween.Completed:Wait()
@@ -133,7 +135,7 @@ function WaveManager.SpawnEnemy(difficulty)
     enemy:SetPrimaryPartCFrame(CFrame.new(startPos))
 
     enemy.Parent = workspace
-    
+
     -- AI Loop (Pathfinding)
     task.spawn(function()
         -- Optimization: Reuse Path object to avoid allocation in loop
@@ -142,7 +144,7 @@ function WaveManager.SpawnEnemy(difficulty)
         -- Reuse RaycastParams to avoid allocation in loop
         local rayParams = RaycastParams.new()
         rayParams.FilterType = Enum.RaycastFilterType.Exclude
-        rayParams.FilterDescendantsInstances = {enemy}
+        rayParams.FilterDescendantsInstances = { enemy }
 
         while enemy.Parent and humanoid and humanoid.Health > 0 do
             local targetPlayer = findNearestPlayer(rootPart.Position)
@@ -166,7 +168,7 @@ function WaveManager.SpawnEnemy(difficulty)
                 -- Optimization: Use direct movement if close and clear Line of Sight
                 if distSq < 900 then -- 30^2
                     -- Update filter to include target character (so we don't hit it)
-                    rayParams.FilterDescendantsInstances = {enemy, targetPlayer.Character}
+                    rayParams.FilterDescendantsInstances = { enemy, targetPlayer.Character }
 
                     local direction = targetPos - rootPart.Position
                     local result = workspace:Raycast(rootPart.Position, direction, rayParams)
@@ -207,7 +209,6 @@ function WaveManager.SpawnEnemy(difficulty)
             task.wait(updateRate)
         end
     end)
-
 end
 
 return WaveManager

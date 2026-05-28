@@ -16,23 +16,25 @@ local queueSet = {} -- O(1) lookup for queue membership
 
 -- Remotes
 local Remotes = ReplicatedStorage:WaitForChild("Remotes")
-local JoinQueueEvent = Instance.new("RemoteEvent", Remotes)
+local JoinQueueEvent = Instance.new("RemoteEvent")
 JoinQueueEvent.Name = "JoinQueue"
+JoinQueueEvent.Parent = Remotes
 
-local QueueUpdateEvent = Instance.new("RemoteEvent", Remotes)
+local QueueUpdateEvent = Instance.new("RemoteEvent")
 QueueUpdateEvent.Name = "QueueUpdate"
+QueueUpdateEvent.Parent = Remotes
 
 -- Constants
 local REQUIRED_PLAYERS = GameConfig.MAX_SESSION_PLAYERS -- Ensure full squads are formed
 
 function MatchmakingService.Init()
     print("[MatchmakingService] Initialized.")
-    
+
     -- Listen for Client Requests
     JoinQueueEvent.OnServerEvent:Connect(function(player)
         MatchmakingService.JoinQueue(player)
     end)
-    
+
     -- Remove players from queue when they disconnect
     Players.PlayerRemoving:Connect(function(player)
         MatchmakingService.LeaveQueue(player)
@@ -48,12 +50,14 @@ function MatchmakingService.Init()
 end
 
 function MatchmakingService.JoinQueue(player)
-    if queueSet[player] then return end
-    
+    if queueSet[player] then
+        return
+    end
+
     table.insert(queue, player)
     queueSet[player] = true
     print(string.format("[Matchmaking] %s joined queue. (%d/%d)", player.Name, #queue, REQUIRED_PLAYERS))
-    
+
     -- Try to process queue immediately
     task.spawn(MatchmakingService.ProcessQueue)
 
@@ -62,7 +66,9 @@ function MatchmakingService.JoinQueue(player)
 end
 
 function MatchmakingService.LeaveQueue(player)
-    if not queueSet[player] then return end
+    if not queueSet[player] then
+        return
+    end
     local idx = table.find(queue, player)
     if idx then
         table.remove(queue, idx)
@@ -75,7 +81,7 @@ end
 function MatchmakingService.ProcessQueue()
     while #queue >= REQUIRED_PLAYERS do
         print("[Matchmaking] Found match! Teleporting...")
-        
+
         -- Extract the squad
         local squad = table.create(REQUIRED_PLAYERS)
         table.move(queue, 1, REQUIRED_PLAYERS, 1, squad)
@@ -95,13 +101,13 @@ function MatchmakingService.ProcessQueue()
         for i = #queue, newSize + 1, -1 do
             queue[i] = nil
         end
-        
+
         task.spawn(function()
             -- Prepare Teleport Options (Pass Data!)
             local teleportOptions = Instance.new("TeleportOptions")
             local teleportData = {
                 MatchId = game.HttpService:GenerateGUID(false),
-                SquadNames = {}
+                SquadNames = {},
             }
 
             -- Collect Squad Info

@@ -1,0 +1,36 @@
+name: Lint
+
+# Runs StyLua and Selene on every PR and on pushes to main.
+# - StyLua: format check (fails on formatting drift).
+# - Selene: lint (fails on errors only; warnings allowed for now and tracked
+#   in docs/VISION.md as Phase 0 follow-up cleanup).
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  lint:
+    name: StyLua + Selene
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # setup-aftman runs `aftman install --no-trust-check` for us using the
+      # versions pinned in aftman.toml.
+      - name: Install Aftman + tools
+        uses: ok-nick/setup-aftman@v0.4.2
+
+      - name: StyLua --check
+        run: stylua --check src/ tests/
+
+      - name: Selene
+        # --allow-warnings: only fail on hard errors. Warnings still print
+        # for visibility and are tracked as Phase 0 follow-up cleanup
+        # in docs/VISION.md §3.
+        run: selene --allow-warnings src/ tests/

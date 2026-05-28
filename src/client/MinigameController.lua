@@ -41,16 +41,26 @@ UserInputService.GamepadDisconnected:Connect(function(gamepad)
 end)
 
 UserInputService.InputBegan:Connect(function(input, gameProcessed)
-    if gameProcessed then return end
+    if gameProcessed then
+        return
+    end
     if input.UserInputType == Enum.UserInputType.Keyboard then
-        if instructionLabel then instructionLabel.Text = "Hold <b>SPACE</b> to align" end
+        if instructionLabel then
+            instructionLabel.Text = "Hold <b>SPACE</b> to align"
+        end
     elseif input.UserInputType.Name:match("Gamepad") then
-        if instructionLabel then instructionLabel.Text = "Hold <b>A Button</b> to align" end
+        if instructionLabel then
+            instructionLabel.Text = "Hold <b>A Button</b> to align"
+        end
     elseif input.UserInputType == Enum.UserInputType.Touch then
         activeTouches = activeTouches + 1
-        if instructionLabel then instructionLabel.Text = "<b>Hold screen</b> to align" end
+        if instructionLabel then
+            instructionLabel.Text = "<b>Hold screen</b> to align"
+        end
     elseif input.UserInputType == Enum.UserInputType.MouseButton1 then
-        if instructionLabel then instructionLabel.Text = "<b>Hold Click</b> to align" end
+        if instructionLabel then
+            instructionLabel.Text = "<b>Hold Click</b> to align"
+        end
     end
 end)
 
@@ -73,7 +83,7 @@ function MinigameController.Init()
     gui.Name = "MinigameUI"
     gui.ResetOnSpawn = false
     gui.Parent = player:WaitForChild("PlayerGui")
-    
+
     local bg = Instance.new("Frame")
     bg.Name = "Background"
     bg.Size = UDim2.new(0, 300, 0, 40)
@@ -83,14 +93,14 @@ function MinigameController.Init()
     bg.Visible = false
     bg.Parent = gui
     frame = bg
-    
+
     target = Instance.new("Frame")
     target.Name = "Target"
     target.Size = UDim2.new(TARGET_SIZE, 0, 1, 0)
     target.BackgroundColor3 = Color3.fromRGB(0, 255, 0)
     target.BackgroundTransparency = 0.5
     target.Parent = bg
-    
+
     bar = Instance.new("Frame")
     bar.Name = "Bar"
     bar.Size = UDim2.new(BAR_SIZE, 0, 1, 0)
@@ -130,12 +140,14 @@ function MinigameController.Init()
 end
 
 function MinigameController.Start(callback)
-    if isPlaying then return end
+    if isPlaying then
+        return
+    end
     isPlaying = true
     successCallback = callback
     progress = 0
     barPosition = 0.5
-    
+
     -- Reset bar color on start
     if bar then
         bar.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
@@ -147,13 +159,13 @@ function MinigameController.Start(callback)
         local isMobile = UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled
         instructionLabel.Text = isMobile and "<b>Hold screen to align</b>" or "<b>Hold SPACE/Click to align</b>"
     end
-    
+
     frame.Visible = true
     if progressFill then
         -- Optimization: Use fromScale instead of new
         progressFill.Size = UDim2.fromScale(0, 1)
     end
-    
+
     -- Game Loop
     local connection
     connection = RunService.RenderStepped:Connect(function(dt)
@@ -162,13 +174,17 @@ function MinigameController.Start(callback)
             frame.Visible = false
             return
         end
-        
-        -- Logic: Move Bar with Multi-Platform Input
+
+        -- Logic: Move Bar with Multi-Platform Input.
+        -- The branches all set the same flag intentionally — readable per
+        -- input source, and easy to extend (e.g., distinct cues per input).
         local isInputActive = false
         if UserInputService:IsKeyDown(Enum.KeyCode.Space) then
             isInputActive = true
+            -- selene: allow(if_same_then_else)
         elseif UserInputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton1) then
             isInputActive = true
+            -- selene: allow(if_same_then_else)
         elseif activeTouches > 0 then
             isInputActive = true
         else
@@ -185,10 +201,10 @@ function MinigameController.Start(callback)
         else
             barPosition = math.max(0, barPosition - (1.0 * dt))
         end
-        
+
         -- Move Target (Random/Sine wave in future, just static/slow for now)
         -- targetPosition = 0.5 + math.sin(tick()) * 0.3
-        
+
         -- Update UI
         -- Optimization: Use UDim2.fromScale in hot paths to skip unused property parsing
         bar.Position = UDim2.fromScale(barPosition, 0)
@@ -196,13 +212,13 @@ function MinigameController.Start(callback)
         if progressFill then
             progressFill.Size = UDim2.fromScale(math.clamp(progress, 0, 1), 1)
         end
-        
+
         -- Check Overlap
         local barStart = barPosition
         local barEnd = barPosition + BAR_SIZE
         local targetStart = targetPosition
         local targetEnd = targetPosition + TARGET_SIZE
-        
+
         if barStart < targetEnd and barEnd > targetStart then
             progress = progress + (FILL_RATE * dt)
             -- Visual feedback: highlight bar when overlapping target
@@ -216,8 +232,6 @@ function MinigameController.Start(callback)
                 bar.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
             end
         end
-        
-
 
         -- Check Win/Loss
         if progress >= 1 then
@@ -236,13 +250,17 @@ function MinigameController.Stop(success)
             instructionLabel.Text = "<b>Success!</b>"
         end
         task.delay(0.5, function()
-            if frame then frame.Visible = false end
+            if frame then
+                frame.Visible = false
+            end
             if successCallback then
                 successCallback()
             end
         end)
     else
-        if frame then frame.Visible = false end
+        if frame then
+            frame.Visible = false
+        end
     end
 end
 

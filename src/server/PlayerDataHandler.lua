@@ -22,18 +22,18 @@ local DEFAULT_DATA = {
         Rubies = 0, -- Lobby Currency (from selling fish/ores)
         Diamonds = 0, -- Premium/Survival Currency (from 99 Nights)
         Level = 1,
-        XP = 0
+        XP = 0,
     },
     Inventory = {
         -- Format: { Content = "wood", Qty = 10 }, { ItemId = "void_sword", GUID = "..." }
-        { ItemId = "starter_bag", Qty = 1 }
+        { ItemId = "starter_bag", Qty = 1 },
     },
     Loadout = {
         Weapon = nil, -- Usage: ItemId (e.g. "void_sword")
         BaseKit = nil,
-        Bag = "starter_bag"
+        Bag = "starter_bag",
     },
-    CodesRedeemed = {}
+    CodesRedeemed = {},
 }
 
 -- Runtime session cache
@@ -49,7 +49,7 @@ local lastGetDataTimes = {}
 local function deepCopy(orig)
     local original_type = type(orig)
     local copy
-    if original_type == 'table' then
+    if original_type == "table" then
         copy = {}
         for orig_key, orig_value in next, orig, nil do
             copy[deepCopy(orig_key)] = deepCopy(orig_value)
@@ -79,7 +79,9 @@ end
 -- Helper: Rebuild Lookup for a user (O(N)) - Called when indices shift
 local function rebuildLookup(userId)
     local data = sessionData[userId]
-    if not data then return end
+    if not data then
+        return
+    end
 
     local lookup = {}
     for i, slot in ipairs(data.Inventory) do
@@ -123,10 +125,14 @@ local function acquireSessionLock(store, key)
                         -- don't bump a key we don't own.
                         return nil
                     end
-                    warn(string.format(
-                        "[Data] Taking over stale session lock for %s (age %ds, prev JobId %s)",
-                        key, lockAge, tostring(existingLock.JobId)
-                    ))
+                    warn(
+                        string.format(
+                            "[Data] Taking over stale session lock for %s (age %ds, prev JobId %s)",
+                            key,
+                            lockAge,
+                            tostring(existingLock.JobId)
+                        )
+                    )
                 end
 
                 oldData = oldData or {}
@@ -138,21 +144,22 @@ local function acquireSessionLock(store, key)
         if pcallSuccess and result ~= nil then
             -- Strip the lock metadata from the in-memory copy so reconcile()
             -- and Save() don't have to special-case it.
-            local data = {}
-            for k, v in pairs(result) do
-                if k ~= "_SessionLock" then
-                    data[k] = v
-                end
-            end
+            local data = table.clone(result)
+            data._SessionLock = nil
             return true, data
         end
 
         if not pcallSuccess then
             lastReason = tostring(result)
-            warn(string.format(
-                "[Data] acquireSessionLock failed for %s (attempt %d/%d): %s",
-                key, attempt, SESSION_LOCK_RETRIES, lastReason
-            ))
+            warn(
+                string.format(
+                    "[Data] acquireSessionLock failed for %s (attempt %d/%d): %s",
+                    key,
+                    attempt,
+                    SESSION_LOCK_RETRIES,
+                    lastReason
+                )
+            )
         else
             lastReason = "LockedByAnotherServer"
         end
@@ -218,7 +225,7 @@ function PlayerDataHandler.Init()
 
     Players.PlayerAdded:Connect(PlayerDataHandler.OnPlayerAdded)
     Players.PlayerRemoving:Connect(PlayerDataHandler.OnPlayerRemoving)
-    
+
     -- Autosave Loop
     task.spawn(function()
         local playerIndex = 1
@@ -257,7 +264,9 @@ function PlayerDataHandler.Init()
     if not RunService:IsStudio() then
         game:BindToClose(function()
             local players = Players:GetPlayers()
-            if #players == 0 then return end
+            if #players == 0 then
+                return
+            end
 
             print(string.format("[Data] BindToClose: flushing %d players", #players))
 
@@ -346,7 +355,9 @@ function PlayerDataHandler.Save(player, releaseLock)
     local userId = player.UserId
     local data = sessionData[userId]
 
-    if not data then return end
+    if not data then
+        return
+    end
 
     local key = "Player_" .. userId
 
@@ -373,10 +384,7 @@ function PlayerDataHandler.Save(player, releaseLock)
                 end
             end
 
-            local payload = {}
-            for k, v in pairs(data) do
-                payload[k] = v
-            end
+            local payload = table.clone(data)
             payload._SessionLock = { JobId = game.JobId, LockTime = os.time() }
             return payload
         end)
@@ -397,7 +405,9 @@ end
 -- Public API to Get Max Inventory Slots (based on equipped bag)
 function PlayerDataHandler.GetMaxInventorySlots(player)
     local data = sessionData[player.UserId]
-    if not data then return GameConfig.INVENTORY_CAPACITY end
+    if not data then
+        return GameConfig.INVENTORY_CAPACITY
+    end
 
     local bagId = data.Loadout.Bag
     if bagId then
@@ -414,8 +424,10 @@ end
 function PlayerDataHandler.AddItem(player, itemId, quantity)
     local userId = player.UserId
     local data = sessionData[userId]
-    if not data then return false, "NoData" end
-    
+    if not data then
+        return false, "NoData"
+    end
+
     -- Ensure lookup exists (safety)
     if not sessionInventoryLookup[userId] then
         rebuildLookup(userId)
@@ -425,13 +437,13 @@ function PlayerDataHandler.AddItem(player, itemId, quantity)
     if type(quantity) ~= "number" or quantity <= 0 or quantity ~= quantity or quantity == math.huge then
         return false, "InvalidQuantity"
     end
-    
+
     local itemDef = ItemDatabase.GetItem(itemId)
     local isStackable = true
     if itemDef and itemDef.Stackable == false then
         isStackable = false
     end
-    
+
     if isStackable then
         -- Check if item exists (Stacking logic for "Materials")
         -- Optimization: Use GetItem (which uses Lookup O(1))
@@ -455,7 +467,7 @@ function PlayerDataHandler.AddItem(player, itemId, quantity)
                 table.insert(data.Inventory, {
                     ItemId = itemId,
                     Qty = 1,
-                    GUID = HttpService:GenerateGUID(false)
+                    GUID = HttpService:GenerateGUID(false),
                 })
                 -- Update Lookup (point to first one if not set)
                 if not lookup[itemId] then
@@ -466,22 +478,24 @@ function PlayerDataHandler.AddItem(player, itemId, quantity)
             return false, "InventoryFull"
         end
     end
-    
+
     return true, "Success"
 end
 
 -- Public API to Add Currency
 function PlayerDataHandler.AddCurrency(player, currencyType, amount)
     local data = sessionData[player.UserId]
-    if not data then return false end
-    
+    if not data then
+        return false
+    end
+
     if type(amount) ~= "number" or amount <= 0 or amount ~= amount or amount == math.huge then
         return false
     end
 
     if data.Stats[currencyType] then
         data.Stats[currencyType] = data.Stats[currencyType] + amount
-        
+
         -- Update Leaderstats
         local ls = player:FindFirstChild("leaderstats")
         if ls and ls:FindFirstChild(currencyType) then
@@ -496,7 +510,9 @@ end
 function PlayerDataHandler.GetItem(player, itemId)
     local userId = player.UserId
     local data = sessionData[userId]
-    if not data then return nil end
+    if not data then
+        return nil
+    end
 
     -- Optimization: Use Lookup Table (O(1))
     local lookup = sessionInventoryLookup[userId]
@@ -511,7 +527,9 @@ end
 function PlayerDataHandler.RemoveItem(player, itemId, quantity)
     local userId = player.UserId
     local data = sessionData[userId]
-    if not data then return false end
+    if not data then
+        return false
+    end
 
     quantity = quantity or 1
     if type(quantity) ~= "number" or quantity <= 0 or quantity ~= quantity or quantity == math.huge then
@@ -522,7 +540,9 @@ function PlayerDataHandler.RemoveItem(player, itemId, quantity)
     local lookup = sessionInventoryLookup[userId]
     local slotIndex = lookup and lookup[itemId]
 
-    if not slotIndex then return false end -- Not found
+    if not slotIndex then
+        return false
+    end -- Not found
 
     local slot = data.Inventory[slotIndex]
     if not slot or slot.ItemId ~= itemId then
@@ -530,8 +550,6 @@ function PlayerDataHandler.RemoveItem(player, itemId, quantity)
         return false
     end
     local currentQty = slot.Qty or 1
-
-
 
     if currentQty < quantity then
         return false -- Not enough items
@@ -592,16 +610,20 @@ end
 -- Public API to Set Loadout
 function PlayerDataHandler.SetLoadout(player, slot, itemId)
     local data = sessionData[player.UserId]
-    if not data then return false end
-    
+    if not data then
+        return false
+    end
+
     -- Slot must be "Weapon" or "BaseKit" or "Bag" based on our schema
-    if slot ~= "Weapon" and slot ~= "BaseKit" and slot ~= "Bag" then return false end
-    
+    if slot ~= "Weapon" and slot ~= "BaseKit" and slot ~= "Bag" then
+        return false
+    end
+
     -- Verification: Does player own this item?
     if itemId and not PlayerDataHandler.GetItem(player, itemId) then
         return false
     end
-    
+
     data.Loadout[slot] = itemId
     return true
 end
