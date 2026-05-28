@@ -1,0 +1,10 @@
+# Selene config — Roblox/Luau standard library.
+# https://kampfkarren.github.io/selene/usage/configuration.html
+std = "roblox"
+
+# Suppress lints that fight Luau idioms or aren't a fit yet.
+[lints]
+# We use `script.Parent.Foo` heavily; selene flags these as global-mutation in some forms.
+global_usage = "allow"
+# StyLua handles formatting; selene doesn't need to flag mixed table types.
+mixed_table = "allow"

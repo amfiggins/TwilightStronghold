@@ -16,32 +16,59 @@ local lastBuildTimes = {}
 -- Helper: Validate CFrame for NaNs and Inf
 -- Optimization: Unpack components directly to avoid table allocation
 local function isValidCFrame(cf)
-    if typeof(cf) ~= "CFrame" then return false end
+    if typeof(cf) ~= "CFrame" then
+        return false
+    end
 
     local x, y, z, r00, r01, r02, r10, r11, r12, r20, r21, r22 = cf:GetComponents()
-    if x ~= x or math.abs(x) == math.huge then return false end
-    if y ~= y or math.abs(y) == math.huge then return false end
-    if z ~= z or math.abs(z) == math.huge then return false end
-    if r00 ~= r00 or math.abs(r00) == math.huge then return false end
-    if r01 ~= r01 or math.abs(r01) == math.huge then return false end
-    if r02 ~= r02 or math.abs(r02) == math.huge then return false end
-    if r10 ~= r10 or math.abs(r10) == math.huge then return false end
-    if r11 ~= r11 or math.abs(r11) == math.huge then return false end
-    if r12 ~= r12 or math.abs(r12) == math.huge then return false end
-    if r20 ~= r20 or math.abs(r20) == math.huge then return false end
-    if r21 ~= r21 or math.abs(r21) == math.huge then return false end
-    if r22 ~= r22 or math.abs(r22) == math.huge then return false end
+    if x ~= x or math.abs(x) == math.huge then
+        return false
+    end
+    if y ~= y or math.abs(y) == math.huge then
+        return false
+    end
+    if z ~= z or math.abs(z) == math.huge then
+        return false
+    end
+    if r00 ~= r00 or math.abs(r00) == math.huge then
+        return false
+    end
+    if r01 ~= r01 or math.abs(r01) == math.huge then
+        return false
+    end
+    if r02 ~= r02 or math.abs(r02) == math.huge then
+        return false
+    end
+    if r10 ~= r10 or math.abs(r10) == math.huge then
+        return false
+    end
+    if r11 ~= r11 or math.abs(r11) == math.huge then
+        return false
+    end
+    if r12 ~= r12 or math.abs(r12) == math.huge then
+        return false
+    end
+    if r20 ~= r20 or math.abs(r20) == math.huge then
+        return false
+    end
+    if r21 ~= r21 or math.abs(r21) == math.huge then
+        return false
+    end
+    if r22 ~= r22 or math.abs(r22) == math.huge then
+        return false
+    end
     return true
 end
 
 -- Remotes
 local Remotes = ReplicatedStorage:WaitForChild("Remotes")
-local PlaceStructureEvent = Instance.new("RemoteEvent", Remotes)
+local PlaceStructureEvent = Instance.new("RemoteEvent")
+PlaceStructureEvent.Parent = Remotes
 PlaceStructureEvent.Name = "PlaceStructure"
 
 function BuildingSystem.Init()
     print("[BuildingSystem] Initialized.")
-    
+
     PlaceStructureEvent.OnServerEvent:Connect(function(player, structureType, cframe)
         BuildingSystem.PlaceStructure(player, structureType, cframe)
     end)
@@ -64,8 +91,10 @@ function BuildingSystem.PlaceStructure(player, structureType, cframe)
 
     -- 1. Validate Cost Existence
     local cost = GameConfig.StructureCosts[structureType]
-    if not cost then return false, "InvalidStructure" end
-    
+    if not cost then
+        return false, "InvalidStructure"
+    end
+
     -- 2. Validate Placement (Anti-Cheat)
     -- Ensure cframe is valid (Type Check & Finite numbers only - DoS Prevention)
     if not isValidCFrame(cframe) then
@@ -90,20 +119,20 @@ function BuildingSystem.PlaceStructure(player, structureType, cframe)
         return false, "TooFar"
     end
 
-
-
     -- Ensure no collision
 
     -- 3. Deduct Cost
     local success = PlayerDataHandler.RemoveItem(player, cost.Resource, cost.Amount)
     if not success then
-        warn(string.format("[BuildingSystem] %s failed to build %s: Insufficient resources.", player.Name, structureType))
+        warn(
+            string.format("[BuildingSystem] %s failed to build %s: Insufficient resources.", player.Name, structureType)
+        )
         return false, "InsufficientResources"
     end
-    
+
     -- 4. Place It
     print(string.format("[BuildingSystem] %s placed a %s", player.Name, structureType))
-    
+
     local props = GameConfig.StructureProperties[structureType]
     if not props then
         warn(string.format("[BuildingSystem] Missing properties for %s", structureType))

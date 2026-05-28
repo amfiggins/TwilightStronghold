@@ -11,8 +11,9 @@ local DayNightCycle = {}
 
 -- Events
 local Remotes = ReplicatedStorage:WaitForChild("Remotes")
-local PhaseChanged = Instance.new("RemoteEvent", Remotes)
+local PhaseChanged = Instance.new("RemoteEvent")
 PhaseChanged.Name = "PhaseChanged"
+PhaseChanged.Parent = Remotes
 
 -- State
 DayNightCycle.Phase = "Day" -- "Day" or "Night"
@@ -28,7 +29,7 @@ local NIGHT_LENGTH = 120 -- Seconds (Production Value)
 function DayNightCycle.Init()
     print("[DayNightCycle] Initialized.")
     DayNightCycle.StartDay()
-    
+
     task.spawn(function()
         while true do
             task.wait(1)
@@ -39,7 +40,7 @@ end
 
 function DayNightCycle.Tick()
     DayNightCycle.TimeRemaining = DayNightCycle.TimeRemaining - 1
-    
+
     if DayNightCycle.TimeRemaining <= 0 then
         if DayNightCycle.Phase == "Day" then
             DayNightCycle.StartNight()
@@ -53,24 +54,24 @@ function DayNightCycle.StartDay()
     DayNightCycle.Phase = "Day"
     DayNightCycle.DayCount = DayNightCycle.DayCount + 1
     DayNightCycle.TimeRemaining = DAY_LENGTH
-    
+
     -- Visuals
     Lighting.ClockTime = 14 -- 2 PM
     print(string.format("[DayNightCycle] Day %d Started. Build Phase.", DayNightCycle.DayCount))
-    
+
     PhaseChanged:FireAllClients("Day", DayNightCycle.DayCount, DayNightCycle.TimeRemaining)
 end
 
 function DayNightCycle.StartNight()
     DayNightCycle.Phase = "Night"
     DayNightCycle.TimeRemaining = NIGHT_LENGTH
-    
+
     -- Visuals
     Lighting.ClockTime = 0 -- Midnight
     print(string.format("[DayNightCycle] Night %d Started. Combat Phase!", DayNightCycle.DayCount))
-    
+
     PhaseChanged:FireAllClients("Night", DayNightCycle.DayCount, DayNightCycle.TimeRemaining)
-    
+
     -- Notify WaveManager (In a real architecture, we'd use a BindableEvent or direct require)
     local WaveManager = require(script.Parent.WaveManager)
     WaveManager.StartWave(DayNightCycle.DayCount)

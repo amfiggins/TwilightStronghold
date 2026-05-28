@@ -75,10 +75,18 @@ local function updateRefreshState(isActive)
     refreshTooltip.Visible = isActive
 end
 
-refreshBtn.MouseEnter:Connect(function() updateRefreshState(true) end)
-refreshBtn.MouseLeave:Connect(function() updateRefreshState(false) end)
-refreshBtn.SelectionGained:Connect(function() updateRefreshState(true) end)
-refreshBtn.SelectionLost:Connect(function() updateRefreshState(false) end)
+refreshBtn.MouseEnter:Connect(function()
+    updateRefreshState(true)
+end)
+refreshBtn.MouseLeave:Connect(function()
+    updateRefreshState(false)
+end)
+refreshBtn.SelectionGained:Connect(function()
+    updateRefreshState(true)
+end)
+refreshBtn.SelectionLost:Connect(function()
+    updateRefreshState(false)
+end)
 
 -- List Container (ScrollingFrame for Scanability)
 local listContainer = Instance.new("ScrollingFrame")
@@ -121,9 +129,15 @@ local function showToast(text)
     toast.Parent = frame -- Keep toast on frame, over the list
 
     local info = TweenInfo.new(1.5, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
-    local tween = TweenService:Create(toast, info, { TextTransparency = 1, BackgroundTransparency = 1, Position = UDim2.new(0.5, 0, 0.8, 0) })
+    local tween = TweenService:Create(
+        toast,
+        info,
+        { TextTransparency = 1, BackgroundTransparency = 1, Position = UDim2.new(0.5, 0, 0.8, 0) }
+    )
     tween:Play()
-    tween.Completed:Connect(function() toast:Destroy() end)
+    tween.Completed:Connect(function()
+        toast:Destroy()
+    end)
 end
 
 -- Helper: Create Button
@@ -181,7 +195,9 @@ local function createButton(text, onClick, rarityColor, isEquipped, rarityName, 
 
     local function updateState(isHovered)
         -- Always show rarity on hover for scanability
-        if rarityLabel then rarityLabel.Visible = isHovered end
+        if rarityLabel then
+            rarityLabel.Visible = isHovered
+        end
 
         if isEquipped then
             -- Interactive feedback even for equipped items (Brighter Green)
@@ -191,11 +207,19 @@ local function createButton(text, onClick, rarityColor, isEquipped, rarityName, 
         end
     end
 
-    btn.MouseEnter:Connect(function() updateState(true) end)
-    btn.MouseLeave:Connect(function() updateState(false) end)
-    btn.SelectionGained:Connect(function() updateState(true) end)
-    btn.SelectionLost:Connect(function() updateState(false) end)
-    
+    btn.MouseEnter:Connect(function()
+        updateState(true)
+    end)
+    btn.MouseLeave:Connect(function()
+        updateState(false)
+    end)
+    btn.SelectionGained:Connect(function()
+        updateState(true)
+    end)
+    btn.SelectionLost:Connect(function()
+        updateState(false)
+    end)
+
     btn.MouseButton1Click:Connect(function()
         if isEquipped then
             showToast("Already equipped")
@@ -217,11 +241,19 @@ local currentRotationTween = nil
 
 -- Populate Inventory Buttons
 local function populateLoadout()
-    if isRefreshing then return end
+    if isRefreshing then
+        return
+    end
     isRefreshing = true
 
-    if currentRotationTween then currentRotationTween:Cancel() end
-    currentRotationTween = TweenService:Create(refreshBtn, TweenInfo.new(1, Enum.EasingStyle.Linear, Enum.EasingDirection.Out, -1), {Rotation = 360})
+    if currentRotationTween then
+        currentRotationTween:Cancel()
+    end
+    currentRotationTween = TweenService:Create(
+        refreshBtn,
+        TweenInfo.new(1, Enum.EasingStyle.Linear, Enum.EasingDirection.Out, -1),
+        { Rotation = 360 }
+    )
     currentRotationTween:Play()
 
     -- Clear List (preserve layout)
@@ -246,7 +278,9 @@ local function populateLoadout()
         return GetPlayerData:InvokeServer()
     end)
 
-    if loadingLabel then loadingLabel:Destroy() end
+    if loadingLabel then
+        loadingLabel:Destroy()
+    end
 
     if not success then
         warn("Failed to fetch player data:", data)
@@ -260,7 +294,9 @@ local function populateLoadout()
         errorLabel.TextSize = 14
         errorLabel.Parent = listContainer
 
-        if currentRotationTween then currentRotationTween:Cancel() end
+        if currentRotationTween then
+            currentRotationTween:Cancel()
+        end
         refreshBtn.Rotation = 0
         isRefreshing = false
         return
@@ -355,7 +391,9 @@ local function populateLoadout()
         emptyLabel.Parent = listContainer
     end
 
-    if currentRotationTween then currentRotationTween:Cancel() end
+    if currentRotationTween then
+        currentRotationTween:Cancel()
+    end
     refreshBtn.Rotation = 0
     isRefreshing = false
 end

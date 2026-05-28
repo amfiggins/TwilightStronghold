@@ -73,8 +73,8 @@ Nighttime should feel: **stressful, suspenseful, atmospheric, dangerous, unpredi
 |---|---|
 | Players per run | Up to **6** (cooperative; no PvP at launch) |
 | Average successful run length | 2+ hours |
-| Win condition | Survive **150 nights** |
-| After 150 | Endless mode with continued scaling and a leaderboard |
+| Day 150 milestone | Survive **150 nights** to unlock endless leaderboard ranking. Run does not end — players keep going. |
+| Endless mode | After Day 150, difficulty continues scaling and players compete on a survival-rank leaderboard. |
 | Joining mid-run | Friends may join if a reserved slot exists; reserved slots cannot be filled by strangers |
 
 ## 1.4 Lobby world
@@ -275,10 +275,10 @@ This section reflects what is **actually in the repo** as of the last update. Up
 
 | Area | State |
 |---|---|
-| Toolchain | `aftman.toml` pins `rojo-rbx/rojo@7.4.4`. No StyLua, Selene, Wally, or test runner. |
+| Toolchain | `aftman.toml` pins `rojo-rbx/rojo@7.4.4`, `JohnnyMorganz/StyLua@2.5.2`, `Kampfkarren/selene@0.31.0`. No Wally / TestEZ proper yet. |
 | Project files | Single `default.project.json` mapping `src/shared` → `ReplicatedStorage.Shared`, `src/server` → `ServerScriptService.Server`, `src/client` → `StarterPlayer.StarterPlayerScripts.Client`. CI publishes the same `.rbxl` to both Lobby and Survival Place IDs; runtime branching happens via `game.PlaceId` in `ServerMain.server.lua`. We'll split the project file at Phase 2.1 when Survival ships a different map. |
 | Place IDs | Lobby `140360553864312`, Survival `114856846700519` (in `GameConfig.PLACE_IDS`). |
-| CI | `.github/workflows/publish.yml` builds one `.rbxl` with Rojo on push to `main`, then POSTs it to both Lobby and Survival places via the Roblox Open Cloud Places API using `secrets.ROBLOX_API_KEY` and the GitHub repo vars `UNIVERSE_ID`, `LOBBY_PLACE_ID`, `SURVIVAL_PLACE_ID`. |
+| CI | `.github/workflows/publish.yml` builds one `.rbxl` with Rojo on push to `main`, then POSTs it to both Lobby and Survival places via the Roblox Open Cloud Places API using `secrets.ROBLOX_API_KEY` and the GitHub repo vars `UNIVERSE_ID`, `LOBBY_PLACE_ID`, `SURVIVAL_PLACE_ID`. `.github/workflows/lint.yml` runs `stylua --check` and `selene --allow-warnings` on every PR and push to `main`. |
 | `.luau-analyze.json` | Globals list for local Luau analysis only; not in CI. |
 | `.Jules/*.md` | Three personality journals (`bolt`, `palette`, `sentinel`) used by an external agent system to log perf/UX/security learnings. Treat as a changelog of "why this code looks the way it does." |
 
@@ -330,7 +330,7 @@ Legend: ✅ implemented · 🟡 partial · ❌ missing
 
 | Feature | Status | Notes |
 |---|---|---|
-| Day/Night cycle | 🟡 | Basic; no win at Day 150; off-by-one DayCount; no countdown HUD |
+| Day/Night cycle | 🟡 | Basic; no Day 150 milestone event yet; no countdown HUD |
 | Resource gathering (wood/stone/fish) | ✅ | Solid security model; **nodes never respawn** |
 | Building system | 🟡 | Wall/Tower stubs; no collision check, no persistence, no destruction |
 | Inventory | ✅ | O(1) lookup, bag capacity, swap-remove |
@@ -353,7 +353,7 @@ Legend: ✅ implemented · 🟡 partial · ❌ missing
 | Residents (NPCs) | ❌ | None |
 | Roles / classes | ❌ | None |
 | Raids / blood-moon events | ❌ | None |
-| Win condition (Day 150) | ❌ | Cycle runs forever |
+| Day 150 milestone | ❌ | Cycle runs forever; no milestone event, no leaderboard hook |
 
 ## 2.6 Network surface (RemoteEvents / RemoteFunctions)
 
@@ -391,8 +391,8 @@ Tagged so we can sweep them as a batch.
 | BUG-12 | Low | `MinigameController.target` is static at `0.5` — sine wave is commented out, so the minigame is trivially solvable. |
 | BUG-13 | Medium | `BuildingSystem.PlaceStructure` has a literal `-- Ensure no collision` TODO and no implementation. Walls can stack inside each other or terrain. |
 | BUG-14 | Low | `raw_fish` is a Consumable but has no Hunger/Heal value, and no eat handler exists. |
-| BUG-15 | Low | No StyLua/Selene config; style is loose. |
-| BUG-16 | Low | No automated test harness; `BuildingSystemTest.lua` and benchmarks are ad-hoc. |
+| BUG-15 | Low | ~~No StyLua/Selene config; style is loose.~~ **Fixed** in Phase 0 (StyLua 2.5.2 + Selene 0.31.0 pinned in `aftman.toml`; configs at `stylua.toml` and `selene.toml`; CI runs `stylua --check` and `selene --allow-warnings` on every PR via `.github/workflows/lint.yml`). 24 existing warnings (unused vars, manual-fromscale, etc) remain as a separate cleanup task. |
+| BUG-16 | Low | ~~No automated test harness; `BuildingSystemTest.lua` and benchmarks are ad-hoc.~~ **Partially fixed** in Phase 0: scaffolding landed (`tests/` folder with `TestFramework.lua`, `TestRunner.server.lua`, `tests/unit/ItemDatabase.spec.lua`, plus `tests.project.json` for Studio runs). Tests are Studio-only today. Wiring CI execution via [run-in-roblox](https://github.com/rojo-rbx/run-in-roblox) or [Lune](https://github.com/lune-org/lune) is a follow-up. |
 | BUG-17 | Low | `LoadoutUI` is always visible — no toggle key. |
 
 
@@ -418,8 +418,8 @@ This plan sequences work so each phase produces a **playable, demonstrable build
 - [x] Fix `DayNightCycle.StartDay` off-by-one — start with `DayCount = 0` and only increment on transition, not on `Init`. [BUG-2]
 - [x] Make Tower geometry distinct from Wall in `GameConfig.StructureProperties` (suggest Tower `Vector3.new(4, 16, 4)`, lighter color). [BUG-10]
 - [x] Decide whether to keep `survival.project.json`. Either delete it or actually differentiate it (e.g., Survival project includes a different `_baseplate.rbxm` and excludes the lobby portal). [BUG-9] **Decision: deleted; revisit at Phase 2.1.**
-- [ ] Add `selene.toml` and `stylua.toml` and a CI step that runs both. [BUG-15]
-- [ ] Add a TestEZ-style harness under `src/server/_tests/` and wire to CI. (Stub a single passing test to start.) [BUG-16]
+- [x] Add `selene.toml` and `stylua.toml` and a CI step that runs both. [BUG-15]
+- [x] Add a TestEZ-style harness under `tests/` and wire to CI **(scaffolding only — Studio runs work today; CI execution via run-in-roblox/Lune is a follow-up)**. [BUG-16]
 
 **Artifacts:** PR per group. Suggested grouping: (cleanup), (datastore safety), (loadout fix), (tooling).
 
@@ -451,10 +451,11 @@ This plan sequences work so each phase produces a **playable, demonstrable build
 - [ ] Add `VitalsUpdate` RemoteEvent: server fires `(hunger, thirst)` to the player on every change so client doesn't have to poll.
 - [ ] Hide `LoadoutUI` behind a toggle key (`Tab` or `B`). [BUG-17]
 
-### 1.4 Win/lose condition
+### 1.4 Win/lose framing
 
-- [ ] `DayNightCycle` fires a `GameWon` RemoteEvent when `DayCount == 150`. Show a victory ScreenGui on the client.
-- [ ] After Day 150, switch to Endless mode: continue scaling but flag the run for leaderboard.
+- [ ] `DayNightCycle` fires a `Day150Reached` RemoteEvent when `DayCount == 150` for the first time in a run. Show a celebratory ScreenGui (not a victory/end screen — the run continues).
+- [ ] After Day 150, flag the run as `EndlessMode = true` in match state and write the player's surviving-day count to a leaderboard DataStore on death or disconnect.
+- [ ] Difficulty curve in `WaveManager` keeps scaling past Day 150 with no cap.
 
 ## Phase 2 — World content (so the world isn't empty)
 
@@ -605,6 +606,9 @@ Things that don't fit a phase yet but we don't want to lose. Move into a phase w
 - **Friends-only joins.** Vision says "reserved slots cannot be filled by strangers." Needs a party/lobby-key system on the matchmaking side.
 - **Weather system.** Rain in Forest, snowstorms in Tundra, sandstorms in Desert. Affects visibility and beast cues.
 - **Day-skip vote.** Let the squad vote to skip the rest of a Day Phase if they're ready.
+- **Run tests in CI.** The `tests/` harness is Studio-only today. Wire up [run-in-roblox](https://github.com/rojo-rbx/run-in-roblox) or [Lune](https://github.com/lune-org/lune) so PRs run unit and integration tests automatically.
+- **Cleanup pass on the 24 Selene warnings.** Mostly `roblox_manual_fromscale_or_fromoffset` (use `UDim2.fromScale` / `UDim2.fromOffset`) and unused locals. Drop `--allow-warnings` from CI once the warnings are gone.
+- **Adopt TestEZ proper.** Replace the in-repo `TestFramework.lua` shim with the real [TestEZ](https://roblox.github.io/testez/) once we install Wally.
 
 ---
 
@@ -615,8 +619,8 @@ When we make a tradeoff that locks something in, record it here so future-us doe
 | Date | Decision | Why | Status |
 |---|---|---|---|
 | 2026-05-28 | This document is the source of truth. Existing `optimization_notes.md` and `.Jules/*.md` stay as historical journals. | Single place to look for "what is the game and where are we." | Active |
-| Open | **Squad size: 4 (code) vs 6 (vision).** Need to pick one. Recommendation: bump `MAX_SESSION_PLAYERS` to 6, since reservations + invite-only joins are easier with headroom. | — | Pending |
-| Open | **Win condition night count: 99 (Survive 99 in a Forest pattern) vs 150 (vision doc).** Vision says 150, the franchise reference says 99. Pick one. | — | Pending |
+| 2026-05-28 | **Squad size = 6.** Bumped `MAX_SESSION_PLAYERS` from 4 to 6 to match the vision. | Reserved-slot/invite-only joins are easier with headroom; matches design doc; trivial config change. | Done |
+| 2026-05-28 | **Day 150 is a milestone, not a win.** The run does not end at Day 150. Players unlock endless leaderboard ranking and keep going. Difficulty continues scaling past 150 with no cap. | Maintains replayability and avoids a hard "you won, game over" off-ramp. Differentiates from the "Survive 99" pattern. | Done |
 | 2026-05-28 | **Delete `survival.project.json`.** It was byte-identical to `default.project.json`. CI now builds once and publishes the same `.rbxl` to both Place IDs. We'll reintroduce a differentiated project at Phase 2.1 when there's actual place-specific content (e.g., a Forest Kingdom map shipped only to Survival). | YAGNI — solve the duplication when there's a real difference to encode. | Done (BUG-9) |
 
 ---

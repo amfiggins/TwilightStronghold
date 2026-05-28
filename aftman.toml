@@ -2,3 +2,11 @@
 # Rojo: syncs filesystem scripts into Roblox Studio and builds .rbxl files
 # https://github.com/rojo-rbx/rojo/releases
 rojo = "rojo-rbx/rojo@7.4.4"
+
+# StyLua: deterministic Luau code formatter
+# https://github.com/JohnnyMorganz/StyLua/releases
+stylua = "JohnnyMorganz/StyLua@2.5.2"
+
+# Selene: Luau linter
+# https://github.com/Kampfkarren/selene/releases
+selene = "Kampfkarren/selene@0.31.0"

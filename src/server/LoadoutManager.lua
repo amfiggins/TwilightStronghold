@@ -16,8 +16,9 @@ local lastRequestTimes = {} -- [UserId] = timestamp
 
 -- Create Remotes
 local Remotes = ReplicatedStorage:WaitForChild("Remotes")
-local LoadoutEvent = Instance.new("RemoteEvent", Remotes)
+local LoadoutEvent = Instance.new("RemoteEvent")
 LoadoutEvent.Name = "SetLoadout"
+LoadoutEvent.Parent = Remotes
 
 function LoadoutManager.Init()
     LoadoutEvent.OnServerEvent:Connect(LoadoutManager.OnLoadoutRequest)
@@ -40,20 +41,24 @@ function LoadoutManager.OnLoadoutRequest(player, slot, itemId)
     end
     lastRequestTimes[player.UserId] = now
 
-    print(string.format("[LoadoutManager] Request from %s: Set %s to %s", player.Name, tostring(slot), tostring(itemId)))
-    
+    print(
+        string.format("[LoadoutManager] Request from %s: Set %s to %s", player.Name, tostring(slot), tostring(itemId))
+    )
+
     -- Validation 1: Slot must be valid
     if slot ~= "Weapon" and slot ~= "BaseKit" and slot ~= "Bag" then
         warn("Invalid slot")
         return
     end
-    
+
     -- Validation 2: Item ID must exist in GameConfig
     -- Sentinel: Type checking is critical here. Clients can send any type (e.g. bool, table).
     -- If itemId is not nil, it must be a string and exist in the database.
     if itemId ~= nil then
         if type(itemId) ~= "string" then
-            warn(string.format("[LoadoutManager] Security: Invalid itemId type (%s) from %s", type(itemId), player.Name))
+            warn(
+                string.format("[LoadoutManager] Security: Invalid itemId type (%s) from %s", type(itemId), player.Name)
+            )
             return
         end
 
@@ -75,14 +80,11 @@ function LoadoutManager.OnLoadoutRequest(player, slot, itemId)
             return
         end
     end
-    
+
     -- Execute
     -- Note: If itemId is nil, it means "Unequip"
-    local success = PlayerDataHandler.SetLoadout(player, slot, itemId)
-    
-    if success then
-        -- Feedback? (Optional)
-    end
+    PlayerDataHandler.SetLoadout(player, slot, itemId)
+    -- Future: fire a confirmation RemoteEvent here so the client can show feedback.
 end
 
 return LoadoutManager

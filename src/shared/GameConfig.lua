@@ -9,27 +9,28 @@ local Shared = {}
 Shared.GAME_VERSION = "0.1.0-alpha"
 Shared.IS_SURVIVAL_MODE = false -- Toggle to true to test Survival Loop in Studio
 Shared.MAX_LOBBY_PLAYERS = 20
-Shared.MAX_SESSION_PLAYERS = 4 -- Survival squad size
+-- Survival squad size. Matches docs/VISION.md §1.3 (up to 6 cooperative players per run).
+Shared.MAX_SESSION_PLAYERS = 6
 Shared.INVENTORY_CAPACITY = 5 -- Fallback max unique slots (if no bag equipped)
 Shared.MAX_BUILD_DISTANCE = 20 -- Maximum distance in studs to allow building
 
 -- Place Configuration
 Shared.PLACE_IDS = {
     Lobby = 140360553864312, -- Twilight Stronghold - Lobby Place ID
-    SurvivalZone = 114856846700519 -- Survival Zone Place ID
+    SurvivalZone = 114856846700519, -- Survival Zone Place ID
 }
 
 -- Structure Costs
 Shared.StructureCosts = {
     ["Wall"] = { Resource = "wood_log", Amount = 5 },
-    ["Tower"] = { Resource = "wood_log", Amount = 20 }
+    ["Tower"] = { Resource = "wood_log", Amount = 20 },
 }
 
 -- Structure Properties (Visuals & Physics)
 Shared.StructureProperties = {
     ["Wall"] = { Size = Vector3.new(4, 8, 1), Color = Color3.fromRGB(160, 132, 79), Anchored = true },
     -- Tower: taller and thicker than walls so it's actually distinguishable in-world.
-    ["Tower"] = { Size = Vector3.new(4, 16, 4), Color = Color3.fromRGB(120, 95, 50), Anchored = true }
+    ["Tower"] = { Size = Vector3.new(4, 16, 4), Color = Color3.fromRGB(120, 95, 50), Anchored = true },
 }
 
 -- Rarity Definitions
@@ -46,7 +47,7 @@ Shared.Rarity = {
 Shared.Resources = {
     ["Tree"] = { Item = "wood_log", Min = 1, Max = 3, RareItem = "golden_wood", RareChance = 5, DestroyOnGather = true },
     ["Rock"] = { Item = "stone_ore", Min = 1, Max = 2, DestroyOnGather = true },
-    ["Lake"] = { Item = "raw_fish", Min = 1, Max = 1 }
+    ["Lake"] = { Item = "raw_fish", Min = 1, Max = 1 },
 }
 
 -- Mapping: Specific Node Name -> Generic Resource ID
@@ -61,7 +62,7 @@ Shared.NodeTypeMapping = {
     ["Granite"] = "Rock",
     ["Basalt"] = "Rock",
     ["Pond"] = "Lake",
-    ["River"] = "Lake"
+    ["River"] = "Lake",
 }
 
 -- Item Database (Mock-up)
