@@ -23,6 +23,11 @@ local DEFAULT_DATA = {
         Diamonds = 0, -- Premium/Survival Currency (from 99 Nights)
         Level = 1,
         XP = 0,
+        -- Vitals (managed by VitalsSystem in Survival mode)
+        Hunger = 100,
+        Thirst = 100,
+        MaxHunger = 100,
+        MaxThirst = 100,
     },
     Inventory = {
         -- Format: { ItemId = "wood", Qty = 10 }, { ItemId = "void_sword", GUID = "..." }
@@ -647,6 +652,82 @@ function PlayerDataHandler.SetLoadout(player, slot, itemId)
 
     data.Loadout[slot] = itemId
     return true
+end
+
+-- Public API to consume a Food or Drink item.
+-- Validates the item type, removes one from inventory, and applies the
+-- HungerRestore / ThirstRestore / HealthRestore values.
+-- Returns (true, "Success") or (false, reason).
+function PlayerDataHandler.ConsumeItem(player, itemId)
+    local data = sessionData[player.UserId]
+    if not data then
+        return false, "NoData"
+    end
+
+    local itemDef = ItemDatabase.GetItem(itemId)
+    if not itemDef then
+        return false, "UnknownItem"
+    end
+    if itemDef.Type ~= "Food" and itemDef.Type ~= "Drink" then
+        return false, "NotConsumable"
+    end
+
+    -- Verify ownership
+    if not PlayerDataHandler.GetItem(player, itemId) then
+        return false, "NotOwned"
+    end
+
+    -- Remove one from inventory
+    local removed = PlayerDataHandler.RemoveItem(player, itemId, 1)
+    if not removed then
+        return false, "RemoveFailed"
+    end
+
+    -- Apply vitals
+    local stats = data.Stats
+    if itemDef.HungerRestore and itemDef.HungerRestore > 0 then
+        stats.Hunger = math.min(stats.MaxHunger, (stats.Hunger or 0) + itemDef.HungerRestore)
+    end
+    if itemDef.ThirstRestore and itemDef.ThirstRestore > 0 then
+        stats.Thirst = math.min(stats.MaxThirst, (stats.Thirst or 0) + itemDef.ThirstRestore)
+    end
+    if itemDef.HealthRestore and itemDef.HealthRestore > 0 then
+        local character = player.Character
+        local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+        if humanoid then
+            humanoid.Health = math.min(humanoid.MaxHealth, humanoid.Health + itemDef.HealthRestore)
+        end
+    end
+
+    return true, "Success"
+end
+
+-- Public API to directly set a vital (used by VitalsSystem for decay ticks).
+-- Clamps to [0, max]. Returns the new value.
+function PlayerDataHandler.SetVital(player, vitalName, value)
+    local data = sessionData[player.UserId]
+    if not data or not data.Stats then
+        return nil
+    end
+    local maxKey = "Max" .. vitalName
+    local maxVal = data.Stats[maxKey] or 100
+    local clamped = math.clamp(value, 0, maxVal)
+    data.Stats[vitalName] = clamped
+    return clamped
+end
+
+-- Public API to get current vitals snapshot (for VitalsUpdate events).
+function PlayerDataHandler.GetVitals(player)
+    local data = sessionData[player.UserId]
+    if not data or not data.Stats then
+        return nil
+    end
+    return {
+        Hunger = data.Stats.Hunger or 100,
+        Thirst = data.Stats.Thirst or 100,
+        MaxHunger = data.Stats.MaxHunger or 100,
+        MaxThirst = data.Stats.MaxThirst or 100,
+    }
 end
 
 return PlayerDataHandler

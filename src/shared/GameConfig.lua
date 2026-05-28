@@ -13,6 +13,8 @@ Shared.MAX_LOBBY_PLAYERS = 20
 Shared.MAX_SESSION_PLAYERS = 6
 Shared.INVENTORY_CAPACITY = 5 -- Fallback max unique slots (if no bag equipped)
 Shared.MAX_BUILD_DISTANCE = 20 -- Maximum distance in studs to allow building
+-- Night count at which the Day 150 milestone fires (run continues in endless mode).
+Shared.MILESTONE_NIGHT = 150
 
 -- Place Configuration
 Shared.PLACE_IDS = {

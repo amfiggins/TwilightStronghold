@@ -294,6 +294,7 @@ This section reflects what is **actually in the repo** as of the last update. Up
 | `WaveManager.lua` | Spawns enemies during night, deals touch damage with per-player cooldown, despawns at dawn, registers/unregisters with `CombatSystem`. Pathfinding+raycast LOS shortcut, tiered update rates. | 🟡 Single enemy type |
 | `LoadoutManager.lua` | `SetLoadout` RemoteEvent. Validates slot, type-checks itemId against `ItemDatabase`, enforces type per slot, rate-limits. | 🟡 (see bug list) |
 | `CombatSystem.lua` | `Attack` RemoteEvent. Validates equipped weapon, target is a registered enemy, range/cooldown. Tracks per-player damage contribution; awards proportional Rubies + XP on kill via `UnregisterEnemy`. | ✅ Real (Phase 1.1) |
+| `VitalsSystem.lua` | `EatItem` + `DrinkItem` + `VitalsUpdate` RemoteEvents. Staggered decay loop (Hunger −1/tick, Thirst −2/tick every 5s). Starvation/dehydration damage when either hits 0. Delegates consume logic to `PlayerDataHandler.ConsumeItem`. | ✅ Real (Phase 1.2) |
 | `MatchmakingService.lua` | `JoinQueue` + `QueueUpdate` RemoteEvents. FIFO, 6 players → `TeleportAsync` to Survival with a `MatchId` GUID. Re-queues on teleport failure (ghost-cleanup). | ✅ Real |
 | `BuildingSystemTest.lua` | Module that mocks a player and asserts a Wall is created. Not auto-run, must be required from the command bar. | 🟡 Ad-hoc |
 | `VerifyResourceMappings.server.lua` | Iterates `NodeTypeMapping`, warns on unmapped resources. | ⚠️ Auto-runs in production |
@@ -344,7 +345,7 @@ Legend: ✅ implemented · 🟡 partial · ❌ missing
 | Matchmaking | ✅ | 4-player queue; ghost cleanup |
 | DataStore persistence | ✅ | Solid retries; **no `BindToClose`, no cross-server session lock** |
 | HUD | ❌ | No phase/day timer, no health/hunger/thirst bar, no hotbar |
-| Hunger / Thirst / Cold | ❌ | No stats in `DEFAULT_DATA` |
+| Hunger / Thirst / Cold | ✅ | `Stats.Hunger` and `Stats.Thirst` in DEFAULT_DATA; `VitalsSystem` decays both every 5s; starvation/dehydration damage when either hits 0; `EatItem`/`DrinkItem` RemoteEvents |
 | Hotbar | ❌ | Loadout panel exists; no number-key hotbar |
 | Farming | ❌ | Zero — no seeds, plots, growth, watering, harvest |
 | Crafting | ❌ | No `CraftingManager`, no recipes, no workbench |
@@ -369,6 +370,9 @@ All under `ReplicatedStorage.Remotes`:
 | `GatherResource` | RemoteEvent | `ResourceManager` | both | Request gather; receive award notification |
 | `PlaceStructure` | RemoteEvent | `BuildingSystem` (Survival only) | C→S | Build wall/tower at CFrame |
 | `Attack` | RemoteEvent | `CombatSystem` (Survival only) | C→S | Attack a target Model with the equipped weapon |
+| `EatItem` | RemoteEvent | `VitalsSystem` (Survival only) | C→S | Consume a Food item; server validates, removes, applies HungerRestore |
+| `DrinkItem` | RemoteEvent | `VitalsSystem` (Survival only) | C→S | Consume a Drink item; server validates, removes, applies ThirstRestore |
+| `VitalsUpdate` | RemoteEvent | `VitalsSystem` (Survival only) | S→C | `{Hunger, Thirst, MaxHunger, MaxThirst}` snapshot on every change |
 | `SetLoadout` | RemoteEvent | `LoadoutManager` | C→S | Equip/unequip Weapon or BaseKit |
 | `JoinQueue` | RemoteEvent | `MatchmakingService` (Lobby only) | C→S | Enter matchmaking queue |
 | `QueueUpdate` | RemoteEvent | `MatchmakingService` (Lobby only) | S→C | Notify queue join/leave + size |
@@ -395,7 +399,7 @@ Tagged so we can sweep them as a batch.
 | BUG-11 | Low | ~~`WaveManager.StartWave` checks `Phase ~= "Night"` only after `task.wait(SPAWN_RATE)` — small window where a post-dawn enemy spawns.~~ **Fixed** in Phase 1.1 (loop waits in 0.5s slices and re-checks the phase before spawning). |
 | BUG-12 | Low | `MinigameController.target` is static at `0.5` — sine wave is commented out, so the minigame is trivially solvable. |
 | BUG-13 | Medium | `BuildingSystem.PlaceStructure` has a literal `-- Ensure no collision` TODO and no implementation. Walls can stack inside each other or terrain. |
-| BUG-14 | Low | `raw_fish` is a Consumable but has no Hunger/Heal value, and no eat handler exists. |
+| BUG-14 | Low | ~~`raw_fish` is a Consumable but has no Hunger/Heal value, and no eat handler exists.~~ **Fixed** in Phase 1.2 (`raw_fish` is now `Type Food` with `HungerRestore = 10`; `EatItem`/`DrinkItem` RemoteEvents wired through `VitalsSystem` → `PlayerDataHandler.ConsumeItem`). |
 | BUG-15 | Low | ~~No StyLua/Selene config; style is loose.~~ **Fixed** in Phase 0 (StyLua 2.5.2 + Selene 0.31.0 pinned in `aftman.toml`; configs at `stylua.toml` and `selene.toml`; CI runs `stylua --check` and `selene --allow-warnings` on every PR via `.github/workflows/lint.yml`). 24 existing warnings (unused vars, manual-fromscale, etc) remain as a separate cleanup task. |
 | BUG-16 | Low | ~~No automated test harness; `BuildingSystemTest.lua` and benchmarks are ad-hoc.~~ **Partially fixed** in Phase 0: scaffolding landed (`tests/` folder with `TestFramework.lua`, `TestRunner.server.lua`, `tests/unit/ItemDatabase.spec.lua`, plus `tests.project.json` for Studio runs). Tests are Studio-only today. Wiring CI execution via [run-in-roblox](https://github.com/rojo-rbx/run-in-roblox) or [Lune](https://github.com/lune-org/lune) is a follow-up. |
 | BUG-17 | Low | `LoadoutUI` is always visible — no toggle key. |
@@ -444,11 +448,11 @@ This plan sequences work so each phase produces a **playable, demonstrable build
 
 ### 1.2 Vitals (hunger, thirst)
 
-- [ ] Add `Stats.Hunger`, `Stats.Thirst`, `Stats.MaxHunger=100`, `Stats.MaxThirst=100` to `DEFAULT_DATA` in `PlayerDataHandler`. Reconcile handles existing players.
-- [ ] `src/server/VitalsSystem.lua` (new). Tick every 5s; reduce Hunger by 1 and Thirst by 2; if either hits 0, deal 1 damage/sec to the player. Survival mode only.
-- [ ] `EatItem` RemoteEvent. Validates the item is `Type == "Food"` and the player owns it. Applies `+ItemDatabase[item].Hunger` and `RemoveItem(player, itemId, 1)`.
-- [ ] `DrinkWater` RemoteEvent. Same pattern with `Type == "Drink"`.
-- [ ] Add `cooked_fish` (Hunger 30, Type Food) and `water_flask` (Thirst 50, Type Drink) to `ItemDatabase`. Promote `raw_fish` to give Hunger 10 only when raw, with a stomach-ache debuff (later). [BUG-14]
+- [x] Add `Stats.Hunger`, `Stats.Thirst`, `Stats.MaxHunger=100`, `Stats.MaxThirst=100` to `DEFAULT_DATA` in `PlayerDataHandler`. Reconcile handles existing players.
+- [x] `src/server/VitalsSystem.lua` (new). Tick every 5s; reduce Hunger by 1 and Thirst by 2; if either hits 0, deal 1 damage/sec to the player. Survival mode only.
+- [x] `EatItem` RemoteEvent. Validates the item is `Type == "Food"` and the player owns it. Applies `+ItemDatabase[item].HungerRestore` and `RemoveItem(player, itemId, 1)`.
+- [x] `DrinkItem` RemoteEvent. Same pattern with `Type == "Drink"`.
+- [x] Add `cooked_fish` (Hunger 30, Type Food), `water_flask` (Thirst 50, Type Drink), `berries` (Hunger 8 + Thirst 5) to `ItemDatabase`. Promote `raw_fish` to `Type Food` with Hunger 10 and a `StomachAche` flag. [BUG-14]
 
 ### 1.3 HUD (the bare minimum)
 
