@@ -335,7 +335,7 @@ Legend: ✅ implemented · 🟡 partial · ❌ missing
 
 | Feature | Status | Notes |
 |---|---|---|
-| Day/Night cycle | 🟡 | Basic; no Day 150 milestone event yet; no countdown HUD |
+| Day/Night cycle | 🟡 | Basic; Day 150 milestone event fires; no countdown HUD _(wait, HUD landed in Phase 1.3 — see below)_ |
 | Resource gathering (wood/stone/fish) | ✅ | Solid security model; **nodes never respawn** |
 | Building system | 🟡 | Wall/Tower stubs; no collision check, no persistence, no destruction |
 | Inventory | ✅ | O(1) lookup, bag capacity, swap-remove |
@@ -344,7 +344,7 @@ Legend: ✅ implemented · 🟡 partial · ❌ missing
 | Enemies / waves | 🟡 | One enemy type, deals touch damage, despawns at dawn, drops rewards. Still missing: ranged enemies, multiple types, despawn at >150 stud distance, AI attack animations |
 | Matchmaking | ✅ | 4-player queue; ghost cleanup |
 | DataStore persistence | ✅ | Solid retries; **no `BindToClose`, no cross-server session lock** |
-| HUD | ❌ | No phase/day timer, no health/hunger/thirst bar, no hotbar |
+| HUD | ✅ | `SurvivalHUD.client.lua`: Health/Hunger/Thirst bars (bottom-left) + Day/Night phase label + countdown timer (top-center) + Day 150 milestone banner |
 | Hunger / Thirst / Cold | ✅ | `Stats.Hunger` and `Stats.Thirst` in DEFAULT_DATA; `VitalsSystem` decays both every 5s; starvation/dehydration damage when either hits 0; `EatItem`/`DrinkItem` RemoteEvents |
 | Hotbar | ❌ | Loadout panel exists; no number-key hotbar |
 | Farming | ❌ | Zero — no seeds, plots, growth, watering, harvest |
@@ -358,7 +358,7 @@ Legend: ✅ implemented · 🟡 partial · ❌ missing
 | Residents (NPCs) | ❌ | None |
 | Roles / classes | ❌ | None |
 | Raids / blood-moon events | ❌ | None |
-| Day 150 milestone | ❌ | Cycle runs forever; no milestone event, no leaderboard hook |
+| Day 150 milestone | 🟡 | `Day150Reached` RemoteEvent fires + client banner; leaderboard DataStore write deferred to Phase 5/7 |
 
 ## 2.6 Network surface (RemoteEvents / RemoteFunctions)
 
@@ -402,7 +402,7 @@ Tagged so we can sweep them as a batch.
 | BUG-14 | Low | ~~`raw_fish` is a Consumable but has no Hunger/Heal value, and no eat handler exists.~~ **Fixed** in Phase 1.2 (`raw_fish` is now `Type Food` with `HungerRestore = 10`; `EatItem`/`DrinkItem` RemoteEvents wired through `VitalsSystem` → `PlayerDataHandler.ConsumeItem`). |
 | BUG-15 | Low | ~~No StyLua/Selene config; style is loose.~~ **Fixed** in Phase 0 (StyLua 2.5.2 + Selene 0.31.0 pinned in `aftman.toml`; configs at `stylua.toml` and `selene.toml`; CI runs `stylua --check` and `selene --allow-warnings` on every PR via `.github/workflows/lint.yml`). 24 existing warnings (unused vars, manual-fromscale, etc) remain as a separate cleanup task. |
 | BUG-16 | Low | ~~No automated test harness; `BuildingSystemTest.lua` and benchmarks are ad-hoc.~~ **Partially fixed** in Phase 0: scaffolding landed (`tests/` folder with `TestFramework.lua`, `TestRunner.server.lua`, `tests/unit/ItemDatabase.spec.lua`, plus `tests.project.json` for Studio runs). Tests are Studio-only today. Wiring CI execution via [run-in-roblox](https://github.com/rojo-rbx/run-in-roblox) or [Lune](https://github.com/lune-org/lune) is a follow-up. |
-| BUG-17 | Low | `LoadoutUI` is always visible — no toggle key. |
+| BUG-17 | Low | ~~`LoadoutUI` is always visible — no toggle key.~~ **Fixed** in Phase 1.3 (starts hidden; `Tab` / DPad-Down toggles; populates lazily on first open). |
 
 
 
@@ -456,15 +456,15 @@ This plan sequences work so each phase produces a **playable, demonstrable build
 
 ### 1.3 HUD (the bare minimum)
 
-- [ ] `src/client/SurvivalHUD.client.lua` (new). Top-center: Day N + countdown using `PhaseChanged` payload. Bottom-left: three bars (Health from `Humanoid.Health`, Hunger and Thirst polled via `GetPlayerData` and updated locally on `EatItem`/`DrinkWater` confirmation event).
-- [ ] Add `VitalsUpdate` RemoteEvent: server fires `(hunger, thirst)` to the player on every change so client doesn't have to poll.
-- [ ] Hide `LoadoutUI` behind a toggle key (`Tab` or `B`). [BUG-17]
+- [x] `src/client/SurvivalHUD.client.lua` (new). Top-center: Day N + countdown using `PhaseChanged` payload. Bottom-left: three bars (Health from `Humanoid.Health`, Hunger and Thirst from `VitalsUpdate` events).
+- [x] `VitalsUpdate` RemoteEvent: server fires `{Hunger, Thirst, MaxHunger, MaxThirst}` to the player on every change. _(landed in Phase 1.2)_
+- [x] Hide `LoadoutUI` behind a toggle key (`Tab` / DPad-Down). [BUG-17]
 
 ### 1.4 Win/lose framing
 
-- [ ] `DayNightCycle` fires a `Day150Reached` RemoteEvent when `DayCount == 150` for the first time in a run. Show a celebratory ScreenGui (not a victory/end screen — the run continues).
-- [ ] After Day 150, flag the run as `EndlessMode = true` in match state and write the player's surviving-day count to a leaderboard DataStore on death or disconnect.
-- [ ] Difficulty curve in `WaveManager` keeps scaling past Day 150 with no cap.
+- [x] `DayNightCycle` fires a `Day150Reached` RemoteEvent when `DayCount == 150` for the first time in a run. Client shows a celebratory banner that fades after 5s (run continues).
+- [ ] After Day 150, flag the run as `EndlessMode = true` in match state and write the player's surviving-day count to a leaderboard DataStore on death or disconnect. _(Phase 5/7)_
+- [ ] Difficulty curve in `WaveManager` keeps scaling past Day 150 with no cap. _(already true — difficulty = DayCount with no ceiling)_
 
 ## Phase 2 — World content (so the world isn't empty)
 
