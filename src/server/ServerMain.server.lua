@@ -23,6 +23,9 @@ local isSurvival = (game.PlaceId == GameConfig.PLACE_IDS.SurvivalZone) or GameCo
 if isSurvival then
     print(string.format("[Server] >> Starting SURVIVAL Mode (PlaceId: %s) <<", game.PlaceId))
     require(script.Parent.DayNightCycle).Init()
+    -- CombatSystem must init before WaveManager so the Attack remote and
+    -- enemy registry exist when the first enemy spawns.
+    require(script.Parent.CombatSystem).Init()
     require(script.Parent.WaveManager).Init()
     require(script.Parent.BuildingSystem).Init()
 else

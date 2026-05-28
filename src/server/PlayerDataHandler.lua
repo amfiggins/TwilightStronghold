@@ -25,11 +25,17 @@ local DEFAULT_DATA = {
         XP = 0,
     },
     Inventory = {
-        -- Format: { Content = "wood", Qty = 10 }, { ItemId = "void_sword", GUID = "..." }
+        -- Format: { ItemId = "wood", Qty = 10 }, { ItemId = "void_sword", GUID = "..." }
+        -- New players spawn with a starter bag and a wooden sword so they
+        -- can fight on Day 1 of Survival.
         { ItemId = "starter_bag", Qty = 1 },
+        { ItemId = "wooden_sword", Qty = 1 },
     },
     Loadout = {
-        Weapon = nil, -- Usage: ItemId (e.g. "void_sword")
+        -- Players equip via the LoadoutUI. We don't preset a Weapon here
+        -- because existing accounts that pre-date the wooden_sword wouldn't
+        -- actually have one in their inventory after reconcile().
+        Weapon = nil,
         BaseKit = nil,
         Bag = "starter_bag",
     },
@@ -312,6 +318,21 @@ function PlayerDataHandler.OnPlayerAdded(player)
             data = deepCopy(DEFAULT_DATA)
         end
         reconcile(data, DEFAULT_DATA)
+
+        -- One-time migration: ensure every player has at least one Weapon
+        -- in their inventory. Existing accounts pre-date the wooden_sword.
+        local hasWeapon = false
+        for _, slot in ipairs(data.Inventory) do
+            local def = ItemDatabase.GetItem(slot.ItemId)
+            if def and def.Type == "Weapon" then
+                hasWeapon = true
+                break
+            end
+        end
+        if not hasWeapon then
+            table.insert(data.Inventory, { ItemId = "wooden_sword", Qty = 1 })
+        end
+
         sessionData[userId] = data
 
         -- Build Lookup Table

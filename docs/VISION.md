@@ -291,9 +291,10 @@ This section reflects what is **actually in the repo** as of the last update. Up
 | `ResourceManager.lua` | `GatherResource` RemoteEvent handler. Validates rate limit (1s), distance (25 studs²), proximity prompt presence, maps node names to resource IDs via `NodeTypeMapping`, rolls rare drops, awards items, destroys node if `DestroyOnGather`. | ✅ Real |
 | `BuildingSystem.lua` | `PlaceStructure` RemoteEvent. Rate limit (0.5s), NaN-CFrame validation, 20-stud range, deducts wood, spawns a flat Part. | 🟡 Skeletal |
 | `DayNightCycle.lua` | 1Hz tick. Day=300s, Night=120s. Fires `PhaseChanged` to clients. Calls `WaveManager.StartWave` on night start. Sets `Lighting.ClockTime` only. | 🟡 Basic |
-| `WaveManager.lua` | Spawns one red Part-with-Humanoid every 5s during night. Pathfinding+raycast LOS shortcut, tiered update rates, fade-out on death. | 🟡 Spawning only |
+| `WaveManager.lua` | Spawns enemies during night, deals touch damage with per-player cooldown, despawns at dawn, registers/unregisters with `CombatSystem`. Pathfinding+raycast LOS shortcut, tiered update rates. | 🟡 Single enemy type |
 | `LoadoutManager.lua` | `SetLoadout` RemoteEvent. Validates slot, type-checks itemId against `ItemDatabase`, enforces type per slot, rate-limits. | 🟡 (see bug list) |
-| `MatchmakingService.lua` | `JoinQueue` + `QueueUpdate` RemoteEvents. FIFO, 4 players → `TeleportAsync` to Survival with a `MatchId` GUID. Re-queues on teleport failure (ghost-cleanup). | ✅ Real |
+| `CombatSystem.lua` | `Attack` RemoteEvent. Validates equipped weapon, target is a registered enemy, range/cooldown. Tracks per-player damage contribution; awards proportional Rubies + XP on kill via `UnregisterEnemy`. | ✅ Real (Phase 1.1) |
+| `MatchmakingService.lua` | `JoinQueue` + `QueueUpdate` RemoteEvents. FIFO, 6 players → `TeleportAsync` to Survival with a `MatchId` GUID. Re-queues on teleport failure (ghost-cleanup). | ✅ Real |
 | `BuildingSystemTest.lua` | Module that mocks a player and asserts a Wall is created. Not auto-run, must be required from the command bar. | 🟡 Ad-hoc |
 | `VerifyResourceMappings.server.lua` | Iterates `NodeTypeMapping`, warns on unmapped resources. | ⚠️ Auto-runs in production |
 | `VerifyWaveManager.server.lua` | Re-runs `WaveManager.Init()` (duplicate of ServerMain), asserts shape. | ⚠️ Auto-runs in production |
@@ -306,6 +307,7 @@ This section reflects what is **actually in the repo** as of the last update. Up
 | File | What it does | Status |
 |---|---|---|
 | `InteractionClient.client.lua` | Listens for `Gather` proximity prompts → starts minigame → fires `GatherResource` to server on success. Toast notifications on award. | ✅ Real |
+| `CombatClient.client.lua` | Survival-only. On M1 / gamepad R2, picks the model under the cursor and fires `Attack`. Server validates everything. No-ops in Lobby. | ✅ Real (Phase 1.1) |
 | `MinigameController.lua` | "Fisch-style" hold-to-align minigame. Multi-input (keyboard / mouse / touch / gamepad). Recently improved with success-state delay, platform-aware hints, gamepad cache. | 🟡 Single static minigame |
 | `LoadoutUI.client.lua` | Always-visible left-side panel listing Weapons / Kits / Bags from inventory. Equip/unequip with rarity colors and tooltips. | 🟡 (Bag-equip broken — see bugs) |
 | `PortalController.client.lua` | Lobby-only. Listens for `EnterSurvival` prompt → fires `JoinQueue`. Toast on queue update. | ✅ Real |
@@ -320,7 +322,9 @@ Constants: `GAME_VERSION`, `IS_SURVIVAL_MODE`, `MAX_LOBBY_PLAYERS = 20`, `MAX_SE
 
 ### `ItemDatabase.lua`
 
-12 items in 5 categories: Tool (`wooden_rod`, `iron_pickaxe`), Weapon (`void_sword`), Kit (`watchtower_kit`), Bag (`starter_bag`/`leather_bag`/`reinforced_bag`), Material (`wood_log`, `golden_wood`, `stone_ore`), Consumable (`raw_fish`).
+13 items in 5 categories: Tool (`wooden_rod`, `iron_pickaxe`), Weapon (`wooden_sword`, `void_sword`), Kit (`watchtower_kit`), Bag (`starter_bag`/`leather_bag`/`reinforced_bag`), Material (`wood_log`, `golden_wood`, `stone_ore`), Consumable (`raw_fish`).
+
+Weapons declare `Damage`, `Range`, `Cooldown` (used by `CombatSystem`).
 
 **Missing categories** for the vision: Food (with Hunger value), Seed, Crop, Furniture, LightSource, Trap, Resident-bonus item, Quest item.
 
@@ -335,8 +339,8 @@ Legend: ✅ implemented · 🟡 partial · ❌ missing
 | Building system | 🟡 | Wall/Tower stubs; no collision check, no persistence, no destruction |
 | Inventory | ✅ | O(1) lookup, bag capacity, swap-remove |
 | Loadout | 🟡 | Weapon/Kit work; **Bag-equip broken** end-to-end |
-| Combat | ❌ | Enemies don't damage players; players don't damage enemies |
-| Enemies / waves | 🟡 | One enemy type, no AI attack, no rewards on kill, no despawn at dawn |
+| Combat | ✅ | Server-authoritative `CombatSystem`: weapon-equipped check, range + cooldown, damage application, proportional Ruby/XP rewards on kill |
+| Enemies / waves | 🟡 | One enemy type, deals touch damage, despawns at dawn, drops rewards. Still missing: ranged enemies, multiple types, despawn at >150 stud distance, AI attack animations |
 | Matchmaking | ✅ | 4-player queue; ghost cleanup |
 | DataStore persistence | ✅ | Solid retries; **no `BindToClose`, no cross-server session lock** |
 | HUD | ❌ | No phase/day timer, no health/hunger/thirst bar, no hotbar |
@@ -364,6 +368,7 @@ All under `ReplicatedStorage.Remotes`:
 | `GetPlayerData` | RemoteFunction | `PlayerDataHandler` | C→S | Fetch player session data (rate-limited) |
 | `GatherResource` | RemoteEvent | `ResourceManager` | both | Request gather; receive award notification |
 | `PlaceStructure` | RemoteEvent | `BuildingSystem` (Survival only) | C→S | Build wall/tower at CFrame |
+| `Attack` | RemoteEvent | `CombatSystem` (Survival only) | C→S | Attack a target Model with the equipped weapon |
 | `SetLoadout` | RemoteEvent | `LoadoutManager` | C→S | Equip/unequip Weapon or BaseKit |
 | `JoinQueue` | RemoteEvent | `MatchmakingService` (Lobby only) | C→S | Enter matchmaking queue |
 | `QueueUpdate` | RemoteEvent | `MatchmakingService` (Lobby only) | S→C | Notify queue join/leave + size |
@@ -384,10 +389,10 @@ Tagged so we can sweep them as a batch.
 | BUG-5 | High | ~~No cross-server session lock — two servers can read/write the same player key during teleport handoff.~~ **Fixed** in Phase 0 (compare-and-swap session lock via `UpdateAsync` with 600s stale threshold and 5×6s teleport-handoff retries). |
 | BUG-6 | High | Resource nodes never respawn after gather. Empty world after a few minutes. |
 | BUG-7 | High | Built structures never persist across server restarts. |
-| BUG-8 | Critical-for-game | Enemies cause no damage. Players cause no damage to enemies. |
+| BUG-8 | Critical-for-game | ~~Enemies cause no damage. Players cause no damage to enemies.~~ **Fixed** in Phase 1.1 (server-authoritative `CombatSystem` with weapon validation + range + cooldown; enemies deal touch damage with per-player cooldown; kill rewards split by damage contribution). |
 | BUG-9 | Low | ~~`survival.project.json` is byte-identical to `default.project.json` — pointless duplication.~~ **Fixed** in Phase 0 (deleted; CI builds once and publishes the same `.rbxl` to both Place IDs. Will reintroduce a differentiated project at Phase 2.1 when we add a real Forest Kingdom map). |
 | BUG-10 | Low | ~~Tower has Wall dimensions (`4,8,1`) and same color.~~ **Fixed** in Phase 0 (Tower is now `4×16×4` with darker color). |
-| BUG-11 | Low | `WaveManager.StartWave` checks `Phase ~= "Night"` only after `task.wait(SPAWN_RATE)` — small window where a post-dawn enemy spawns. |
+| BUG-11 | Low | ~~`WaveManager.StartWave` checks `Phase ~= "Night"` only after `task.wait(SPAWN_RATE)` — small window where a post-dawn enemy spawns.~~ **Fixed** in Phase 1.1 (loop waits in 0.5s slices and re-checks the phase before spawning). |
 | BUG-12 | Low | `MinigameController.target` is static at `0.5` — sine wave is commented out, so the minigame is trivially solvable. |
 | BUG-13 | Medium | `BuildingSystem.PlaceStructure` has a literal `-- Ensure no collision` TODO and no implementation. Walls can stack inside each other or terrain. |
 | BUG-14 | Low | `raw_fish` is a Consumable but has no Hunger/Heal value, and no eat handler exists. |
@@ -431,11 +436,11 @@ This plan sequences work so each phase produces a **playable, demonstrable build
 
 ### 1.1 Combat
 
-- [ ] `src/server/CombatSystem.lua` (new). RemoteEvent `Attack`. Validates attacker has a weapon equipped, target is in range, applies damage based on `ItemDatabase[weapon].Damage`. Rate-limited per the existing pattern.
-- [ ] `src/client/CombatClient.client.lua` (new). On left-click or M1 press while a Weapon is equipped, fire `Attack` with the targeted enemy.
-- [ ] Update `WaveManager` enemies to deal damage on touch: connect `Touched` on the enemy's `HumanoidRootPart`, deal `damage = 5 + difficulty * 2` to the touched player's Humanoid, with a 1s per-player damage cooldown. [BUG-8]
-- [ ] On enemy death, award XP and a small Ruby drop (`PlayerDataHandler.AddCurrency(killer, "Rubies", 5 * difficulty)` + `AddItem` chance for materials).
-- [ ] Despawn enemies at dawn: in `WaveManager.StartWave`, after the spawn loop ends, iterate currently-alive enemies and tween-out + destroy.
+- [x] `src/server/CombatSystem.lua` (new). RemoteEvent `Attack`. Validates attacker has a weapon equipped, target is in range, applies damage based on `ItemDatabase[weapon].Damage`. Rate-limited per the existing pattern.
+- [x] `src/client/CombatClient.client.lua` (new). On left-click or M1 press while a Weapon is equipped, fire `Attack` with the targeted enemy.
+- [x] Update `WaveManager` enemies to deal damage on touch: connect `Touched` on the enemy's `HumanoidRootPart`, deal `damage = 5 + difficulty * 2` to the touched player's Humanoid, with a 1s per-player damage cooldown. [BUG-8]
+- [x] On enemy death, award XP and a small Ruby drop (`PlayerDataHandler.AddCurrency(killer, "Rubies", 5 * difficulty)` + proportional split by damage contribution).
+- [x] Despawn enemies at dawn: in `WaveManager.StartWave`, after the spawn loop ends, iterate currently-alive enemies and tween-out + destroy.
 
 ### 1.2 Vitals (hunger, thirst)
 
