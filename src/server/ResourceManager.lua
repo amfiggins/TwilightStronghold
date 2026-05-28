@@ -6,6 +6,7 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Players = game:GetService("Players")
 local PlayerDataHandler = require(script.Parent.PlayerDataHandler)
+local ResourceRespawn = require(script.Parent.ResourceRespawn)
 local GameConfig = require(ReplicatedStorage.Shared.GameConfig)
 
 local ResourceManager = {}
@@ -131,9 +132,11 @@ function ResourceManager.OnGatherRequest(player, resourceNode)
     if success then
         print(string.format("[ResourceManager] Awarded %s x%d to %s", itemAwarded, qty, player.Name))
 
-        -- Deplete Resource
+        -- Deplete Resource — schedule a respawn instead of destroying outright
+        -- so the world repopulates after RESPAWN_MIN..RESPAWN_MAX seconds.
+        -- See ResourceRespawn.lua. (BUG-6 fix.)
         if drop.DestroyOnGather then
-            resourceNode:Destroy()
+            ResourceRespawn.Schedule(resourceNode)
         end
 
         -- Notify client of successful gathering
