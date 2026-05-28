@@ -28,6 +28,7 @@ if isSurvival then
     require(script.Parent.CombatSystem).Init()
     require(script.Parent.WaveManager).Init()
     require(script.Parent.BuildingSystem).Init()
+    require(script.Parent.VitalsSystem).Init()
 else
     print(string.format("[Server] >> Starting LOBBY Mode (PlaceId: %s) <<", game.PlaceId))
     require(script.Parent.MatchmakingService).Init()

@@ -80,7 +80,42 @@ local items = {
     ["wood_log"] = { Name = "Wood Log", Type = "Material", Rarity = "Common", Description = "Basic building material." },
     ["golden_wood"] = { Name = "Golden Wood", Type = "Material", Rarity = "Rare", Description = "Shiny wood." },
     ["stone_ore"] = { Name = "Stone", Type = "Material", Rarity = "Common", Description = "A heavy rock." },
-    ["raw_fish"] = { Name = "Raw Fish", Type = "Consumable", Rarity = "Common", Description = "Smells fishy." },
+
+    -- Food & Drink
+    -- HungerRestore : hunger points restored on eat (0–100 scale)
+    -- ThirstRestore : thirst points restored on drink (0–100 scale)
+    -- HealthRestore : HP restored on consume (optional)
+    -- StomachAche   : if true, eating raw causes a brief debuff (future)
+    ["raw_fish"] = {
+        Name = "Raw Fish",
+        Type = "Food",
+        Rarity = "Common",
+        HungerRestore = 10,
+        StomachAche = true,
+        Description = "Smells fishy. Eat cooked for better results.",
+    },
+    ["cooked_fish"] = {
+        Name = "Cooked Fish",
+        Type = "Food",
+        Rarity = "Common",
+        HungerRestore = 30,
+        Description = "Properly cooked. Restores a decent amount of hunger.",
+    },
+    ["water_flask"] = {
+        Name = "Water Flask",
+        Type = "Drink",
+        Rarity = "Common",
+        ThirstRestore = 50,
+        Description = "A flask of clean water.",
+    },
+    ["berries"] = {
+        Name = "Berries",
+        Type = "Food",
+        Rarity = "Common",
+        HungerRestore = 8,
+        ThirstRestore = 5,
+        Description = "Wild berries. Small but refreshing.",
+    },
 }
 
 -- Public API: Get Item Definition
