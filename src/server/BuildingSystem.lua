@@ -1,17 +1,36 @@
 --[[
     BuildingSystem.lua
-    Handles server-side validation and placement of structures (Walls, Towers).
+    Server-side validation and placement of structures (Walls, Towers).
+    Persists every successful placement via StructurePersistence.
 ]]
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Players = game:GetService("Players")
+
 local PlayerDataHandler = require(script.Parent.PlayerDataHandler)
+local StructurePersistence = require(script.Parent.StructurePersistence)
 local GameConfig = require(ReplicatedStorage.Shared.GameConfig)
 
 local BuildingSystem = {}
 
 local BUILD_COOLDOWN = 0.5
 local lastBuildTimes = {}
+
+-- Tag every player-built structure so future systems (raid AI, persistence
+-- restore, cleanup) can find them with workspace:GetDescendants() filtering.
+local STRUCTURE_TAG = "TwilightStronghold_PlayerStructure"
+
+-- Folder under workspace to keep things tidy.
+local function getStructuresFolder()
+    local existing = workspace:FindFirstChild("PlayerStructures")
+    if existing then
+        return existing
+    end
+    local folder = Instance.new("Folder")
+    folder.Name = "PlayerStructures"
+    folder.Parent = workspace
+    return folder
+end
 
 -- Helper: Validate CFrame for NaNs and Inf
 -- Optimization: Unpack components directly to avoid table allocation
@@ -60,6 +79,48 @@ local function isValidCFrame(cf)
     return true
 end
 
+-- Helper: detect collisions with existing parts at the proposed CFrame.
+-- Uses GetPartBoundsInBox so terrain (which isn't a BasePart) is excluded —
+-- that's intentional, terrain shouldn't block structure placement.
+-- Returns true if the box intersects any non-terrain part except the player's
+-- own character (so a wall can be placed at your feet).
+-- (BUG-13 fix.)
+local function hasCollision(cframe, size, ignoreCharacter)
+    local overlapParams = OverlapParams.new()
+    overlapParams.FilterType = Enum.RaycastFilterType.Exclude
+    if ignoreCharacter then
+        overlapParams.FilterDescendantsInstances = { ignoreCharacter }
+    end
+    -- Inset slightly so two flush-placed walls don't collide on edges.
+    local insetSize = Vector3.new(math.max(0.1, size.X - 0.2), math.max(0.1, size.Y - 0.2), math.max(0.1, size.Z - 0.2))
+    local hits = workspace:GetPartBoundsInBox(cframe, insetSize, overlapParams)
+    return #hits > 0
+end
+
+-- Renderer: build the actual world Part for a given structure type at a CFrame.
+-- Used for both fresh placements (PlaceStructure) and persistence restores
+-- (called via StructurePersistence.SetRenderer).
+local function renderStructure(record)
+    local props = GameConfig.StructureProperties[record.structureType]
+    if not props then
+        warn(string.format("[BuildingSystem] Missing properties for %s", tostring(record.structureType)))
+        return nil
+    end
+
+    local structure = Instance.new("Part")
+    structure.Name = record.structureType
+    structure.Size = props.Size
+    structure.Anchored = props.Anchored
+    structure.CFrame = record.cframe
+    structure.Color = props.Color
+    structure:AddTag(STRUCTURE_TAG)
+    if record.ownerUserId then
+        structure:SetAttribute("OwnerUserId", record.ownerUserId)
+    end
+    structure.Parent = getStructuresFolder()
+    return structure
+end
+
 -- Remotes
 local Remotes = ReplicatedStorage:WaitForChild("Remotes")
 local PlaceStructureEvent = Instance.new("RemoteEvent")
@@ -68,6 +129,10 @@ PlaceStructureEvent.Name = "PlaceStructure"
 
 function BuildingSystem.Init()
     print("[BuildingSystem] Initialized.")
+
+    -- Wire up persistence rendering and load any saved structures.
+    StructurePersistence.SetRenderer(renderStructure)
+    StructurePersistence.Init()
 
     PlaceStructureEvent.OnServerEvent:Connect(function(player, structureType, cframe)
         BuildingSystem.PlaceStructure(player, structureType, cframe)
@@ -95,6 +160,12 @@ function BuildingSystem.PlaceStructure(player, structureType, cframe)
         return false, "InvalidStructure"
     end
 
+    local props = GameConfig.StructureProperties[structureType]
+    if not props then
+        warn(string.format("[BuildingSystem] Missing properties for %s", structureType))
+        return false, "MissingProperties"
+    end
+
     -- 2. Validate Placement (Anti-Cheat)
     -- Ensure cframe is valid (Type Check & Finite numbers only - DoS Prevention)
     if not isValidCFrame(cframe) then
@@ -119,7 +190,12 @@ function BuildingSystem.PlaceStructure(player, structureType, cframe)
         return false, "TooFar"
     end
 
-    -- Ensure no collision
+    -- 2b. Collision check (BUG-13). Reject placement if the proposed bounds
+    -- intersect any non-terrain part. We allow the player's own character
+    -- to overlap so you can wall yourself in.
+    if hasCollision(cframe, props.Size, character) then
+        return false, "Collides"
+    end
 
     -- 3. Deduct Cost
     local success = PlayerDataHandler.RemoveItem(player, cost.Resource, cost.Amount)
@@ -130,23 +206,19 @@ function BuildingSystem.PlaceStructure(player, structureType, cframe)
         return false, "InsufficientResources"
     end
 
-    -- 4. Place It
-    print(string.format("[BuildingSystem] %s placed a %s", player.Name, structureType))
-
-    local props = GameConfig.StructureProperties[structureType]
-    if not props then
-        warn(string.format("[BuildingSystem] Missing properties for %s", structureType))
-        return false, "MissingProperties"
+    -- 4. Render and persist
+    local instance = renderStructure({
+        structureType = structureType,
+        cframe = cframe,
+        ownerUserId = player.UserId,
+    })
+    if not instance then
+        return false, "RenderFailed"
     end
 
-    local structure = Instance.new("Part")
-    structure.Name = structureType
-    structure.Size = props.Size
-    structure.Anchored = props.Anchored
-    structure.CFrame = cframe
-    structure.Color = props.Color
-    structure.Parent = workspace
+    StructurePersistence.AddStructure(structureType, cframe, player.UserId)
 
+    print(string.format("[BuildingSystem] %s placed a %s", player.Name, structureType))
     return true, "Success"
 end
 
