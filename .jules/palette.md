@@ -42,3 +42,6 @@
 ## 2027-04-01 - Matchmaking Queue Visibility
 **Learning:** Players joining a matchmaking queue via an interactable object (like a Portal) often feel uncertain if their action registered when the feedback is limited to console prints or delayed teleports.
 **Action:** Always provide immediate, on-screen visual confirmation (like a toast notification) indicating successful queue entry and current queue size.
+## 2024-05-24 - Async Loading Operations
+**Learning:** When improving UX during async loading operations, avoid replacing universally recognized icons (like '↻') with ambiguous text (like '...'). Instead, animate the existing icon (e.g., rotating it in place) to provide clear visual feedback while maintaining the element's visual affordance.
+**Action:** Handle relative layout rotation by wrapping static children (like tooltips) and rotating elements in a shared container to prevent unintended inheritance of rotation.
