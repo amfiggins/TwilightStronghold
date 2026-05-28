@@ -91,31 +91,98 @@ local function rebuildLookup(userId)
     sessionInventoryLookup[userId] = lookup
 end
 
--- Helper: Retry GetAsync with Exponential Backoff
-local function retryGetAsync(store, key, retries, baseDelay)
-    retries = retries or 3
-    baseDelay = baseDelay or 1
+-- ── Cross-server session locking ──────────────────────────────────────────
+-- Prevents two Roblox servers from loading + writing the same player key
+-- concurrently (e.g., during a Lobby → Survival teleport handoff).
+--
+-- Locks older than this are considered abandoned (server crash, force-shutdown)
+-- and the next server to load can take over.
+local SESSION_LOCK_STALE_SECONDS = 600
+-- During a teleport handoff, the source server's final save may not have
+-- landed yet. We retry this many times, this many seconds apart.
+local SESSION_LOCK_RETRY_SECONDS = 6
+local SESSION_LOCK_RETRIES = 5
 
-    local currentTry = 0
-    local success, result
+-- Acquire (or take over) the session lock for a key using UpdateAsync as
+-- compare-and-swap.
+-- Returns (true, dataWithoutLockMetadata) on success, (false, reason) on failure.
+local function acquireSessionLock(store, key)
+    local lastReason = "Unknown"
 
-    while currentTry <= retries do
-        success, result = pcall(function()
-            return store:GetAsync(key)
+    for attempt = 1, SESSION_LOCK_RETRIES do
+        local pcallSuccess, result = pcall(function()
+            return store:UpdateAsync(key, function(oldData)
+                local now = os.time()
+                local existingLock = oldData and oldData._SessionLock
+
+                if existingLock and existingLock.JobId ~= game.JobId then
+                    local lockAge = now - (existingLock.LockTime or 0)
+                    if lockAge < SESSION_LOCK_STALE_SECONDS then
+                        -- Held by another live server. Returning nil from
+                        -- UpdateAsync's transformer aborts the write so we
+                        -- don't bump a key we don't own.
+                        return nil
+                    end
+                    warn(string.format(
+                        "[Data] Taking over stale session lock for %s (age %ds, prev JobId %s)",
+                        key, lockAge, tostring(existingLock.JobId)
+                    ))
+                end
+
+                oldData = oldData or {}
+                oldData._SessionLock = { JobId = game.JobId, LockTime = now }
+                return oldData
+            end)
         end)
 
-        if success then
-            return true, result
-        else
-            currentTry = currentTry + 1
-            if currentTry <= retries then
-                warn(string.format("[Data] GetAsync failed for key %s (Attempt %d/%d): %s. Retrying...", key, currentTry, retries + 1, tostring(result)))
-                task.wait(baseDelay * (2 ^ (currentTry - 1)))
+        if pcallSuccess and result ~= nil then
+            -- Strip the lock metadata from the in-memory copy so reconcile()
+            -- and Save() don't have to special-case it.
+            local data = {}
+            for k, v in pairs(result) do
+                if k ~= "_SessionLock" then
+                    data[k] = v
+                end
             end
+            return true, data
+        end
+
+        if not pcallSuccess then
+            lastReason = tostring(result)
+            warn(string.format(
+                "[Data] acquireSessionLock failed for %s (attempt %d/%d): %s",
+                key, attempt, SESSION_LOCK_RETRIES, lastReason
+            ))
+        else
+            lastReason = "LockedByAnotherServer"
+        end
+
+        if attempt < SESSION_LOCK_RETRIES then
+            task.wait(SESSION_LOCK_RETRY_SECONDS)
         end
     end
 
-    return false, result
+    return false, lastReason
+end
+
+-- Release the session lock by clearing the lock fields. Used when a player
+-- leaves cleanly so other servers can immediately take over the key.
+local function releaseSessionLock(store, key, finalData)
+    local pcallSuccess, err = pcall(function()
+        store:UpdateAsync(key, function(oldData)
+            -- Even if oldData is nil (DataStore wipe between writes, vanishingly
+            -- rare), we still want to commit the player's final data.
+            local payload = finalData or oldData or {}
+            payload._SessionLock = nil
+            return payload
+        end)
+    end)
+
+    if not pcallSuccess then
+        warn(string.format("[Data] releaseSessionLock failed for %s: %s", key, tostring(err)))
+        return false
+    end
+    return true
 end
 
 function PlayerDataHandler.Init()
@@ -183,19 +250,61 @@ function PlayerDataHandler.Init()
             end
         end
     end)
+
+    -- BindToClose: final flush before the server shuts down. Roblox gives us
+    -- 30 seconds; we save all sessions in parallel and wait up to 25s for them.
+    -- Skip in Studio because BindToClose blocks Play Solo for the full timeout.
+    if not RunService:IsStudio() then
+        game:BindToClose(function()
+            local players = Players:GetPlayers()
+            if #players == 0 then return end
+
+            print(string.format("[Data] BindToClose: flushing %d players", #players))
+
+            local pending = #players
+            local doneSignal = Instance.new("BindableEvent")
+
+            for _, player in ipairs(players) do
+                task.spawn(function()
+                    -- releaseLock=true so other servers can take over immediately.
+                    PlayerDataHandler.Save(player, true)
+                    pending = pending - 1
+                    if pending == 0 then
+                        doneSignal:Fire()
+                    end
+                end)
+            end
+
+            -- Wait up to 25s for saves to finish
+            local timeoutThread = task.delay(25, function()
+                if pending > 0 then
+                    warn(string.format("[Data] BindToClose: %d saves did not complete in time", pending))
+                    doneSignal:Fire()
+                end
+            end)
+
+            doneSignal.Event:Wait()
+            task.cancel(timeoutThread)
+        end)
+    end
 end
 
 function PlayerDataHandler.OnPlayerAdded(player)
     local userId = player.UserId
     local key = "Player_" .. userId
-    
-    local success, data = retryGetAsync(PlayerDataStore, key, 3, 2)
-    
+
+    -- Acquire the cross-server session lock. This both fetches the data and
+    -- atomically marks the key as owned by this JobId.
+    local success, data = acquireSessionLock(PlayerDataStore, key)
+
     if success then
-        data = data or deepCopy(DEFAULT_DATA)
+        -- Detect first-time players: empty result vs missing keys
+        if not data or not next(data) then
+            data = deepCopy(DEFAULT_DATA)
+        end
         reconcile(data, DEFAULT_DATA)
         sessionData[userId] = data
-        
+
         -- Build Lookup Table
         rebuildLookup(userId)
 
@@ -203,17 +312,17 @@ function PlayerDataHandler.OnPlayerAdded(player)
         local ls = Instance.new("Folder")
         ls.Name = "leaderstats"
         ls.Parent = player
-        
+
         local rubies = Instance.new("IntValue")
         rubies.Name = "Rubies"
         rubies.Value = data.Stats.Rubies
         rubies.Parent = ls
-        
+
         local diamonds = Instance.new("IntValue")
         diamonds.Name = "Diamonds"
         diamonds.Value = data.Stats.Diamonds
         diamonds.Parent = ls
-        
+
         print(string.format("[Data] Loaded data for %s", player.Name))
     else
         warn(string.format("[Data] Failed to load data for %s: %s", player.Name, tostring(data)))
@@ -223,28 +332,56 @@ function PlayerDataHandler.OnPlayerAdded(player)
 end
 
 function PlayerDataHandler.OnPlayerRemoving(player)
-    PlayerDataHandler.Save(player)
+    -- Release the session lock as part of the final save so other servers
+    -- can take over immediately on teleport handoff.
+    PlayerDataHandler.Save(player, true)
     sessionData[player.UserId] = nil
     sessionInventoryLookup[player.UserId] = nil
     lastGetDataTimes[player.UserId] = nil
 end
 
-function PlayerDataHandler.Save(player)
+-- Save player data. If `releaseLock` is true, also clears the session lock so
+-- another server can immediately take over the key (used on player leave).
+function PlayerDataHandler.Save(player, releaseLock)
     local userId = player.UserId
     local data = sessionData[userId]
-    
+
     if not data then return end
-    
+
     local key = "Player_" .. userId
-    
+
+    if releaseLock then
+        local ok = releaseSessionLock(PlayerDataStore, key, data)
+        if ok then
+            print(string.format("[Data] Saved data for %s (lock released)", player.Name))
+        end
+        return
+    end
+
+    -- Routine save: refresh the session lock at the same time so a long-lived
+    -- session never looks stale to another server.
     local success, err = pcall(function()
         PlayerDataStore:UpdateAsync(key, function(oldData)
-            -- UpdateAsync is safer than SetAsync as it prevents data corruption
-            -- from concurrent writes and respects session locks.
-            return data
+            -- Defensive: if a different server somehow has the lock, abort
+            -- by returning nil rather than overwrite their data.
+            local existingLock = oldData and oldData._SessionLock
+            if existingLock and existingLock.JobId ~= game.JobId then
+                local lockAge = os.time() - (existingLock.LockTime or 0)
+                if lockAge < SESSION_LOCK_STALE_SECONDS then
+                    warn(string.format("[Data] Refusing save for %s: lock held by another server", key))
+                    return nil
+                end
+            end
+
+            local payload = {}
+            for k, v in pairs(data) do
+                payload[k] = v
+            end
+            payload._SessionLock = { JobId = game.JobId, LockTime = os.time() }
+            return payload
         end)
     end)
-    
+
     if success then
         print(string.format("[Data] Saved data for %s", player.Name))
     else

@@ -3,7 +3,7 @@
 **Living document.** This is the single source of truth for what Twilight Stronghold is, what we have built, and what is left to build. Keep it current.
 
 - **Status:** Pre-alpha (`GAME_VERSION = 0.1.0-alpha`)
-- **Last updated:** 2026-05-28
+- **Last updated:** 2026-05-28 (Phase 0 in progress)
 - **Owners:** @amfiggins
 - **Update rules:** see [How to keep this doc alive](#how-to-keep-this-doc-alive) at the bottom.
 
@@ -377,16 +377,16 @@ Tagged so we can sweep them as a batch.
 
 | # | Severity | Issue |
 |---|---|---|
-| BUG-1 | High | `LoadoutUI.client.lua` sends `slot = "Bag"` but `LoadoutManager` only allows `Weapon`/`BaseKit` → bag equipping is dead-on-arrival. |
-| BUG-2 | Medium | `DayNightCycle.StartDay` increments `DayCount` on every call, including initial `Init`. First print is "Day 2 Started." |
-| BUG-3 | High | `Verify*.server.lua` and `EnemySpawnBenchmark.lua` / `QueueBenchmark.lua` auto-run in production, including a duplicate `WaveManager.Init()`. Burns startup time and creates 10k parts. |
-| BUG-4 | High | `PlayerDataHandler` has no `game:BindToClose` final flush — in-flight saves are dropped on shutdown. |
-| BUG-5 | High | No cross-server session lock — two servers can read/write the same player key during teleport handoff. |
+| BUG-1 | High | ~~`LoadoutUI.client.lua` sends `slot = "Bag"` but `LoadoutManager` only allows `Weapon`/`BaseKit` → bag equipping is dead-on-arrival.~~ **Fixed** in Phase 0 (LoadoutManager now accepts `"Bag"` with `Type=="Bag"` enforcement). |
+| BUG-2 | Medium | ~~`DayNightCycle.StartDay` increments `DayCount` on every call, including initial `Init`. First print is "Day 2 Started."~~ **Fixed** in Phase 0 (`DayCount` starts at 0). |
+| BUG-3 | High | ~~`Verify*.server.lua` and `EnemySpawnBenchmark.lua` / `QueueBenchmark.lua` auto-run in production, including a duplicate `WaveManager.Init()`. Burns startup time and creates 10k parts.~~ **Fixed** in Phase 0 (moved to top-level `dev/` folder which Rojo does not sync). |
+| BUG-4 | High | ~~`PlayerDataHandler` has no `game:BindToClose` final flush — in-flight saves are dropped on shutdown.~~ **Fixed** in Phase 0 (BindToClose flushes all sessions in parallel with a 25s budget; skipped in Studio). |
+| BUG-5 | High | ~~No cross-server session lock — two servers can read/write the same player key during teleport handoff.~~ **Fixed** in Phase 0 (compare-and-swap session lock via `UpdateAsync` with 600s stale threshold and 5×6s teleport-handoff retries). |
 | BUG-6 | High | Resource nodes never respawn after gather. Empty world after a few minutes. |
 | BUG-7 | High | Built structures never persist across server restarts. |
 | BUG-8 | Critical-for-game | Enemies cause no damage. Players cause no damage to enemies. |
 | BUG-9 | Low | `survival.project.json` is byte-identical to `default.project.json` — pointless duplication. |
-| BUG-10 | Low | Tower has Wall dimensions (`4,8,1`) and same color. |
+| BUG-10 | Low | ~~Tower has Wall dimensions (`4,8,1`) and same color.~~ **Fixed** in Phase 0 (Tower is now `4×16×4` with darker color). |
 | BUG-11 | Low | `WaveManager.StartWave` checks `Phase ~= "Night"` only after `task.wait(SPAWN_RATE)` — small window where a post-dawn enemy spawns. |
 | BUG-12 | Low | `MinigameController.target` is static at `0.5` — sine wave is commented out, so the minigame is trivially solvable. |
 | BUG-13 | Medium | `BuildingSystem.PlaceStructure` has a literal `-- Ensure no collision` TODO and no implementation. Walls can stack inside each other or terrain. |
@@ -411,12 +411,12 @@ This plan sequences work so each phase produces a **playable, demonstrable build
 
 **DoD:** A fresh server start has no auto-running benchmarks, all known data-loss windows are closed, and equipping a Bag actually works.
 
-- [ ] Move `BuildingSystemTest.lua`, `EnemySpawnBenchmark.lua`, `InventoryBenchmark.lua`, `PathfindingBenchmark.lua`, `QueueBenchmark.lua`, `RetryBenchmark.lua`, `VerifyResourceMappings.server.lua`, `VerifyWaveManager.server.lua` out of `src/server/` into `src/server/_dev/` and exclude that folder from the production Rojo project (or guard each with `if not RunService:IsStudio() then return end`). [BUG-3]
-- [ ] Add `game:BindToClose(function() ... save all sessions ... end)` to `PlayerDataHandler.Init`. Iterate `Players:GetPlayers()`, fire `Save` on each, wait up to ~25s. [BUG-4]
-- [ ] Implement cross-server session lock in `PlayerDataHandler`. Embed `{ JobId = game.JobId, LockTime = os.time() }` in saved data; on load, refuse if `LockTime` < 600s old and `JobId ~= game.JobId`; release on save. [BUG-5]
-- [ ] Fix Bag-equip path: change `LoadoutManager.OnLoadoutRequest` slot whitelist to include `"Bag"` and add a `Type == "Bag"` enforcement branch parallel to Weapon/Kit. [BUG-1]
-- [ ] Fix `DayNightCycle.StartDay` off-by-one — start with `DayCount = 0` and only increment on transition, not on `Init`. [BUG-2]
-- [ ] Make Tower geometry distinct from Wall in `GameConfig.StructureProperties` (suggest Tower `Vector3.new(4, 16, 4)`, lighter color). [BUG-10]
+- [x] Move `BuildingSystemTest.lua`, `EnemySpawnBenchmark.lua`, `InventoryBenchmark.lua`, `PathfindingBenchmark.lua`, `QueueBenchmark.lua`, `RetryBenchmark.lua`, `VerifyResourceMappings.server.lua`, `VerifyWaveManager.server.lua` out of `src/server/` into `dev/` (top-level, not synced by Rojo). [BUG-3]
+- [x] Add `game:BindToClose(function() ... save all sessions ... end)` to `PlayerDataHandler.Init`. Iterate `Players:GetPlayers()`, fire `Save` on each, wait up to ~25s. [BUG-4]
+- [x] Implement cross-server session lock in `PlayerDataHandler`. Embed `{ JobId = game.JobId, LockTime = os.time() }` in saved data; on load, refuse if `LockTime` < 600s old and `JobId ~= game.JobId`; release on save. [BUG-5]
+- [x] Fix Bag-equip path: change `LoadoutManager.OnLoadoutRequest` slot whitelist to include `"Bag"` and add a `Type == "Bag"` enforcement branch parallel to Weapon/Kit. [BUG-1]
+- [x] Fix `DayNightCycle.StartDay` off-by-one — start with `DayCount = 0` and only increment on transition, not on `Init`. [BUG-2]
+- [x] Make Tower geometry distinct from Wall in `GameConfig.StructureProperties` (suggest Tower `Vector3.new(4, 16, 4)`, lighter color). [BUG-10]
 - [ ] Decide whether to keep `survival.project.json`. Either delete it or actually differentiate it (e.g., Survival project includes a different `_baseplate.rbxm` and excludes the lobby portal). [BUG-9]
 - [ ] Add `selene.toml` and `stylua.toml` and a CI step that runs both. [BUG-15]
 - [ ] Add a TestEZ-style harness under `src/server/_tests/` and wire to CI. (Stub a single passing test to start.) [BUG-16]

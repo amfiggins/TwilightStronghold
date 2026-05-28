@@ -16,7 +16,9 @@ PhaseChanged.Name = "PhaseChanged"
 
 -- State
 DayNightCycle.Phase = "Day" -- "Day" or "Night"
-DayNightCycle.DayCount = 1
+-- DayCount starts at 0 because StartDay() increments before announcing.
+-- Initial StartDay() call from Init() takes us to Day 1, not Day 2.
+DayNightCycle.DayCount = 0
 DayNightCycle.TimeRemaining = 0
 
 -- Config

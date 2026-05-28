@@ -28,7 +28,8 @@ Shared.StructureCosts = {
 -- Structure Properties (Visuals & Physics)
 Shared.StructureProperties = {
     ["Wall"] = { Size = Vector3.new(4, 8, 1), Color = Color3.fromRGB(160, 132, 79), Anchored = true },
-    ["Tower"] = { Size = Vector3.new(4, 8, 1), Color = Color3.fromRGB(160, 132, 79), Anchored = true }
+    -- Tower: taller and thicker than walls so it's actually distinguishable in-world.
+    ["Tower"] = { Size = Vector3.new(4, 16, 4), Color = Color3.fromRGB(120, 95, 50), Anchored = true }
 }
 
 -- Rarity Definitions
