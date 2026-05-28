@@ -1,5 +1,10 @@
 name: Publish to Roblox
 
+# Both the Lobby and Survival places ship the same code today. The runtime
+# Lobby vs Survival branch happens in ServerMain.server.lua based on PlaceId.
+# When we add place-specific content (Phase 2.1, Forest Kingdom map), we'll
+# split the project files again. Until then, build once and publish to both.
+
 on:
   push:
     branches:
@@ -31,33 +36,23 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # ── Install Rojo ──────────────────────────────────────────────────────
-      # Rojo builds the .rbxl file from the filesystem scripts
+      # ── Install Rojo via Aftman ───────────────────────────────────────────
+      # Aftman reads aftman.toml to install the pinned Rojo version.
       - name: Install Rojo
         uses: ok-nick/setup-aftman@v0.4.2
-        # Aftman is the Roblox toolchain manager (like nvm but for Roblox tools)
-        # It reads aftman.toml to install the right Rojo version
 
       - name: Install tools via Aftman
         run: aftman install
-        # This installs rojo (and any other tools listed in aftman.toml)
 
-      # ── Build Lobby Place ─────────────────────────────────────────────────
+      # ── Build the place file ──────────────────────────────────────────────
       - name: Create build directory
         run: mkdir -p build
 
-      - name: Build Lobby (.rbxl)
-        if: ${{ github.event_name == 'push' || inputs.place == 'both' || inputs.place == 'lobby' }}
-        run: rojo build default.project.json --output build/TwilightStronghold-Lobby.rbxl
+      - name: Build place (.rbxl)
+        run: rojo build default.project.json --output build/TwilightStronghold.rbxl
 
-      # ── Build Survival Place ──────────────────────────────────────────────
-      # The survival zone uses the same scripts but a different project config
-      - name: Build Survival Zone (.rbxl)
-        if: ${{ github.event_name == 'push' || inputs.place == 'both' || inputs.place == 'survival' }}
-        run: rojo build survival.project.json --output build/TwilightStronghold-Survival.rbxl
-
-      # ── Publish Lobby to Roblox ───────────────────────────────────────────
-      - name: Publish Lobby to Roblox
+      # ── Publish Lobby ─────────────────────────────────────────────────────
+      - name: Publish to Lobby place
         if: ${{ github.event_name == 'push' || inputs.place == 'both' || inputs.place == 'lobby' }}
         env:
           ROBLOX_API_KEY: ${{ secrets.ROBLOX_API_KEY }}
@@ -66,11 +61,11 @@ jobs:
             --request POST \
             --header "x-api-key: $ROBLOX_API_KEY" \
             --header "Content-Type: application/octet-stream" \
-            --data-binary @build/TwilightStronghold-Lobby.rbxl \
+            --data-binary @build/TwilightStronghold.rbxl \
             "https://apis.roblox.com/universes/v1/${{ vars.UNIVERSE_ID }}/places/${{ vars.LOBBY_PLACE_ID }}/versions?versionType=Published"
 
-      # ── Publish Survival Zone to Roblox ──────────────────────────────────
-      - name: Publish Survival Zone to Roblox
+      # ── Publish Survival ──────────────────────────────────────────────────
+      - name: Publish to Survival place
         if: ${{ github.event_name == 'push' || inputs.place == 'both' || inputs.place == 'survival' }}
         env:
           ROBLOX_API_KEY: ${{ secrets.ROBLOX_API_KEY }}
@@ -79,7 +74,7 @@ jobs:
             --request POST \
             --header "x-api-key: $ROBLOX_API_KEY" \
             --header "Content-Type: application/octet-stream" \
-            --data-binary @build/TwilightStronghold-Survival.rbxl \
+            --data-binary @build/TwilightStronghold.rbxl \
             "https://apis.roblox.com/universes/v1/${{ vars.UNIVERSE_ID }}/places/${{ vars.SURVIVAL_PLACE_ID }}/versions?versionType=Published"
 
       # ── Summary ───────────────────────────────────────────────────────────

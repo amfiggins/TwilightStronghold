@@ -24,9 +24,10 @@ docs/
 
 ```bash
 aftman install
-rojo build default.project.json --output build/lobby.rbxl
-rojo build survival.project.json --output build/survival.rbxl
+rojo build default.project.json --output build/twilight-stronghold.rbxl
 ```
+
+The same `.rbxl` is published to both the Lobby and Survival places. Runtime branching happens in `ServerMain.server.lua` based on `game.PlaceId`. Place-specific content will get its own project file again at Phase 2.1 (see [`docs/VISION.md`](./docs/VISION.md)).
 
 ## Updating the vision doc
 

@@ -276,9 +276,9 @@ This section reflects what is **actually in the repo** as of the last update. Up
 | Area | State |
 |---|---|
 | Toolchain | `aftman.toml` pins `rojo-rbx/rojo@7.4.4`. No StyLua, Selene, Wally, or test runner. |
-| Project files | `default.project.json` and `survival.project.json` are byte-identical (only the `name` differs). Both map `src/shared` → `ReplicatedStorage.Shared`, `src/server` → `ServerScriptService.Server`, `src/client` → `StarterPlayer.StarterPlayerScripts.Client`. |
+| Project files | Single `default.project.json` mapping `src/shared` → `ReplicatedStorage.Shared`, `src/server` → `ServerScriptService.Server`, `src/client` → `StarterPlayer.StarterPlayerScripts.Client`. CI publishes the same `.rbxl` to both Lobby and Survival Place IDs; runtime branching happens via `game.PlaceId` in `ServerMain.server.lua`. We'll split the project file at Phase 2.1 when Survival ships a different map. |
 | Place IDs | Lobby `140360553864312`, Survival `114856846700519` (in `GameConfig.PLACE_IDS`). |
-| CI | `.github/workflows/publish.yml` builds both `.rbxl` files with Rojo on push to `main`, then POSTs them to the Roblox Open Cloud Places API using `secrets.ROBLOX_API_KEY` and the GitHub repo vars `UNIVERSE_ID`, `LOBBY_PLACE_ID`, `SURVIVAL_PLACE_ID`. |
+| CI | `.github/workflows/publish.yml` builds one `.rbxl` with Rojo on push to `main`, then POSTs it to both Lobby and Survival places via the Roblox Open Cloud Places API using `secrets.ROBLOX_API_KEY` and the GitHub repo vars `UNIVERSE_ID`, `LOBBY_PLACE_ID`, `SURVIVAL_PLACE_ID`. |
 | `.luau-analyze.json` | Globals list for local Luau analysis only; not in CI. |
 | `.Jules/*.md` | Three personality journals (`bolt`, `palette`, `sentinel`) used by an external agent system to log perf/UX/security learnings. Treat as a changelog of "why this code looks the way it does." |
 
@@ -385,7 +385,7 @@ Tagged so we can sweep them as a batch.
 | BUG-6 | High | Resource nodes never respawn after gather. Empty world after a few minutes. |
 | BUG-7 | High | Built structures never persist across server restarts. |
 | BUG-8 | Critical-for-game | Enemies cause no damage. Players cause no damage to enemies. |
-| BUG-9 | Low | `survival.project.json` is byte-identical to `default.project.json` — pointless duplication. |
+| BUG-9 | Low | ~~`survival.project.json` is byte-identical to `default.project.json` — pointless duplication.~~ **Fixed** in Phase 0 (deleted; CI builds once and publishes the same `.rbxl` to both Place IDs. Will reintroduce a differentiated project at Phase 2.1 when we add a real Forest Kingdom map). |
 | BUG-10 | Low | ~~Tower has Wall dimensions (`4,8,1`) and same color.~~ **Fixed** in Phase 0 (Tower is now `4×16×4` with darker color). |
 | BUG-11 | Low | `WaveManager.StartWave` checks `Phase ~= "Night"` only after `task.wait(SPAWN_RATE)` — small window where a post-dawn enemy spawns. |
 | BUG-12 | Low | `MinigameController.target` is static at `0.5` — sine wave is commented out, so the minigame is trivially solvable. |
@@ -417,7 +417,7 @@ This plan sequences work so each phase produces a **playable, demonstrable build
 - [x] Fix Bag-equip path: change `LoadoutManager.OnLoadoutRequest` slot whitelist to include `"Bag"` and add a `Type == "Bag"` enforcement branch parallel to Weapon/Kit. [BUG-1]
 - [x] Fix `DayNightCycle.StartDay` off-by-one — start with `DayCount = 0` and only increment on transition, not on `Init`. [BUG-2]
 - [x] Make Tower geometry distinct from Wall in `GameConfig.StructureProperties` (suggest Tower `Vector3.new(4, 16, 4)`, lighter color). [BUG-10]
-- [ ] Decide whether to keep `survival.project.json`. Either delete it or actually differentiate it (e.g., Survival project includes a different `_baseplate.rbxm` and excludes the lobby portal). [BUG-9]
+- [x] Decide whether to keep `survival.project.json`. Either delete it or actually differentiate it (e.g., Survival project includes a different `_baseplate.rbxm` and excludes the lobby portal). [BUG-9] **Decision: deleted; revisit at Phase 2.1.**
 - [ ] Add `selene.toml` and `stylua.toml` and a CI step that runs both. [BUG-15]
 - [ ] Add a TestEZ-style harness under `src/server/_tests/` and wire to CI. (Stub a single passing test to start.) [BUG-16]
 
@@ -617,7 +617,7 @@ When we make a tradeoff that locks something in, record it here so future-us doe
 | 2026-05-28 | This document is the source of truth. Existing `optimization_notes.md` and `.Jules/*.md` stay as historical journals. | Single place to look for "what is the game and where are we." | Active |
 | Open | **Squad size: 4 (code) vs 6 (vision).** Need to pick one. Recommendation: bump `MAX_SESSION_PLAYERS` to 6, since reservations + invite-only joins are easier with headroom. | — | Pending |
 | Open | **Win condition night count: 99 (Survive 99 in a Forest pattern) vs 150 (vision doc).** Vision says 150, the franchise reference says 99. Pick one. | — | Pending |
-| Open | **Lobby and Survival as the same Rojo project or different.** Currently identical — either delete `survival.project.json` or actually differentiate it (different baseplate, different default scripts). | — | Pending |
+| 2026-05-28 | **Delete `survival.project.json`.** It was byte-identical to `default.project.json`. CI now builds once and publishes the same `.rbxl` to both Place IDs. We'll reintroduce a differentiated project at Phase 2.1 when there's actual place-specific content (e.g., a Forest Kingdom map shipped only to Survival). | YAGNI — solve the duplication when there's a real difference to encode. | Done (BUG-9) |
 
 ---
 
