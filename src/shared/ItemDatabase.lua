@@ -24,7 +24,28 @@ local items = {
     },
 
     -- Weapons (Loadout Items)
-    ["void_sword"] = { Name = "Void Slayer", Type = "Weapon", Rarity = "Legendary", Damage = 50, Stackable = false },
+    -- Damage   : hitpoints removed per swing
+    -- Range    : max stud distance from attacker root to target root
+    -- Cooldown : seconds between swings (server-enforced)
+    ["wooden_sword"] = {
+        Name = "Wooden Sword",
+        Type = "Weapon",
+        Rarity = "Common",
+        Damage = 10,
+        Range = 8,
+        Cooldown = 0.6,
+        Description = "Splintery but better than bare hands.",
+        Stackable = false,
+    },
+    ["void_sword"] = {
+        Name = "Void Slayer",
+        Type = "Weapon",
+        Rarity = "Legendary",
+        Damage = 50,
+        Range = 10,
+        Cooldown = 0.5,
+        Stackable = false,
+    },
 
     -- Base Kits (Loadout Items)
     ["watchtower_kit"] = { Name = "Watchtower Blueprint", Type = "Kit", Rarity = "Rare", StructureId = "tower_01" },
