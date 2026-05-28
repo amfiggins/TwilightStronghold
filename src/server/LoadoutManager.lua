@@ -43,9 +43,9 @@ function LoadoutManager.OnLoadoutRequest(player, slot, itemId)
     print(string.format("[LoadoutManager] Request from %s: Set %s to %s", player.Name, tostring(slot), tostring(itemId)))
     
     -- Validation 1: Slot must be valid
-    if slot ~= "Weapon" and slot ~= "BaseKit" then 
-        warn("Invalid slot") 
-        return 
+    if slot ~= "Weapon" and slot ~= "BaseKit" and slot ~= "Bag" then
+        warn("Invalid slot")
+        return
     end
     
     -- Validation 2: Item ID must exist in GameConfig
@@ -69,6 +69,9 @@ function LoadoutManager.OnLoadoutRequest(player, slot, itemId)
             return
         elseif slot == "BaseKit" and itemDef.Type ~= "Kit" then
             warn(string.format("[LoadoutManager] Security: Type Mismatch (Kit) for %s by %s", itemId, player.Name))
+            return
+        elseif slot == "Bag" and itemDef.Type ~= "Bag" then
+            warn(string.format("[LoadoutManager] Security: Type Mismatch (Bag) for %s by %s", itemId, player.Name))
             return
         end
     end
