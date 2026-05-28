@@ -35,16 +35,25 @@ title.TextColor3 = Color3.fromRGB(255, 255, 255)
 title.BorderSizePixel = 0
 title.Parent = frame
 
+-- Refresh Container (Micro-UX)
+local refreshContainer = Instance.new("Frame")
+refreshContainer.Name = "RefreshContainer"
+refreshContainer.Size = UDim2.new(0, 30, 1, 0)
+refreshContainer.Position = UDim2.new(1, -30, 0, 0)
+refreshContainer.BackgroundTransparency = 1
+refreshContainer.Parent = title
+
 -- Refresh Button (Micro-UX)
 local refreshBtn = Instance.new("TextButton")
 refreshBtn.Text = "↻"
-refreshBtn.Size = UDim2.new(0, 30, 1, 0)
-refreshBtn.Position = UDim2.new(1, -30, 0, 0)
+refreshBtn.Size = UDim2.new(1, 0, 1, 0)
+refreshBtn.Position = UDim2.new(0.5, 0, 0.5, 0)
+refreshBtn.AnchorPoint = Vector2.new(0.5, 0.5)
 refreshBtn.BackgroundTransparency = 1
 refreshBtn.TextColor3 = Color3.fromRGB(200, 200, 200)
 refreshBtn.Font = Enum.Font.GothamBold
 refreshBtn.TextSize = 18
-refreshBtn.Parent = title
+refreshBtn.Parent = refreshContainer
 
 -- Refresh Tooltip (Micro-UX)
 local refreshTooltip = Instance.new("TextLabel")
@@ -59,7 +68,7 @@ refreshTooltip.Font = Enum.Font.SourceSans
 refreshTooltip.TextSize = 12
 refreshTooltip.Visible = false
 refreshTooltip.ZIndex = 10
-refreshTooltip.Parent = refreshBtn
+refreshTooltip.Parent = refreshContainer
 
 local function updateRefreshState(isActive)
     refreshBtn.TextColor3 = isActive and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(200, 200, 200)
@@ -204,12 +213,16 @@ local function createButton(text, onClick, rarityColor, isEquipped, rarityName, 
 end
 
 local isRefreshing = false
+local currentRotationTween = nil
 
 -- Populate Inventory Buttons
 local function populateLoadout()
     if isRefreshing then return end
     isRefreshing = true
-    refreshBtn.Text = "..."
+
+    if currentRotationTween then currentRotationTween:Cancel() end
+    currentRotationTween = TweenService:Create(refreshBtn, TweenInfo.new(1, Enum.EasingStyle.Linear, Enum.EasingDirection.Out, -1), {Rotation = 360})
+    currentRotationTween:Play()
 
     -- Clear List (preserve layout)
     for _, child in ipairs(listContainer:GetChildren()) do
@@ -247,7 +260,8 @@ local function populateLoadout()
         errorLabel.TextSize = 14
         errorLabel.Parent = listContainer
 
-        refreshBtn.Text = "↻"
+        if currentRotationTween then currentRotationTween:Cancel() end
+        refreshBtn.Rotation = 0
         isRefreshing = false
         return
     end
@@ -341,7 +355,8 @@ local function populateLoadout()
         emptyLabel.Parent = listContainer
     end
 
-    refreshBtn.Text = "↻"
+    if currentRotationTween then currentRotationTween:Cancel() end
+    refreshBtn.Rotation = 0
     isRefreshing = false
 end
 
