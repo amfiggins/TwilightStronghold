@@ -45,3 +45,7 @@
 ## 2024-05-24 - Async Loading Operations
 **Learning:** When improving UX during async loading operations, avoid replacing universally recognized icons (like '↻') with ambiguous text (like '...'). Instead, animate the existing icon (e.g., rotating it in place) to provide clear visual feedback while maintaining the element's visual affordance.
 **Action:** Handle relative layout rotation by wrapping static children (like tooltips) and rotating elements in a shared container to prevent unintended inheritance of rotation.
+
+## 2027-05-01 - Minigame Success States
+**Learning:** Instantly removing the UI upon minigame success is jarring. Players need a brief moment to process the visual feedback of their success before the context shifts.
+**Action:** Always insert a short delay (e.g., 0.5s) and display a clear "Success" state (like text or color changes) before closing high-focus minigame UIs.

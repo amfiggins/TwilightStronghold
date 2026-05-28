@@ -124,6 +124,13 @@ function MinigameController.Start(callback)
     if bar then
         bar.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
     end
+    if progressFill then
+        progressFill.BackgroundColor3 = Color3.fromRGB(0, 255, 100)
+    end
+    if instructionLabel then
+        local isMobile = UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled
+        instructionLabel.Text = isMobile and "<b>Hold screen to align</b>" or "<b>Hold SPACE/Click to align</b>"
+    end
     
     frame.Visible = true
     if progressFill then
@@ -205,9 +212,21 @@ end
 
 function MinigameController.Stop(success)
     isPlaying = false
-    frame.Visible = false
-    if success and successCallback then
-        successCallback()
+    if success then
+        if progressFill then
+            progressFill.BackgroundColor3 = Color3.fromRGB(255, 215, 0)
+        end
+        if instructionLabel then
+            instructionLabel.Text = "<b>Success!</b>"
+        end
+        task.delay(0.5, function()
+            if frame then frame.Visible = false end
+            if successCallback then
+                successCallback()
+            end
+        end)
+    else
+        if frame then frame.Visible = false end
     end
 end
 
