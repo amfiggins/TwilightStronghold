@@ -2,10 +2,13 @@
     DayNightCycle.lua
     Manages the core game loop for Survival Mode.
     Broadcasting Phase Changes: Day (Build) <-> Night (Combat).
+    Fires Day150Reached once when DayCount hits GameConfig.MILESTONE_NIGHT.
 ]]
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Lighting = game:GetService("Lighting")
+
+local GameConfig = require(ReplicatedStorage.Shared.GameConfig)
 
 local DayNightCycle = {}
 
@@ -15,12 +18,19 @@ local PhaseChanged = Instance.new("RemoteEvent")
 PhaseChanged.Name = "PhaseChanged"
 PhaseChanged.Parent = Remotes
 
+-- Fires once when DayCount reaches MILESTONE_NIGHT. Run does not end —
+-- the cycle continues in endless mode (see docs/VISION.md §1.4).
+local Day150Reached = Instance.new("RemoteEvent")
+Day150Reached.Name = "Day150Reached"
+Day150Reached.Parent = Remotes
+
 -- State
 DayNightCycle.Phase = "Day" -- "Day" or "Night"
 -- DayCount starts at 0 because StartDay() increments before announcing.
 -- Initial StartDay() call from Init() takes us to Day 1, not Day 2.
 DayNightCycle.DayCount = 0
 DayNightCycle.TimeRemaining = 0
+DayNightCycle.MilestoneFired = false -- prevent re-firing on subsequent days
 
 -- Config
 local DAY_LENGTH = 300 -- Seconds (Production)
@@ -60,6 +70,15 @@ function DayNightCycle.StartDay()
     print(string.format("[DayNightCycle] Day %d Started. Build Phase.", DayNightCycle.DayCount))
 
     PhaseChanged:FireAllClients("Day", DayNightCycle.DayCount, DayNightCycle.TimeRemaining)
+
+    -- Day 150 milestone: fire once, then continue in endless mode.
+    if not DayNightCycle.MilestoneFired and DayNightCycle.DayCount >= GameConfig.MILESTONE_NIGHT then
+        DayNightCycle.MilestoneFired = true
+        print(
+            string.format("[DayNightCycle] 🏆 Day %d milestone reached! Endless mode active.", DayNightCycle.DayCount)
+        )
+        Day150Reached:FireAllClients(DayNightCycle.DayCount)
+    end
 end
 
 function DayNightCycle.StartNight()
@@ -72,7 +91,6 @@ function DayNightCycle.StartNight()
 
     PhaseChanged:FireAllClients("Night", DayNightCycle.DayCount, DayNightCycle.TimeRemaining)
 
-    -- Notify WaveManager (In a real architecture, we'd use a BindableEvent or direct require)
     local WaveManager = require(script.Parent.WaveManager)
     WaveManager.StartWave(DayNightCycle.DayCount)
 end

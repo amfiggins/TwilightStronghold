@@ -1,11 +1,14 @@
 --[[
     LoadoutUI.client.lua
-    Basic UI to select Loadout items (Weapon/BaseKit).
+    Basic UI to select Loadout items (Weapon/BaseKit/Bag).
+    Toggle visibility with Tab (keyboard) or DPad-Down (gamepad).
+    Starts hidden so it doesn't clutter the screen during combat.
 ]]
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
 local GameConfig = require(ReplicatedStorage.Shared.GameConfig)
 local ItemDatabase = require(ReplicatedStorage.Shared.ItemDatabase)
 
@@ -19,11 +22,12 @@ gui.Name = "LoadoutUI"
 gui.ResetOnSpawn = false
 gui.Parent = player:WaitForChild("PlayerGui")
 
--- Container
+-- Container (hidden by default — toggle with Tab)
 local frame = Instance.new("Frame")
 frame.Size = UDim2.new(0, 220, 0, 350) -- Adjusted width for scrollbar
 frame.Position = UDim2.new(0.05, 0, 0.5, -175)
 frame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+frame.Visible = false -- BUG-17 fix: start hidden
 frame.Parent = gui
 
 -- Title
@@ -410,5 +414,19 @@ refreshBtn.MouseButton1Click:Connect(function()
     populateLoadout()
 end)
 
--- Run population
-task.spawn(populateLoadout)
+-- Toggle visibility with Tab (keyboard) or DPad-Down (gamepad). BUG-17 fix.
+UserInputService.InputBegan:Connect(function(input, gameProcessedEvent)
+    if gameProcessedEvent then
+        return
+    end
+    if input.KeyCode == Enum.KeyCode.Tab or input.KeyCode == Enum.KeyCode.DPadDown then
+        frame.Visible = not frame.Visible
+        -- Populate on first open so we don't fetch data until the player
+        -- actually wants to see the loadout.
+        if frame.Visible and not isRefreshing then
+            task.spawn(populateLoadout)
+        end
+    end
+end)
+
+-- Do NOT auto-populate on startup — wait for the player to open the panel.
