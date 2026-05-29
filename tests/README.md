@@ -15,7 +15,9 @@ tests/
 
 ## Lune tests (CI)
 
-Run on every PR via `.github/workflows/lint.yml`. They cover **pure-Lua modules** (anything in `src/shared/` that doesn't reference `game`, `workspace`, etc.).
+Run on every PR via `.github/workflows/lint.yml`. They cover **pure-Lua modules** — anything that doesn't reference Roblox-runtime globals like `game`, `workspace`, `Vector3`, `Color3`, `Enum`, etc.
+
+Modules that touch Roblox types (today: `GameConfig.lua`, every `src/server/*` module, every `src/client/*` module) cannot be unit-tested under Lune without globally shimming the Roblox API surface. They're integration-test territory — see the next section.
 
 Run locally:
 

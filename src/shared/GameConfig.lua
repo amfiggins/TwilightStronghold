@@ -26,13 +26,33 @@ Shared.PLACE_IDS = {
 Shared.StructureCosts = {
     ["Wall"] = { Resource = "wood_log", Amount = 5 },
     ["Tower"] = { Resource = "wood_log", Amount = 20 },
+    ["Plot"] = { Resource = "wood_log", Amount = 1 },
 }
 
--- Structure Properties (Visuals & Physics)
+-- Structure Properties (Visuals & Physics).
+-- Optional fields per structure type:
+--   Persistent : if false, the structure is not saved to StructurePersistence
+--                and will disappear when the server restarts. Use for ephemeral
+--                gameplay objects (farming plots, campfires) whose state is
+--                meaningful only within a single run. Defaults to true.
+--   CanCollide : passed straight to the rendered Part. Defaults to true.
+--                Plots are walkable so players can stand on them while
+--                planting.
 Shared.StructureProperties = {
     ["Wall"] = { Size = Vector3.new(4, 8, 1), Color = Color3.fromRGB(160, 132, 79), Anchored = true },
     -- Tower: taller and thicker than walls so it's actually distinguishable in-world.
     ["Tower"] = { Size = Vector3.new(4, 16, 4), Color = Color3.fromRGB(120, 95, 50), Anchored = true },
+    -- Plot: a flat tile of soil. Per the Phase 3.2 design decision in
+    -- docs/VISION.md §5, plots live only for the duration of a run —
+    -- they are not saved to the per-Place DataStore.
+    ["Plot"] = {
+        Size = Vector3.new(4, 0.4, 4),
+        Color = Color3.fromRGB(95, 65, 35),
+        Material = Enum.Material.Ground,
+        Anchored = true,
+        CanCollide = true,
+        Persistent = false,
+    },
 }
 
 -- Rarity Definitions

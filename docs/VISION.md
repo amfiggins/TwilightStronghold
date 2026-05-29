@@ -290,7 +290,7 @@ This section reflects what is **actually in the repo** as of the last update. Up
 | `PlayerDataHandler.lua` | DataStore-backed player data. Schema: `Stats {Rubies, Diamonds, Level, XP}`, `Inventory[]`, `Loadout {Weapon, BaseKit, Bag}`, `CodesRedeemed`. O(1) inventory lookup, swap-remove, NaN/`math.huge` validation, retry-with-backoff `GetAsync`, staggered autosave (60s window divided across players). | ✅ Mature |
 | `ResourceManager.lua` | `GatherResource` RemoteEvent handler. Validates rate limit (1s), distance (25 studs²), proximity prompt presence, maps node names to resource IDs via `NodeTypeMapping`, rolls rare drops, awards items, schedules respawn via `ResourceRespawn` if `DestroyOnGather`. | ✅ Real |
 | `ResourceRespawn.lua` | Snapshots gathered nodes into `ServerStorage.ResourceRespawnPool` and re-parents them back at the original CFrame 60–120s later. | ✅ Real (Phase 2.2) |
-| `BuildingSystem.lua` | `PlaceStructure` RemoteEvent. Rate limit (0.5s), NaN-CFrame validation, 20-stud range, `OverlapParams` collision check, deducts wood, instantiates Part under `workspace.PlayerStructures`, tags with `TwilightStronghold_PlayerStructure`, persists via `StructurePersistence`. | ✅ Real |
+| `BuildingSystem.lua` | `PlaceStructure` RemoteEvent. Rate limit (0.5s), NaN-CFrame validation, 20-stud range, `OverlapParams` collision check, deducts cost, instantiates Part under `workspace.PlayerStructures`, tags with `TwilightStronghold_PlayerStructure`, optionally persists via `StructurePersistence` (per `StructureProperties.Persistent` flag). Plots ship with `PlotState`/`CropKey`/`WateringCount`/`PlantedAt` attributes. | ✅ Real |
 | `StructurePersistence.lua` | Per-Place DataStore. AddStructure() appends to in-memory list and schedules a debounced (5s) save. On Survival start, loads saved records and re-instantiates each via a renderer callback. BindToClose final flush. | ✅ Real (Phase 2.3) |
 | `DayNightCycle.lua` | 1Hz tick. Day=300s, Night=120s. Fires `PhaseChanged` to clients. Calls `WaveManager.StartWave` on night start. Sets `Lighting.ClockTime` only. | 🟡 Basic |
 | `WaveManager.lua` | Spawns enemies during night, deals touch damage with per-player cooldown, despawns at dawn, registers/unregisters with `CombatSystem`. Pathfinding+raycast LOS shortcut, tiered update rates. | 🟡 Single enemy type |
@@ -355,7 +355,7 @@ Legend: ✅ implemented · 🟡 partial · ❌ missing
 | HUD | ✅ | `SurvivalHUD.client.lua`: Health/Hunger/Thirst bars (bottom-left) + Day/Night phase label + countdown timer (top-center) + Day 150 milestone banner |
 | Hunger / Thirst / Cold | ✅ | `Stats.Hunger` and `Stats.Thirst` in DEFAULT_DATA; `VitalsSystem` decays both every 5s; starvation/dehydration damage when either hits 0; `EatItem`/`DrinkItem` RemoteEvents |
 | Hotbar | ❌ | Loadout panel exists; no number-key hotbar |
-| Farming | 🟡 | Schema only — `CropDatabase` + ItemDatabase entries (seeds, crops, hoe, watering can, fertilizer). No runtime systems yet. _(Phase 3.2/3.3/3.4)_ |
+| Farming | 🟡 | Schema (CropDatabase + ItemDatabase) and plot placement (run-scoped, not persisted). Planting / watering / harvesting / growth tick still ahead. _(Phase 3.3/3.4)_ |
 | Crafting | ❌ | No `CraftingManager`, no recipes, no workbench |
 | Map / world generation | 🟡 | `MapManager` clones `ServerStorage.Maps.ForestKingdom` into `workspace.Map` on Survival start. Map authoring (`ForestKingdom.rbxm`) is a Studio task — see `assets/maps/README.md`. |
 | Audio | ❌ | Zero `SoundService` usage |
@@ -517,8 +517,9 @@ This plan sequences work so each phase produces a **playable, demonstrable build
 
 ### 3.2 Plot system
 
-- [ ] `src/server/PlotManager.lua` (new). Each plot is a `Part` with a `ProximityPrompt` named `Till` (when empty), `Plant` (when tilled), `Water` (when planted, dry), `Harvest` (when ready). Plot state lives in a per-match DataStore alongside structures.
-- [ ] Plots are placed via the building system (`PlotKit` → `Type=Kit, StructureId=plot_01`).
+- [x] **Plot placement.** Extended `BuildingSystem` to support a third structure type via two new optional `StructureProperties` flags: `Persistent` (defaults true; `false` opts out of `StructurePersistence` saves) and `CanCollide`. `Plot` is the first ephemeral structure: 4×0.4×4 stud brown soil tile, costs 1 wood log, walkable, **not persisted across server restarts** per the §5 design decision. Plots ship with attributes `PlotState = "tilled"`, `CropKey = ""`, `WateringCount = 0`, `PlantedAt = 0` so the upcoming `PlotManager` (Phase 3.3) doesn't need an init step.
+- [x] `BuildPlacementClient.client.lua` already handles the new structure type via `STRUCTURE_ORDER`. Press `B`, then `3` to select Plot.
+- [ ] `src/server/PlotManager.lua` (Phase 3.3) — adds `ProximityPrompt`s (`Plant` / `Water` / `Harvest`) to each plot based on its current `PlotState` attribute; runs the server-wide growth tick.
 
 ### 3.3 Farming actions
 
@@ -637,7 +638,8 @@ When we make a tradeoff that locks something in, record it here so future-us doe
 
 | Date | Decision | Why | Status |
 |---|---|---|---|
-| 2026-05-28 | This document is the source of truth. Existing `optimization_notes.md` and `.Jules/*.md` stay as historical journals. | Single place to look for "what is the game and where are we." | Active |
+| 2026-05-29 | **Plots are run-scoped, not persisted.** Walls and Towers stay in `StructurePersistence`'s per-Place DataStore; `Plot` opts out via `StructureProperties.Plot.Persistent = false`. When the server restarts, plots disappear with the run. | A run is the meaningful unit for farming — saving plots cross-run would mix state between unrelated parties. Walls/towers stay persistent because they represent the stronghold investment that persists between server lifetimes (until per-MatchId persistence lands in Phase 5+). | Done (Phase 3.2) |
+| 2026-05-29 | This document is the source of truth. Existing `optimization_notes.md` and `.Jules/*.md` stay as historical journals. | Single place to look for "what is the game and where are we." | Active |
 | 2026-05-28 | **Squad size = 6.** Bumped `MAX_SESSION_PLAYERS` from 4 to 6 to match the vision. | Reserved-slot/invite-only joins are easier with headroom; matches design doc; trivial config change. | Done |
 | 2026-05-28 | **Day 150 is a milestone, not a win.** The run does not end at Day 150. Players unlock endless leaderboard ranking and keep going. Difficulty continues scaling past 150 with no cap. | Maintains replayability and avoids a hard "you won, game over" off-ramp. Differentiates from the "Survive 99" pattern. | Done |
 | 2026-05-28 | **Delete `survival.project.json`.** It was byte-identical to `default.project.json`. CI now builds once and publishes the same `.rbxl` to both Place IDs. We'll reintroduce a differentiated project at Phase 2.1 when there's actual place-specific content (e.g., a Forest Kingdom map shipped only to Survival). | YAGNI — solve the duplication when there's a real difference to encode. | Done (BUG-9) |

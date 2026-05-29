@@ -111,12 +111,31 @@ local function renderStructure(record)
     structure.Name = record.structureType
     structure.Size = props.Size
     structure.Anchored = props.Anchored
+    -- Optional CanCollide override; defaults to true to match Roblox's
+    -- Part default and the behaviour Walls/Towers had before this PR.
+    if props.CanCollide ~= nil then
+        structure.CanCollide = props.CanCollide
+    end
     structure.CFrame = record.cframe
     structure.Color = props.Color
+    if props.Material then
+        structure.Material = props.Material
+    end
     structure:AddTag(STRUCTURE_TAG)
     if record.ownerUserId then
         structure:SetAttribute("OwnerUserId", record.ownerUserId)
     end
+
+    -- Plot-specific initial state. Future PlotManager (Phase 3.3) will flip
+    -- these as the player plants/waters/harvests. Setting them at render
+    -- time means newly-placed plots are immediately ready to plant on.
+    if record.structureType == "Plot" then
+        structure:SetAttribute("PlotState", "tilled")
+        structure:SetAttribute("CropKey", "")
+        structure:SetAttribute("WateringCount", 0)
+        structure:SetAttribute("PlantedAt", 0)
+    end
+
     structure.Parent = getStructuresFolder()
     return structure
 end
@@ -216,7 +235,11 @@ function BuildingSystem.PlaceStructure(player, structureType, cframe)
         return false, "RenderFailed"
     end
 
-    StructurePersistence.AddStructure(structureType, cframe, player.UserId)
+    -- Save to the per-Place DataStore unless this structure type is opted
+    -- out (e.g., farming Plots, which only matter within a single run).
+    if props.Persistent ~= false then
+        StructurePersistence.AddStructure(structureType, cframe, player.UserId)
+    end
 
     print(string.format("[BuildingSystem] %s placed a %s", player.Name, structureType))
     return true, "Success"
