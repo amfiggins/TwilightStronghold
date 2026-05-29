@@ -116,6 +116,74 @@ local items = {
         ThirstRestore = 5,
         Description = "Wild berries. Small but refreshing.",
     },
+
+    -- Farming Crops (harvest yields)
+    -- Crops with HungerRestore are also Food items so VitalsSystem.ConsumeItem
+    -- accepts them with no extra wiring.
+    ["wheat"] = {
+        Name = "Wheat",
+        Type = "Food",
+        Rarity = "Common",
+        HungerRestore = 6,
+        Description = "Raw wheat. Bake into bread for better hunger restore.",
+    },
+    ["carrot"] = {
+        Name = "Carrot",
+        Type = "Food",
+        Rarity = "Common",
+        HungerRestore = 12,
+        Description = "Crunchy and orange.",
+    },
+
+    -- Farming Seeds
+    -- SeedFor : the CropDatabase key this seed grows into
+    -- Tests verify every Seed has a matching CropDatabase entry whose
+    -- SeedItemId points back here.
+    ["wheat_seed"] = {
+        Name = "Wheat Seed",
+        Type = "Seed",
+        Rarity = "Common",
+        SeedFor = "wheat",
+        Description = "Plant on a tilled plot. ~8 minutes to grow.",
+    },
+    ["carrot_seed"] = {
+        Name = "Carrot Seed",
+        Type = "Seed",
+        Rarity = "Common",
+        SeedFor = "carrot",
+        Description = "Plant on a tilled plot. ~6 minutes to grow.",
+    },
+    ["berry_seed"] = {
+        Name = "Berry Seed",
+        Type = "Seed",
+        Rarity = "Common",
+        SeedFor = "berries",
+        Description = "Plant on a tilled plot. Slow but high-yield.",
+    },
+
+    -- Farming Tools
+    -- These are Tools (not Weapons / Kits) — used by FarmingSystem to gate
+    -- Plant / Water / Harvest actions in Phase 3.3.
+    ["hoe"] = {
+        Name = "Hoe",
+        Type = "Tool",
+        Rarity = "Common",
+        Description = "Tills soil so seeds can be planted.",
+        Stackable = false,
+    },
+    ["watering_can"] = {
+        Name = "Watering Can",
+        Type = "Tool",
+        Rarity = "Common",
+        Description = "Waters planted crops to advance their growth.",
+        Stackable = false,
+    },
+    ["fertilizer"] = {
+        Name = "Fertilizer",
+        Type = "Material",
+        Rarity = "Uncommon",
+        Description = "Applied to a planted plot to halve remaining growth time.",
+    },
 }
 
 -- Public API: Get Item Definition
