@@ -403,7 +403,7 @@ Tagged so we can sweep them as a batch.
 | BUG-12 | Low | ~~`MinigameController.target` is static at `0.5` — sine wave is commented out, so the minigame is trivially solvable.~~ **Fixed** in cleanup pass (target oscillates with a 5s sine wave; per-game phase via `gameStartTime`). |
 | BUG-13 | Medium | ~~`BuildingSystem.PlaceStructure` has a literal `-- Ensure no collision` TODO and no implementation. Walls can stack inside each other or terrain.~~ **Fixed** in Phase 2.3 (`hasCollision` uses `OverlapParams` + `workspace:GetPartBoundsInBox`, ignores the placer's own character). |
 | BUG-14 | Low | ~~`raw_fish` is a Consumable but has no Hunger/Heal value, and no eat handler exists.~~ **Fixed** in Phase 1.2 (`raw_fish` is now `Type Food` with `HungerRestore = 10`; `EatItem`/`DrinkItem` RemoteEvents wired through `VitalsSystem` → `PlayerDataHandler.ConsumeItem`). |
-| BUG-15 | Low | ~~No StyLua/Selene config; style is loose.~~ **Fixed** in Phase 0 (StyLua 2.5.2 + Selene 0.31.0 pinned in `aftman.toml`; configs at `stylua.toml` and `selene.toml`; CI runs `stylua --check` and `selene --allow-warnings` on every PR via `.github/workflows/lint.yml`). 24 existing warnings (unused vars, manual-fromscale, etc) remain as a separate cleanup task. |
+| BUG-15 | Low | ~~No StyLua/Selene config; style is loose.~~ **Fixed** in Phase 0 + cleanup pass: StyLua 2.5.2 + Selene 0.31.0 pinned in `aftman.toml`; configs at `stylua.toml` and `selene.toml`; CI runs `stylua --check` and `selene` (no `--allow-warnings`) on every PR via `.github/workflows/lint.yml`. All 24 historical warnings resolved. |
 | BUG-16 | Low | ~~No automated test harness; `BuildingSystemTest.lua` and benchmarks are ad-hoc.~~ **Partially fixed** in Phase 0: scaffolding landed (`tests/` folder with `TestFramework.lua`, `TestRunner.server.lua`, `tests/unit/ItemDatabase.spec.lua`, plus `tests.project.json` for Studio runs). Tests are Studio-only today. Wiring CI execution via [run-in-roblox](https://github.com/rojo-rbx/run-in-roblox) or [Lune](https://github.com/lune-org/lune) is a follow-up. |
 | BUG-17 | Low | ~~`LoadoutUI` is always visible — no toggle key.~~ **Fixed** in Phase 1.3 (starts hidden; `Tab` / DPad-Down toggles; populates lazily on first open). |
 
@@ -620,7 +620,7 @@ Things that don't fit a phase yet but we don't want to lose. Move into a phase w
 - **Weather system.** Rain in Forest, snowstorms in Tundra, sandstorms in Desert. Affects visibility and beast cues.
 - **Day-skip vote.** Let the squad vote to skip the rest of a Day Phase if they're ready.
 - **Run tests in CI.** The `tests/` harness is Studio-only today. Wire up [run-in-roblox](https://github.com/rojo-rbx/run-in-roblox) or [Lune](https://github.com/lune-org/lune) so PRs run unit and integration tests automatically.
-- **Cleanup pass on the 24 Selene warnings.** Mostly `roblox_manual_fromscale_or_fromoffset` (use `UDim2.fromScale` / `UDim2.fromOffset`) and unused locals. Drop `--allow-warnings` from CI once the warnings are gone.
+- **Cleanup pass on the 24 Selene warnings.** ✅ Done in cleanup PR — all 24 warnings resolved; `--allow-warnings` removed from CI.
 - **Adopt TestEZ proper.** Replace the in-repo `TestFramework.lua` shim with the real [TestEZ](https://roblox.github.io/testez/) once we install Wally.
 
 ---

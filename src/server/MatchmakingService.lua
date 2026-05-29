@@ -8,7 +8,6 @@ local TeleportService = game:GetService("TeleportService")
 local Players = game:GetService("Players")
 
 local GameConfig = require(ReplicatedStorage.Shared.GameConfig)
-local PlayerDataHandler = require(script.Parent.PlayerDataHandler)
 
 local MatchmakingService = {}
 local queue = {} -- List of players waiting
@@ -139,7 +138,7 @@ function MatchmakingService.ProcessQueue()
 end
 
 -- Handle Teleport Failures
-TeleportService.TeleportInitFailed:Connect(function(player, result, errorMessage)
+TeleportService.TeleportInitFailed:Connect(function(player, _result, errorMessage)
     warn(string.format("[Matchmaking] Teleport failed for %s: %s", player.Name, errorMessage))
 end)
 

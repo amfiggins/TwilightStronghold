@@ -8,7 +8,6 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
 
-local GameConfig = require(ReplicatedStorage.Shared.GameConfig)
 local ItemDatabase = require(ReplicatedStorage.Shared.ItemDatabase)
 
 local player = Players.LocalPlayer
@@ -31,7 +30,7 @@ notifGui.Parent = player:WaitForChild("PlayerGui")
 local function showNotification(text)
     local label = Instance.new("TextLabel")
     label.Text = text
-    label.Size = UDim2.new(0, 200, 0, 40)
+    label.Size = UDim2.fromOffset(200, 40)
     label.Position = UDim2.new(0.5, -100, 0.7, 0)
     label.BackgroundTransparency = 1
     label.TextColor3 = Color3.fromRGB(255, 255, 255)

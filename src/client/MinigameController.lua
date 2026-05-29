@@ -6,7 +6,6 @@
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local MinigameController = {}
 local player = Players.LocalPlayer
@@ -65,7 +64,7 @@ UserInputService.InputBegan:Connect(function(input, gameProcessed)
     end
 end)
 
-UserInputService.InputEnded:Connect(function(input, gameProcessed)
+UserInputService.InputEnded:Connect(function(input, _gameProcessed)
     if input.UserInputType == Enum.UserInputType.Touch then
         activeTouches = math.max(0, activeTouches - 1)
     end
@@ -92,7 +91,7 @@ function MinigameController.Init()
 
     local bg = Instance.new("Frame")
     bg.Name = "Background"
-    bg.Size = UDim2.new(0, 300, 0, 40)
+    bg.Size = UDim2.fromOffset(300, 40)
     bg.Position = UDim2.new(0.5, -150, 0.8, 0)
     bg.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
     bg.BorderSizePixel = 2
@@ -102,14 +101,14 @@ function MinigameController.Init()
 
     target = Instance.new("Frame")
     target.Name = "Target"
-    target.Size = UDim2.new(TARGET_SIZE, 0, 1, 0)
+    target.Size = UDim2.fromScale(TARGET_SIZE, 1)
     target.BackgroundColor3 = Color3.fromRGB(0, 255, 0)
     target.BackgroundTransparency = 0.5
     target.Parent = bg
 
     bar = Instance.new("Frame")
     bar.Name = "Bar"
-    bar.Size = UDim2.new(BAR_SIZE, 0, 1, 0)
+    bar.Size = UDim2.fromScale(BAR_SIZE, 1)
     bar.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
     bar.Parent = bg
 
@@ -124,7 +123,7 @@ function MinigameController.Init()
 
     progressFill = Instance.new("Frame")
     progressFill.Name = "ProgressFill"
-    progressFill.Size = UDim2.new(0, 0, 1, 0)
+    progressFill.Size = UDim2.fromScale(0, 1)
     progressFill.BackgroundColor3 = Color3.fromRGB(0, 255, 100)
     progressFill.BorderSizePixel = 0
     progressFill.Parent = progressBg
@@ -136,7 +135,7 @@ function MinigameController.Init()
     instruction.RichText = true
     instruction.Size = UDim2.new(1, 0, 0, 30)
     instruction.AnchorPoint = Vector2.new(0, 1) -- Bottom-Left
-    instruction.Position = UDim2.new(0, 0, 0, -5) -- 5px above
+    instruction.Position = UDim2.fromOffset(0, -5) -- 5px above
     instruction.BackgroundTransparency = 1
     instruction.TextColor3 = Color3.fromRGB(255, 255, 255)
     instruction.TextStrokeTransparency = 0.5
