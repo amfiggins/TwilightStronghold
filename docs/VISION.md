@@ -292,13 +292,14 @@ This section reflects what is **actually in the repo** as of the last update. Up
 | `ResourceRespawn.lua` | Snapshots gathered nodes into `ServerStorage.ResourceRespawnPool` and re-parents them back at the original CFrame 60–120s later. | ✅ Real (Phase 2.2) |
 | `BuildingSystem.lua` | `PlaceStructure` RemoteEvent. Rate limit (0.5s), NaN-CFrame validation, 20-stud range, `OverlapParams` collision check, deducts cost, instantiates Part under `workspace.PlayerStructures`, tags with `TwilightStronghold_PlayerStructure`, optionally persists via `StructurePersistence` (per `StructureProperties.Persistent` flag). Plots ship with `PlotState`/`CropKey`/`WateringCount`/`PlantedAt` attributes. | ✅ Real |
 | `StructurePersistence.lua` | Per-Place DataStore. AddStructure() appends to in-memory list and schedules a debounced (5s) save. On Survival start, loads saved records and re-instantiates each via a renderer callback. BindToClose final flush. | ✅ Real (Phase 2.3) |
-| `DayNightCycle.lua` | 1Hz tick. Day=300s, Night=120s. Fires `PhaseChanged` to clients. Calls `WaveManager.StartWave` on night start. Sets `Lighting.ClockTime` only. | 🟡 Basic |
+| `DayNightCycle.lua` | 1Hz tick. Day=300s, Night=120s. Fires `PhaseChanged` (RemoteEvent → all clients) and `PhaseChangedBindable` (server-side). `Day150Reached` fires once at the milestone. Sets `Lighting.ClockTime`. | 🟡 Basic |
 | `WaveManager.lua` | Spawns enemies during night, deals touch damage with per-player cooldown, despawns at dawn, registers/unregisters with `CombatSystem`. Pathfinding+raycast LOS shortcut, tiered update rates. | 🟡 Single enemy type |
 | `LoadoutManager.lua` | `SetLoadout` RemoteEvent. Validates slot, type-checks itemId against `ItemDatabase`, enforces type per slot, rate-limits. | 🟡 (see bug list) |
 | `CombatSystem.lua` | `Attack` RemoteEvent. Validates equipped weapon, target is a registered enemy, range/cooldown. Tracks per-player damage contribution; awards proportional Rubies + XP on kill via `UnregisterEnemy`. | ✅ Real (Phase 1.1) |
 | `VitalsSystem.lua` | `EatItem` + `DrinkItem` + `VitalsUpdate` RemoteEvents. Staggered decay loop (Hunger −1/tick, Thirst −2/tick every 5s). Starvation/dehydration damage when either hits 0. Delegates consume logic to `PlayerDataHandler.ConsumeItem`. | ✅ Real (Phase 1.2) |
 | `FarmingSystem.lua` | `PlantSeed` + `WaterCrop` + `HarvestCrop` RemoteEvents. Rate-limited (0.5s) + distance-validated (12 studs). Drives `PlotState` / `CropKey` / `WateringCount` / `PlantedAt` attributes; awards crops on harvest. | ✅ Real (Phase 3.3) |
 | `PlotManager.lua` | Owns per-plot `ProximityPrompt`s (Plant / Water / Harvest), driven by `GetAttributeChangedSignal`. Runs the server-wide 5s growth tick that advances `Stage` and flips `PlotState` to `"ready"` when watering + time gates are met. Recolours plots as placeholder visual stage feedback. | ✅ Real (Phase 3.3) |
+| `BeastSystem.lua` | Spawns one biome-appropriate beast at night and despawns at dawn via `DayNightCycle.PhaseChangedBindable`. State machine: Stalk (drift at 50–100 studs) ↔ Glimpse (brief fade-in at 30 studs every 18–35s). Unkillable. | ✅ Real (Phase 4.1) |
 | `MapManager.lua` | On Survival start, clones `ServerStorage.Maps.ForestKingdom` into `workspace.Map`. Counts gather-able nodes. Logs a warning and continues if the map is missing. | ✅ Real (Phase 2.1) |
 | `MatchmakingService.lua` | `JoinQueue` + `QueueUpdate` RemoteEvents. FIFO, 6 players → `TeleportAsync` to Survival with a `MatchId` GUID. Re-queues on teleport failure (ghost-cleanup). | ✅ Real |
 | `BuildingSystemTest.lua` | Module that mocks a player and asserts a Wall is created. Not auto-run, must be required from the command bar. | 🟡 Ad-hoc |
@@ -363,8 +364,8 @@ Legend: ✅ implemented · 🟡 partial · ❌ missing
 | Map / world generation | 🟡 | `MapManager` clones `ServerStorage.Maps.ForestKingdom` into `workspace.Map` on Survival start. Map authoring (`ForestKingdom.rbxm`) is a Studio task — see `assets/maps/README.md`. |
 | Audio | ❌ | Zero `SoundService` usage |
 | VFX | 🟡 | TweenService for enemy fade and UI tweens only |
-| Beast system (the vision pillar) | ❌ | None |
-| Sub-beasts | ❌ | None |
+| Beast system (the vision pillar) | 🟡 | `BeastSystem` + `BeastDatabase` ship one Wendigo per night with Stalk/Glimpse AI. Light-respect, audio cues, and Hunt/jump-scare still ahead. _(Phase 4.2/4.3)_ |
+| Sub-beasts | ❌ | None _(Phase 8)_ |
 | Stronghold light system | ❌ | None |
 | Residents (NPCs) | ❌ | None |
 | Roles / classes | ❌ | None |
@@ -546,9 +547,10 @@ This plan sequences work so each phase produces a **playable, demonstrable build
 
 ### 4.1 Beast core
 
-- [ ] `src/server/BeastSystem.lua` (new). Spawns one Beast per Survival run during night. Beast has stalking AI: stays at 50-100 studs from the nearest player, occasionally darts to 30 studs for a "glimpse," then retreats. If a player is 200+ studs from the stronghold for 60+ seconds, beast switches to Hunt state.
-- [ ] Beast respects light: any source with `BeastRepel = true` attribute within 30 studs forces beast to retreat to >100 studs. Stronghold's main light has a larger radius.
-- [ ] Beast Definitions module: `src/shared/BeastDatabase.lua` with `Wendigo`, `Yeti`, `DjinnStalker` placeholders (only Wendigo wired up at launch).
+- [x] `src/shared/BeastDatabase.lua` (new). `Wendigo`, `Yeti`, `DjinnStalker` definitions. Stores colour as `{R, G, B}` triples instead of `Color3` so the module loads under Lune CI. Public API: `GetBeast`, `GetBeastForBiome`, `GetAll`. Only Wendigo is wired into the spawn logic at launch.
+- [x] `src/server/BeastSystem.lua` (new). Spawns one beast at night and despawns it at dawn via `DayNightCycle.PhaseChangedBindable`. State machine (V1): `Stalk` (drift around the nearest player at 50–100 studs) and `Glimpse` (briefly fade in to ~70% transparency at 30 studs every 18–35s, then back to fully invisible). Unkillable in V1 — high HP, never registered with `CombatSystem`, never damages players (combat lands in Phase 4.3 with the Hunt state and lunge).
+- [x] `src/server/DayNightCycle.lua`: added `PhaseChangedBindable` for clean server-side fanout. WaveManager now subscribes via the bindable instead of being directly required from DayNightCycle.
+- [ ] Beast respects light: any source with `BeastRepel = true` attribute within `LightRetreat` studs forces beast to retreat. Stronghold's main light has a larger radius. _(Phase 4.2)_
 
 ### 4.2 Audio cues
 

@@ -39,6 +39,10 @@ if isSurvival then
     -- this ordering matters if a Survival hot-reload introduces them.)
     require(script.Parent.PlotManager).Init()
     require(script.Parent.FarmingSystem).Init()
+    -- BeastSystem subscribes to DayNightCycle.PhaseChangedBindable, so
+    -- it can init at any point after DayNightCycle. Putting it last keeps
+    -- the init order easy to read: world → core combat → systems → beast.
+    require(script.Parent.BeastSystem).Init()
 else
     print(string.format("[Server] >> Starting LOBBY Mode (PlaceId: %s) <<", game.PlaceId))
     require(script.Parent.MatchmakingService).Init()
