@@ -91,6 +91,7 @@ end
 runSpec("ItemDatabase", require("./ItemDatabase.test"))
 runSpec("Vitals", require("./Vitals.test"))
 runSpec("Weapons", require("./Weapons.test"))
+runSpec("CropDatabase", require("./CropDatabase.test"))
 
 -- ── Report ────────────────────────────────────────────────────────────────
 print(string.format("[TEST] === %d passed, %d failed ===", stats.passed, stats.failed))

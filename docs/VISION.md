@@ -327,9 +327,13 @@ Constants: `GAME_VERSION`, `IS_SURVIVAL_MODE`, `MAX_LOBBY_PLAYERS = 20`, `MAX_SE
 
 ### `ItemDatabase.lua`
 
-13 items in 5 categories: Tool (`wooden_rod`, `iron_pickaxe`), Weapon (`wooden_sword`, `void_sword`), Kit (`watchtower_kit`), Bag (`starter_bag`/`leather_bag`/`reinforced_bag`), Material (`wood_log`, `golden_wood`, `stone_ore`), Consumable (`raw_fish`).
+23 items in 8 categories: Tool (`wooden_rod`, `iron_pickaxe`, `hoe`, `watering_can`), Weapon (`wooden_sword`, `void_sword`), Kit (`watchtower_kit`), Bag (`starter_bag`/`leather_bag`/`reinforced_bag`), Material (`wood_log`, `golden_wood`, `stone_ore`, `fertilizer`), Food (`raw_fish`, `cooked_fish`, `berries`, `wheat`, `carrot`), Drink (`water_flask`), Seed (`wheat_seed`, `carrot_seed`, `berry_seed`).
 
-Weapons declare `Damage`, `Range`, `Cooldown` (used by `CombatSystem`).
+Weapons declare `Damage`, `Range`, `Cooldown` (used by `CombatSystem`). Foods/Drinks declare `HungerRestore`/`ThirstRestore` (used by `VitalsSystem`). Seeds declare `SeedFor` pointing to a `CropDatabase` key (used by `FarmingSystem` from Phase 3.3 onward).
+
+### `CropDatabase.lua`
+
+Three crops to start: `wheat` (8 min, 2-4 yield), `carrot` (6 min, 1-3 yield), `berries` (10 min, 3-6 yield). Each declares `SeedItemId`, `CropItemId`, `GrowthSeconds`, `WaterRequirement`, `Yield`, `Stages` (last must be "ready"), and optional `PreferredBiomes` (metadata only for now).
 
 **Missing categories** for the vision: Food (with Hunger value), Seed, Crop, Furniture, LightSource, Trap, Resident-bonus item, Quest item.
 
@@ -351,7 +355,7 @@ Legend: ✅ implemented · 🟡 partial · ❌ missing
 | HUD | ✅ | `SurvivalHUD.client.lua`: Health/Hunger/Thirst bars (bottom-left) + Day/Night phase label + countdown timer (top-center) + Day 150 milestone banner |
 | Hunger / Thirst / Cold | ✅ | `Stats.Hunger` and `Stats.Thirst` in DEFAULT_DATA; `VitalsSystem` decays both every 5s; starvation/dehydration damage when either hits 0; `EatItem`/`DrinkItem` RemoteEvents |
 | Hotbar | ❌ | Loadout panel exists; no number-key hotbar |
-| Farming | ❌ | Zero — no seeds, plots, growth, watering, harvest |
+| Farming | 🟡 | Schema only — `CropDatabase` + ItemDatabase entries (seeds, crops, hoe, watering can, fertilizer). No runtime systems yet. _(Phase 3.2/3.3/3.4)_ |
 | Crafting | ❌ | No `CraftingManager`, no recipes, no workbench |
 | Map / world generation | 🟡 | `MapManager` clones `ServerStorage.Maps.ForestKingdom` into `workspace.Map` on Survival start. Map authoring (`ForestKingdom.rbxm`) is a Studio task — see `assets/maps/README.md`. |
 | Audio | ❌ | Zero `SoundService` usage |
@@ -506,9 +510,10 @@ This plan sequences work so each phase produces a **playable, demonstrable build
 
 ### 3.1 Schema
 
-- [ ] `src/shared/CropDatabase.lua` (new). Each entry: `{ SeedItemId, CropItemId, GrowthStages = {...}, GrowthSeconds, WaterRequirement, Yield = {min, max}, PreferredBiomes = {...} }`.
-- [ ] Add to `ItemDatabase`: `wheat_seed`, `wheat`, `carrot_seed`, `carrot`, `berry_seed`, `berries`. Add Type `Seed` and `Crop`. Crops have Hunger values.
-- [ ] Add to `ItemDatabase`: `watering_can` (Tool), `hoe` (Tool), `fertilizer` (Material).
+- [x] `src/shared/CropDatabase.lua` (new). Each entry: `{ SeedItemId, CropItemId, GrowthSeconds, WaterRequirement, Yield = {Min, Max}, Stages, PreferredBiomes }`. Public API: `GetCrop`, `GetCropForSeed`, `GetAll`. Three crops to start: `wheat`, `carrot`, `berries`.
+- [x] Add to `ItemDatabase`: `wheat_seed`, `wheat`, `carrot_seed`, `carrot`, `berry_seed`. (Note: `berries` already existed from Phase 1.2.) Seeds are `Type Seed` with `SeedFor` pointing to the CropDatabase key. Crops are `Type Food` with `HungerRestore` so they work with `VitalsSystem.ConsumeItem` for free.
+- [x] Add to `ItemDatabase`: `watering_can` (Tool), `hoe` (Tool), `fertilizer` (Material).
+- [x] Lune tests verify every CropDatabase entry resolves to real ItemDatabase entries and that seed `SeedFor` round-trips back to the crop key. 16 new tests, 26 total.
 
 ### 3.2 Plot system
 
