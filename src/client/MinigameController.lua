@@ -20,6 +20,7 @@ local isPlaying = false
 local progress = 0
 local barPosition = 0
 local targetPosition = 0.5
+local gameStartTime = 0 -- os.clock() when the current minigame started
 local successCallback = nil
 local instructionLabel = nil
 local activeTouches = 0
@@ -75,7 +76,12 @@ local BAR_SIZE = 0.2 -- 20% of the area
 local TARGET_SIZE = 0.15
 local DECAY_RATE = 0.2
 local FILL_RATE = 0.5
-local TARGET_SPEED = 0.5
+-- Target oscillation: sine wave centered in the bar that takes ~5 seconds
+-- per full cycle. Tuned to feel challenging but reachable. Amplitude is
+-- chosen so the target stays fully inside [0, 1 - TARGET_SIZE].
+local TARGET_OSCILLATION_PERIOD_SECONDS = 5
+local TARGET_CENTER = (1 - TARGET_SIZE) * 0.5
+local TARGET_AMPLITUDE = (1 - TARGET_SIZE) * 0.5
 
 function MinigameController.Init()
     -- Create UI Programmatically
@@ -147,6 +153,7 @@ function MinigameController.Start(callback)
     successCallback = callback
     progress = 0
     barPosition = 0.5
+    gameStartTime = os.clock()
 
     -- Reset bar color on start
     if bar then
@@ -202,8 +209,11 @@ function MinigameController.Start(callback)
             barPosition = math.max(0, barPosition - (1.0 * dt))
         end
 
-        -- Move Target (Random/Sine wave in future, just static/slow for now)
-        -- targetPosition = 0.5 + math.sin(tick()) * 0.3
+        -- Move Target: sine wave centred in the bar with one full cycle
+        -- per TARGET_OSCILLATION_PERIOD_SECONDS. (BUG-12 fix.)
+        local elapsed = os.clock() - gameStartTime
+        local angle = (elapsed / TARGET_OSCILLATION_PERIOD_SECONDS) * 2 * math.pi
+        targetPosition = TARGET_CENTER + TARGET_AMPLITUDE * math.sin(angle)
 
         -- Update UI
         -- Optimization: Use UDim2.fromScale in hot paths to skip unused property parsing
