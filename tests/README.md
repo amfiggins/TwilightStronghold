@@ -1,44 +1,44 @@
 # tests/
 
-Automated and semi-automated tests for TwilightStronghold.
-
-## Layout
+Two test surfaces with different runtimes:
 
 ```
 tests/
-  README.md             # this file
-  unit/                 # pure-Lua unit tests (run anywhere, headless)
-  integration/          # tests that need Roblox APIs (run in Studio or run-in-roblox)
-  TestRunner.server.lua # Studio entry point — drag-imports nothing, requires the test modules and reports
+  README.md           # this file
+  lune/               # CI tests — pure-Lua modules, run via Lune
+    runner.luau       #   - entry point
+    *.test.luau       #   - one file per module under test
+  unit/               # Studio integration tests (placeholder for now)
+  TestFramework.lua   # TestEZ-style harness used by Studio specs
+  TestRunner.server.lua  # Studio entry point — auto-discovers tests/unit/*.spec.lua
 ```
 
-## What works today
+## Lune tests (CI)
 
-- `tests/unit/*.spec.lua` — TestEZ-style describe/it blocks using a tiny built-in shim. Run them in Studio by enabling the test runner (see "Run in Studio" below).
-- The runner is **Studio-only by default**. It checks `RunService:IsStudio()` and exits early in production.
+Run on every PR via `.github/workflows/lint.yml`. They cover **pure-Lua modules** (anything in `src/shared/` that doesn't reference `game`, `workspace`, etc.).
 
-## What's not wired yet (Phase 0 follow-up)
+Run locally:
 
-- **CI execution.** Headless Roblox testing is not part of CI yet. Two viable paths when we want it:
-  1. [run-in-roblox](https://github.com/rojo-rbx/run-in-roblox) — runs a `.rbxl` in a real Studio session in CI.
-  2. [Lune](https://github.com/lune-org/lune) — pure-Lua runtime with Roblox API stubs. Faster but not 100% API-compatible.
-- **TestEZ proper.** Today we use a minimal in-repo shim. When tests grow, install [TestEZ](https://roblox.github.io/testez/) via Wally and replace the shim.
-
-## Run in Studio
-
-1. Open the synced place in Studio (via Rojo or the latest `.rbxl`).
-2. The `TestRunner.server.lua` is **not** synced in production builds — to enable it, copy this folder into your local server-side scripts (or set up a separate `tests.project.json`).
-3. Press Play. Tests print to the Output window with `[TEST] PASS` / `[TEST] FAIL`.
-
-## Writing a test
-
-```lua
--- tests/unit/MyModule.spec.lua
-return function(test)
-    test.describe("MyModule", function()
-        test.it("does the thing", function()
-            test.expect(2 + 2).toEqual(4)
-        end)
-    end)
-end
+```bash
+lune run tests/lune/runner.luau
 ```
+
+Add a new test:
+
+1. Create `tests/lune/MyModule.test.luau` returning `function(test) ... end`. Use `require("../../src/shared/MyModule")` to import the module under test.
+2. Add a `runSpec("MyModule", require("./MyModule.test"))` line in `tests/lune/runner.luau`.
+
+Available assertions: `test.expect(value).toEqual(...)`, `.toBeTruthy()`, `.toBeFalsy()`, `.toThrow()`. Group tests with `test.describe(name, fn)` and `test.it(name, fn)`.
+
+## Studio integration tests
+
+For modules that need real Roblox APIs (Instance, RemoteEvent, DataStore, etc), drop a `*.spec.lua` file under `tests/unit/`. The Studio entry point `TestRunner.server.lua` auto-discovers and runs them when the test project is loaded in Studio.
+
+Run locally:
+
+```bash
+rojo build tests.project.json --output build/tests.rbxl
+# Open build/tests.rbxl in Roblox Studio and press Play.
+```
+
+These are **not in CI today**. Wiring them up requires either [run-in-roblox](https://github.com/rojo-rbx/run-in-roblox) (needs a Studio install on the runner) or extending the Lune harness with an `@lune/roblox` shim that mounts `src/` files as fake ModuleScripts. Tracked in `docs/VISION.md` §4 backlog.

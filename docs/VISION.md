@@ -275,10 +275,10 @@ This section reflects what is **actually in the repo** as of the last update. Up
 
 | Area | State |
 |---|---|
-| Toolchain | `aftman.toml` pins `rojo-rbx/rojo@7.4.4`, `JohnnyMorganz/StyLua@2.5.2`, `Kampfkarren/selene@0.31.0`. No Wally / TestEZ proper yet. |
+| Toolchain | `aftman.toml` pins `rojo-rbx/rojo@7.4.4`, `JohnnyMorganz/StyLua@2.5.2`, `Kampfkarren/selene@0.31.0`, `lune-org/lune@0.10.4`. No Wally / TestEZ proper yet. |
 | Project files | Single `default.project.json` mapping `src/shared` → `ReplicatedStorage.Shared`, `src/server` → `ServerScriptService.Server`, `assets/maps` → `ServerStorage.Maps`, `src/client` → `StarterPlayer.StarterPlayerScripts.Client`. CI publishes the same `.rbxl` to both Lobby and Survival Place IDs; runtime branching happens via `game.PlaceId` in `ServerMain.server.lua`. We'll split the project file once the Lobby and Survival places ship genuinely different content. |
 | Place IDs | Lobby `140360553864312`, Survival `114856846700519` (in `GameConfig.PLACE_IDS`). |
-| CI | `.github/workflows/publish.yml` builds one `.rbxl` with Rojo on push to `main`, then POSTs it to both Lobby and Survival places via the Roblox Open Cloud Places API using `secrets.ROBLOX_API_KEY` and the GitHub repo vars `UNIVERSE_ID`, `LOBBY_PLACE_ID`, `SURVIVAL_PLACE_ID`. `.github/workflows/lint.yml` runs `stylua --check` and `selene --allow-warnings` on every PR and push to `main`. |
+| CI | `.github/workflows/publish.yml` builds one `.rbxl` with Rojo on push to `main`, then POSTs it to both Lobby and Survival places via the Roblox Open Cloud Places API using `secrets.ROBLOX_API_KEY` and the GitHub repo vars `UNIVERSE_ID`, `LOBBY_PLACE_ID`, `SURVIVAL_PLACE_ID`. `.github/workflows/lint.yml` runs `stylua --check`, `selene` (no warnings), and `lune run tests/lune/runner.luau` on every PR and push to `main`. |
 | `.luau-analyze.json` | Globals list for local Luau analysis only; not in CI. |
 | `.Jules/*.md` | Three personality journals (`bolt`, `palette`, `sentinel`) used by an external agent system to log perf/UX/security learnings. Treat as a changelog of "why this code looks the way it does." |
 
@@ -404,7 +404,7 @@ Tagged so we can sweep them as a batch.
 | BUG-13 | Medium | ~~`BuildingSystem.PlaceStructure` has a literal `-- Ensure no collision` TODO and no implementation. Walls can stack inside each other or terrain.~~ **Fixed** in Phase 2.3 (`hasCollision` uses `OverlapParams` + `workspace:GetPartBoundsInBox`, ignores the placer's own character). |
 | BUG-14 | Low | ~~`raw_fish` is a Consumable but has no Hunger/Heal value, and no eat handler exists.~~ **Fixed** in Phase 1.2 (`raw_fish` is now `Type Food` with `HungerRestore = 10`; `EatItem`/`DrinkItem` RemoteEvents wired through `VitalsSystem` → `PlayerDataHandler.ConsumeItem`). |
 | BUG-15 | Low | ~~No StyLua/Selene config; style is loose.~~ **Fixed** in Phase 0 + cleanup pass: StyLua 2.5.2 + Selene 0.31.0 pinned in `aftman.toml`; configs at `stylua.toml` and `selene.toml`; CI runs `stylua --check` and `selene` (no `--allow-warnings`) on every PR via `.github/workflows/lint.yml`. All 24 historical warnings resolved. |
-| BUG-16 | Low | ~~No automated test harness; `BuildingSystemTest.lua` and benchmarks are ad-hoc.~~ **Partially fixed** in Phase 0: scaffolding landed (`tests/` folder with `TestFramework.lua`, `TestRunner.server.lua`, `tests/unit/ItemDatabase.spec.lua`, plus `tests.project.json` for Studio runs). Tests are Studio-only today. Wiring CI execution via [run-in-roblox](https://github.com/rojo-rbx/run-in-roblox) or [Lune](https://github.com/lune-org/lune) is a follow-up. |
+| BUG-16 | Low | ~~No automated test harness; `BuildingSystemTest.lua` and benchmarks are ad-hoc.~~ **Fixed** in cleanup pass. CI runs `lune run tests/lune/runner.luau` on every PR via `.github/workflows/lint.yml` (separate `test` job). 10 tests cover ItemDatabase, weapon definitions, and food/drink items. Studio runtime integration tests under `tests/unit/*.spec.lua` and the `TestFramework.lua` harness remain as scaffolding for future tests that need Roblox APIs. |
 | BUG-17 | Low | ~~`LoadoutUI` is always visible — no toggle key.~~ **Fixed** in Phase 1.3 (starts hidden; `Tab` / DPad-Down toggles; populates lazily on first open). |
 
 
@@ -619,7 +619,7 @@ Things that don't fit a phase yet but we don't want to lose. Move into a phase w
 - **Friends-only joins.** Vision says "reserved slots cannot be filled by strangers." Needs a party/lobby-key system on the matchmaking side.
 - **Weather system.** Rain in Forest, snowstorms in Tundra, sandstorms in Desert. Affects visibility and beast cues.
 - **Day-skip vote.** Let the squad vote to skip the rest of a Day Phase if they're ready.
-- **Run tests in CI.** The `tests/` harness is Studio-only today. Wire up [run-in-roblox](https://github.com/rojo-rbx/run-in-roblox) or [Lune](https://github.com/lune-org/lune) so PRs run unit and integration tests automatically.
+- **Run tests in CI.** ✅ Done in cleanup pass — Lune-based unit tests run on every PR. Studio integration tests under `tests/unit/*.spec.lua` are still local-only; wiring them up via `@lune/roblox` instance shimming or [run-in-roblox](https://github.com/rojo-rbx/run-in-roblox) is a future task.
 - **Cleanup pass on the 24 Selene warnings.** ✅ Done in cleanup PR — all 24 warnings resolved; `--allow-warnings` removed from CI.
 - **Adopt TestEZ proper.** Replace the in-repo `TestFramework.lua` shim with the real [TestEZ](https://roblox.github.io/testez/) once we install Wally.
 

@@ -1,12 +1,7 @@
---[[
-    ItemDatabase.spec.lua
-    Smoke test for ItemDatabase. Proves the test harness wires up correctly
-    and gives us a pattern to follow for future specs.
-]]
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local ItemDatabase = require(ReplicatedStorage.Shared.ItemDatabase)
+--!strict
+local ItemDatabase = require("../../src/shared/ItemDatabase")
 
-return function(test)
+return function(test: any)
     test.describe("ItemDatabase", function()
         test.it("returns nil for unknown items", function()
             test.expect(ItemDatabase.GetItem("nope_does_not_exist")).toEqual(nil)

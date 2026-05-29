@@ -1,12 +1,7 @@
---[[
-    Weapons.spec.lua
-    Verifies every Weapon in ItemDatabase has the fields CombatSystem requires.
-    If you add a weapon and forget Damage/Range/Cooldown, this fails loudly.
-]]
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local ItemDatabase = require(ReplicatedStorage.Shared.ItemDatabase)
+--!strict
+local ItemDatabase = require("../../src/shared/ItemDatabase")
 
-return function(test)
+return function(test: any)
     test.describe("Weapons", function()
         test.it("wooden_sword has all combat fields", function()
             local def = ItemDatabase.GetItem("wooden_sword")
