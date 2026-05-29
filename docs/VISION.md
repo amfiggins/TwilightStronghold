@@ -314,7 +314,8 @@ This section reflects what is **actually in the repo** as of the last update. Up
 |---|---|---|
 | `InteractionClient.client.lua` | Listens for `Gather` proximity prompts → starts minigame → fires `GatherResource` to server on success. Toast notifications on award. | ✅ Real |
 | `CombatClient.client.lua` | Survival-only. On M1 / gamepad R2, picks the model under the cursor and fires `Attack`. Server validates everything. No-ops in Lobby. | ✅ Real (Phase 1.1) |
-| `BuildPlacementClient.client.lua` | Survival-only. Press `B` to toggle build mode; `1`/`2` to pick Wall/Tower; mouse moves a translucent ghost; click fires `PlaceStructure`. Ghost is green when valid, red when out of range / colliding (mirrors server checks). | ✅ Real (Phase 2.4) |
+| `BuildPlacementClient.client.lua` | Survival-only. Press `B` to toggle build mode; `1`/`2`/`3` to pick Wall/Tower/Plot; mouse moves a translucent ghost; click fires `PlaceStructure`. Ghost is green when valid, red when out of range / colliding (mirrors server checks). | ✅ Real (Phase 2.4) |
+| `FarmingClient.client.lua` | Survival-only. Routes proximity prompts: Plant opens a seed selector filtered to inventory; Water/Harvest fire immediately. Hover tooltip shows plot status (water progress, time remaining, ready). | ✅ Real (Phase 3.4) |
 | `MinigameController.lua` | "Fisch-style" hold-to-align minigame. Multi-input (keyboard / mouse / touch / gamepad). Recently improved with success-state delay, platform-aware hints, gamepad cache. | 🟡 Single static minigame |
 | `LoadoutUI.client.lua` | Always-visible left-side panel listing Weapons / Kits / Bags from inventory. Equip/unequip with rarity colors and tooltips. | 🟡 (Bag-equip broken — see bugs) |
 | `PortalController.client.lua` | Lobby-only. Listens for `EnterSurvival` prompt → fires `JoinQueue`. Toast on queue update. | ✅ Real |
@@ -357,7 +358,7 @@ Legend: ✅ implemented · 🟡 partial · ❌ missing
 | HUD | ✅ | `SurvivalHUD.client.lua`: Health/Hunger/Thirst bars (bottom-left) + Day/Night phase label + countdown timer (top-center) + Day 150 milestone banner |
 | Hunger / Thirst / Cold | ✅ | `Stats.Hunger` and `Stats.Thirst` in DEFAULT_DATA; `VitalsSystem` decays both every 5s; starvation/dehydration damage when either hits 0; `EatItem`/`DrinkItem` RemoteEvents |
 | Hotbar | ❌ | Loadout panel exists; no number-key hotbar |
-| Farming | 🟡 | Schema, plot placement, plant / water / harvest, server-wide growth tick with visual stage progression. Seed-selector UI and growth-time tooltip still ahead. _(Phase 3.4)_ |
+| Farming | ✅ | Schema, plot placement, plant / water / harvest, server-wide growth tick with visual stage progression, seed-selector UI, hover tooltip. Studio art for stage models is the only thing left. |
 | Crafting | ❌ | No `CraftingManager`, no recipes, no workbench |
 | Map / world generation | 🟡 | `MapManager` clones `ServerStorage.Maps.ForestKingdom` into `workspace.Map` on Survival start. Map authoring (`ForestKingdom.rbxm`) is a Studio task — see `assets/maps/README.md`. |
 | Audio | ❌ | Zero `SoundService` usage |
@@ -534,8 +535,8 @@ This plan sequences work so each phase produces a **playable, demonstrable build
 
 ### 3.4 UX
 
-- [ ] `src/client/FarmingClient.client.lua` (new). Listen for `Plant`/`Water`/`Harvest` prompts. Show inventory-filtered seed selector when `Plant` is triggered.
-- [ ] Add growth-time tooltip on hover: "Wheat — 8 minutes remaining."
+- [x] `src/client/FarmingClient.client.lua` (new). Listens for `Plant`/`Water`/`Harvest` proximity prompts. Plant opens an inventory-filtered seed selector ScreenGui (only seeds the player owns are listed, with crop name + qty + ~minutes-to-grow); Water and Harvest fire their RemoteEvents immediately.
+- [x] Hover tooltip: when the player's mouse is over a plot within 20 studs, a small overlay shows the plot's status — "Empty plot", "Wheat — Water 1/2", "Wheat — 6:23 remaining", or "Wheat — Ready to harvest" depending on attributes.
 
 ## Phase 4 — The beast (vision pillar)
 
