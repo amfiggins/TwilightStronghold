@@ -38,7 +38,7 @@ end
 -- Default ordering for the 1/2 keys. When we add more structure types
 -- (Phase 5+), this will become a longer list and the UI hint string
 -- below will be regenerated.
-local STRUCTURE_ORDER = { "Wall", "Tower" }
+local STRUCTURE_ORDER = { "Wall", "Tower", "Plot" }
 
 -- Visual feedback colours for the ghost (kept distinct from the real
 -- structure colour so it's always clear the player is in build mode).
