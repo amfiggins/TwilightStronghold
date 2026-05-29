@@ -148,7 +148,7 @@ timerLabel.Parent = topFrame
 local function setBarFill(fill, ratio)
     local clamped = math.clamp(ratio, 0, 1)
     TweenService:Create(fill, TweenInfo.new(0.2, Enum.EasingStyle.Quad), {
-        Size = UDim2.new(clamped, 0, 1, 0),
+        Size = UDim2.fromScale(clamped, 1),
     }):Play()
 end
 

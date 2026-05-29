@@ -2,8 +2,8 @@ name: Lint
 
 # Runs StyLua and Selene on every PR and on pushes to main.
 # - StyLua: format check (fails on formatting drift).
-# - Selene: lint (fails on errors only; warnings allowed for now and tracked
-#   in docs/VISION.md as Phase 0 follow-up cleanup).
+# - Selene: lint (fails on any error or warning — see Phase 0 cleanup
+#   notes in docs/VISION.md §2.7 BUG-15).
 
 on:
   push:
@@ -30,7 +30,7 @@ jobs:
         run: stylua --check src/ tests/
 
       - name: Selene
-        # --allow-warnings: only fail on hard errors. Warnings still print
-        # for visibility and are tracked as Phase 0 follow-up cleanup
-        # in docs/VISION.md §3.
-        run: selene --allow-warnings src/ tests/
+        # Strict mode — any warning fails the build. The Phase 0 cleanup
+        # pass (BUG-15) reduced the pile from 24 warnings to 0, so we
+        # gate hard going forward.
+        run: selene src/ tests/

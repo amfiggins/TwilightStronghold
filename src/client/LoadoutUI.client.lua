@@ -24,7 +24,7 @@ gui.Parent = player:WaitForChild("PlayerGui")
 
 -- Container (hidden by default — toggle with Tab)
 local frame = Instance.new("Frame")
-frame.Size = UDim2.new(0, 220, 0, 350) -- Adjusted width for scrollbar
+frame.Size = UDim2.fromOffset(220, 350) -- Adjusted width for scrollbar
 frame.Position = UDim2.new(0.05, 0, 0.5, -175)
 frame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
 frame.Visible = false -- BUG-17 fix: start hidden
@@ -50,8 +50,8 @@ refreshContainer.Parent = title
 -- Refresh Button (Micro-UX)
 local refreshBtn = Instance.new("TextButton")
 refreshBtn.Text = "↻"
-refreshBtn.Size = UDim2.new(1, 0, 1, 0)
-refreshBtn.Position = UDim2.new(0.5, 0, 0.5, 0)
+refreshBtn.Size = UDim2.fromScale(1, 1)
+refreshBtn.Position = UDim2.fromScale(0.5, 0.5)
 refreshBtn.AnchorPoint = Vector2.new(0.5, 0.5)
 refreshBtn.BackgroundTransparency = 1
 refreshBtn.TextColor3 = Color3.fromRGB(200, 200, 200)
@@ -62,7 +62,7 @@ refreshBtn.Parent = refreshContainer
 -- Refresh Tooltip (Micro-UX)
 local refreshTooltip = Instance.new("TextLabel")
 refreshTooltip.Text = "Refresh Inventory"
-refreshTooltip.Size = UDim2.new(0, 120, 0, 24)
+refreshTooltip.Size = UDim2.fromOffset(120, 24)
 refreshTooltip.AnchorPoint = Vector2.new(1, 0)
 refreshTooltip.Position = UDim2.new(1, 0, -1, -5) -- Above the button
 refreshTooltip.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
@@ -95,7 +95,7 @@ end)
 -- List Container (ScrollingFrame for Scanability)
 local listContainer = Instance.new("ScrollingFrame")
 listContainer.Size = UDim2.new(1, 0, 1, -30)
-listContainer.Position = UDim2.new(0, 0, 0, 30)
+listContainer.Position = UDim2.fromOffset(0, 30)
 listContainer.BackgroundTransparency = 1
 listContainer.BorderSizePixel = 0
 listContainer.ScrollBarThickness = 6
@@ -121,9 +121,9 @@ padding.Parent = listContainer
 local function showToast(text)
     local toast = Instance.new("TextLabel")
     toast.Text = text
-    toast.Size = UDim2.new(0, 180, 0, 30)
+    toast.Size = UDim2.fromOffset(180, 30)
     toast.AnchorPoint = Vector2.new(0.5, 0.5)
-    toast.Position = UDim2.new(0.5, 0, 0.9, 0) -- Bottom of frame
+    toast.Position = UDim2.fromScale(0.5, 0.9) -- Bottom of frame
     toast.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
     toast.TextColor3 = Color3.fromRGB(255, 255, 255)
     toast.Font = Enum.Font.GothamBold
@@ -136,7 +136,7 @@ local function showToast(text)
     local tween = TweenService:Create(
         toast,
         info,
-        { TextTransparency = 1, BackgroundTransparency = 1, Position = UDim2.new(0.5, 0, 0.8, 0) }
+        { TextTransparency = 1, BackgroundTransparency = 1, Position = UDim2.fromScale(0.5, 0.8) }
     )
     tween:Play()
     tween.Completed:Connect(function()
@@ -156,9 +156,9 @@ local function createButton(text, onClick, rarityColor, isEquipped, rarityName, 
     btn.RichText = true
     btn.TextXAlignment = Enum.TextXAlignment.Left
 
-    local padding = Instance.new("UIPadding")
-    padding.PaddingLeft = UDim.new(0, 10)
-    padding.Parent = btn
+    local btnPadding = Instance.new("UIPadding")
+    btnPadding.PaddingLeft = UDim.new(0, 10)
+    btnPadding.Parent = btn
 
     local displayText = isEquipped and "✓ " .. text or text
     if subtext then

@@ -6,7 +6,6 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Players = game:GetService("Players")
 local PlayerDataHandler = require(script.Parent.PlayerDataHandler)
-local GameConfig = require(ReplicatedStorage.Shared.GameConfig)
 local ItemDatabase = require(ReplicatedStorage.Shared.ItemDatabase)
 
 local LoadoutManager = {}
