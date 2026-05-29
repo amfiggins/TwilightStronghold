@@ -153,6 +153,16 @@ function WaveManager.Init()
     enemyTemplate = buildEnemyTemplate()
     -- Lazy-bind CombatSystem now that ServerMain has loaded both modules.
     CombatSystem = require(script.Parent.CombatSystem)
+
+    -- Subscribe to phase transitions instead of being called directly by
+    -- DayNightCycle. Same goes for BeastSystem, Phase 5 RaidManager, etc.
+    local DayNightCycle = require(script.Parent.DayNightCycle)
+    DayNightCycle.PhaseChangedBindable.Event:Connect(function(phase, dayCount)
+        if phase == "Night" then
+            WaveManager.StartWave(dayCount)
+        end
+    end)
+
     print("[WaveManager] Initialized.")
 end
 

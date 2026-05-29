@@ -3,6 +3,10 @@
     Manages the core game loop for Survival Mode.
     Broadcasting Phase Changes: Day (Build) <-> Night (Combat).
     Fires Day150Reached once when DayCount hits GameConfig.MILESTONE_NIGHT.
+
+    Server-side subscribers (WaveManager, BeastSystem, future RaidManager)
+    listen on DayNightCycle.PhaseChangedBindable. Clients listen on the
+    PhaseChanged RemoteEvent under ReplicatedStorage.Remotes.
 ]]
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -24,6 +28,12 @@ local Day150Reached = Instance.new("RemoteEvent")
 Day150Reached.Name = "Day150Reached"
 Day150Reached.Parent = Remotes
 
+-- Server-side bindable for other modules to react to phase transitions
+-- without having to be required directly by this module. Fires
+-- (phase: string, dayCount: number, timeRemaining: number) — same
+-- payload as the client-facing RemoteEvent.
+DayNightCycle.PhaseChangedBindable = Instance.new("BindableEvent")
+
 -- State
 DayNightCycle.Phase = "Day" -- "Day" or "Night"
 -- DayCount starts at 0 because StartDay() increments before announcing.
@@ -38,6 +48,11 @@ local NIGHT_LENGTH = 120 -- Seconds (Production Value)
 
 function DayNightCycle.Init()
     print("[DayNightCycle] Initialized.")
+    -- The initial StartDay fires PhaseChangedBindable before any other
+    -- module has had a chance to subscribe. That's intentional: subscribers
+    -- need to handle their initial state without relying on this first
+    -- event. (e.g., WaveManager only acts on "Night", and the first event
+    -- is "Day".)
     DayNightCycle.StartDay()
 
     task.spawn(function()
@@ -70,6 +85,7 @@ function DayNightCycle.StartDay()
     print(string.format("[DayNightCycle] Day %d Started. Build Phase.", DayNightCycle.DayCount))
 
     PhaseChanged:FireAllClients("Day", DayNightCycle.DayCount, DayNightCycle.TimeRemaining)
+    DayNightCycle.PhaseChangedBindable:Fire("Day", DayNightCycle.DayCount, DayNightCycle.TimeRemaining)
 
     -- Day 150 milestone: fire once, then continue in endless mode.
     if not DayNightCycle.MilestoneFired and DayNightCycle.DayCount >= GameConfig.MILESTONE_NIGHT then
@@ -90,9 +106,7 @@ function DayNightCycle.StartNight()
     print(string.format("[DayNightCycle] Night %d Started. Combat Phase!", DayNightCycle.DayCount))
 
     PhaseChanged:FireAllClients("Night", DayNightCycle.DayCount, DayNightCycle.TimeRemaining)
-
-    local WaveManager = require(script.Parent.WaveManager)
-    WaveManager.StartWave(DayNightCycle.DayCount)
+    DayNightCycle.PhaseChangedBindable:Fire("Night", DayNightCycle.DayCount, DayNightCycle.TimeRemaining)
 end
 
 return DayNightCycle
