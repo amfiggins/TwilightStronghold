@@ -15,8 +15,11 @@ src/
   shared/   # ReplicatedStorage.Shared — GameConfig, ItemDatabase, etc.
   server/   # ServerScriptService.Server — game logic, datastores, security
   client/   # StarterPlayer.StarterPlayerScripts.Client — UI, input, VFX
+assets/
+  maps/     # ServerStorage.Maps — hand-authored .rbxm map files
 docs/
   VISION.md # Vision, current state, phased plan, backlog, decision log
+tests/      # Studio-only TestEZ-style harness
 .Jules/     # Agent journals (perf, UX, security learnings)
 ```
 
