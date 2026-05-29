@@ -57,8 +57,8 @@ closeContainer.Parent = title
 
 local closeBtn = Instance.new("TextButton")
 closeBtn.Text = "✕"
-closeBtn.Size = UDim2.new(1, 0, 1, 0)
-closeBtn.Position = UDim2.new(0.5, 0, 0.5, 0)
+closeBtn.Size = UDim2.fromScale(1, 1)
+closeBtn.Position = UDim2.fromScale(0.5, 0.5)
 closeBtn.AnchorPoint = Vector2.new(0.5, 0.5)
 closeBtn.BackgroundTransparency = 1
 closeBtn.TextColor3 = Color3.fromRGB(200, 200, 200)
@@ -86,8 +86,8 @@ end)
 -- Refresh Button (Micro-UX)
 local refreshBtn = Instance.new("TextButton")
 refreshBtn.Text = "↻"
-refreshBtn.Size = UDim2.new(1, 0, 1, 0)
-refreshBtn.Position = UDim2.new(0.5, 0, 0.5, 0)
+refreshBtn.Size = UDim2.fromScale(1, 1)
+refreshBtn.Position = UDim2.fromScale(0.5, 0.5)
 refreshBtn.AnchorPoint = Vector2.new(0.5, 0.5)
 refreshBtn.BackgroundTransparency = 1
 refreshBtn.TextColor3 = Color3.fromRGB(200, 200, 200)
@@ -146,12 +146,12 @@ layout.Padding = UDim.new(0, 5)
 layout.SortOrder = Enum.SortOrder.LayoutOrder
 
 -- Padding
-local padding = Instance.new("UIPadding")
-padding.PaddingTop = UDim.new(0, 10) -- Adjusted padding since title is separate
-padding.PaddingLeft = UDim.new(0, 10)
-padding.PaddingRight = UDim.new(0, 10)
-padding.PaddingBottom = UDim.new(0, 10)
-padding.Parent = listContainer
+local btnPadding = Instance.new("UIPadding")
+listPadding.PaddingTop = UDim.new(0, 10) -- Adjusted padding since title is separate
+btnPadding.PaddingLeft = UDim.new(0, 10)
+listPadding.PaddingRight = UDim.new(0, 10)
+listPadding.PaddingBottom = UDim.new(0, 10)
+listPadding.Parent = listContainer
 
 -- Helper: Toast Notification
 local function showToast(text)
@@ -192,9 +192,9 @@ local function createButton(text, onClick, rarityColor, isEquipped, rarityName, 
     btn.RichText = true
     btn.TextXAlignment = Enum.TextXAlignment.Left
 
-    local padding = Instance.new("UIPadding")
-    padding.PaddingLeft = UDim.new(0, 10)
-    padding.Parent = btn
+    local btnPadding = Instance.new("UIPadding")
+    btnPadding.PaddingLeft = UDim.new(0, 10)
+    btnPadding.Parent = btn
 
     local displayText = isEquipped and "✓ " .. text or text
     if subtext then
@@ -455,7 +455,7 @@ end)
 local toggleBtn = Instance.new("TextButton")
 toggleBtn.Name = "ToggleLoadoutBtn"
 toggleBtn.Text = "🎒 Loadout [TAB]"
-toggleBtn.Size = UDim2.new(0, 150, 0, 40)
+toggleBtn.Size = UDim2.fromOffset(150, 40)
 toggleBtn.Position = UDim2.new(0.05, 0, 0.5, 185) -- Below the main frame
 toggleBtn.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 toggleBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
