@@ -312,6 +312,7 @@ This section reflects what is **actually in the repo** as of the last update. Up
 |---|---|---|
 | `InteractionClient.client.lua` | Listens for `Gather` proximity prompts → starts minigame → fires `GatherResource` to server on success. Toast notifications on award. | ✅ Real |
 | `CombatClient.client.lua` | Survival-only. On M1 / gamepad R2, picks the model under the cursor and fires `Attack`. Server validates everything. No-ops in Lobby. | ✅ Real (Phase 1.1) |
+| `BuildPlacementClient.client.lua` | Survival-only. Press `B` to toggle build mode; `1`/`2` to pick Wall/Tower; mouse moves a translucent ghost; click fires `PlaceStructure`. Ghost is green when valid, red when out of range / colliding (mirrors server checks). | ✅ Real (Phase 2.4) |
 | `MinigameController.lua` | "Fisch-style" hold-to-align minigame. Multi-input (keyboard / mouse / touch / gamepad). Recently improved with success-state delay, platform-aware hints, gamepad cache. | 🟡 Single static minigame |
 | `LoadoutUI.client.lua` | Always-visible left-side panel listing Weapons / Kits / Bags from inventory. Equip/unequip with rarity colors and tooltips. | 🟡 (Bag-equip broken — see bugs) |
 | `PortalController.client.lua` | Lobby-only. Listens for `EnterSurvival` prompt → fires `JoinQueue`. Toast on queue update. | ✅ Real |
@@ -340,7 +341,7 @@ Legend: ✅ implemented · 🟡 partial · ❌ missing
 |---|---|---|
 | Day/Night cycle | 🟡 | Basic; Day 150 milestone event fires; no countdown HUD _(wait, HUD landed in Phase 1.3 — see below)_ |
 | Resource gathering (wood/stone/fish) | ✅ | Solid security model; nodes respawn 60–120s after gather (Phase 2.2) |
-| Building system | 🟡 | Wall/Tower placements with collision check, persist across restarts via `StructurePersistence`, tagged with `TwilightStronghold_PlayerStructure` for future raid AI. Still missing: health/damage, destruction |
+| Building system | 🟡 | Wall/Tower placements with collision check + persistence; client-side ghost preview with green/red feedback before clicking. Tagged `TwilightStronghold_PlayerStructure` for future raid AI. Still missing: health/damage, destruction. |
 | Inventory | ✅ | O(1) lookup, bag capacity, swap-remove |
 | Loadout | 🟡 | Weapon/Kit work; **Bag-equip broken** end-to-end |
 | Combat | ✅ | Server-authoritative `CombatSystem`: weapon-equipped check, range + cooldown, damage application, proportional Ruby/XP rewards on kill |
@@ -495,7 +496,7 @@ This plan sequences work so each phase produces a **playable, demonstrable build
 
 ### 2.4 Build placement preview (UX)
 
-- [ ] `src/client/BuildPlacementClient.client.lua` (new). When player has a Kit equipped, holding `R` shows a translucent ghost of the structure at the cursor's mouse hit position. Clicking sends the CFrame to server. Esc cancels.
+- [x] `src/client/BuildPlacementClient.client.lua` (new). Press `B` to enter build mode, `1`/`2` to switch between Wall/Tower, mouse positions a translucent ghost of the structure, click to send to server, `B`/`Esc` to exit. Ghost is green when valid, red when out of range or colliding (mirrors server checks). Survival-only — no-ops in Lobby.
 
 ## Phase 3 — Farming (the new pillar)
 
