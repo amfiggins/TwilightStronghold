@@ -297,6 +297,8 @@ This section reflects what is **actually in the repo** as of the last update. Up
 | `LoadoutManager.lua` | `SetLoadout` RemoteEvent. Validates slot, type-checks itemId against `ItemDatabase`, enforces type per slot, rate-limits. | 🟡 (see bug list) |
 | `CombatSystem.lua` | `Attack` RemoteEvent. Validates equipped weapon, target is a registered enemy, range/cooldown. Tracks per-player damage contribution; awards proportional Rubies + XP on kill via `UnregisterEnemy`. | ✅ Real (Phase 1.1) |
 | `VitalsSystem.lua` | `EatItem` + `DrinkItem` + `VitalsUpdate` RemoteEvents. Staggered decay loop (Hunger −1/tick, Thirst −2/tick every 5s). Starvation/dehydration damage when either hits 0. Delegates consume logic to `PlayerDataHandler.ConsumeItem`. | ✅ Real (Phase 1.2) |
+| `FarmingSystem.lua` | `PlantSeed` + `WaterCrop` + `HarvestCrop` RemoteEvents. Rate-limited (0.5s) + distance-validated (12 studs). Drives `PlotState` / `CropKey` / `WateringCount` / `PlantedAt` attributes; awards crops on harvest. | ✅ Real (Phase 3.3) |
+| `PlotManager.lua` | Owns per-plot `ProximityPrompt`s (Plant / Water / Harvest), driven by `GetAttributeChangedSignal`. Runs the server-wide 5s growth tick that advances `Stage` and flips `PlotState` to `"ready"` when watering + time gates are met. Recolours plots as placeholder visual stage feedback. | ✅ Real (Phase 3.3) |
 | `MapManager.lua` | On Survival start, clones `ServerStorage.Maps.ForestKingdom` into `workspace.Map`. Counts gather-able nodes. Logs a warning and continues if the map is missing. | ✅ Real (Phase 2.1) |
 | `MatchmakingService.lua` | `JoinQueue` + `QueueUpdate` RemoteEvents. FIFO, 6 players → `TeleportAsync` to Survival with a `MatchId` GUID. Re-queues on teleport failure (ghost-cleanup). | ✅ Real |
 | `BuildingSystemTest.lua` | Module that mocks a player and asserts a Wall is created. Not auto-run, must be required from the command bar. | 🟡 Ad-hoc |
@@ -355,7 +357,7 @@ Legend: ✅ implemented · 🟡 partial · ❌ missing
 | HUD | ✅ | `SurvivalHUD.client.lua`: Health/Hunger/Thirst bars (bottom-left) + Day/Night phase label + countdown timer (top-center) + Day 150 milestone banner |
 | Hunger / Thirst / Cold | ✅ | `Stats.Hunger` and `Stats.Thirst` in DEFAULT_DATA; `VitalsSystem` decays both every 5s; starvation/dehydration damage when either hits 0; `EatItem`/`DrinkItem` RemoteEvents |
 | Hotbar | ❌ | Loadout panel exists; no number-key hotbar |
-| Farming | 🟡 | Schema (CropDatabase + ItemDatabase) and plot placement (run-scoped, not persisted). Planting / watering / harvesting / growth tick still ahead. _(Phase 3.3/3.4)_ |
+| Farming | 🟡 | Schema, plot placement, plant / water / harvest, server-wide growth tick with visual stage progression. Seed-selector UI and growth-time tooltip still ahead. _(Phase 3.4)_ |
 | Crafting | ❌ | No `CraftingManager`, no recipes, no workbench |
 | Map / world generation | 🟡 | `MapManager` clones `ServerStorage.Maps.ForestKingdom` into `workspace.Map` on Survival start. Map authoring (`ForestKingdom.rbxm`) is a Studio task — see `assets/maps/README.md`. |
 | Audio | ❌ | Zero `SoundService` usage |
@@ -381,6 +383,9 @@ All under `ReplicatedStorage.Remotes`:
 | `EatItem` | RemoteEvent | `VitalsSystem` (Survival only) | C→S | Consume a Food item; server validates, removes, applies HungerRestore |
 | `DrinkItem` | RemoteEvent | `VitalsSystem` (Survival only) | C→S | Consume a Drink item; server validates, removes, applies ThirstRestore |
 | `VitalsUpdate` | RemoteEvent | `VitalsSystem` (Survival only) | S→C | `{Hunger, Thirst, MaxHunger, MaxThirst}` snapshot on every change |
+| `PlantSeed` | RemoteEvent | `FarmingSystem` (Survival only) | C→S | Plant a seed on a tilled plot |
+| `WaterCrop` | RemoteEvent | `FarmingSystem` (Survival only) | C→S | Water a planted plot (increments WateringCount) |
+| `HarvestCrop` | RemoteEvent | `FarmingSystem` (Survival only) | C→S | Harvest a ready plot (awards crop yield, resets to tilled) |
 | `SetLoadout` | RemoteEvent | `LoadoutManager` | C→S | Equip/unequip Weapon or BaseKit |
 | `JoinQueue` | RemoteEvent | `MatchmakingService` (Lobby only) | C→S | Enter matchmaking queue |
 | `QueueUpdate` | RemoteEvent | `MatchmakingService` (Lobby only) | S→C | Notify queue join/leave + size |
@@ -523,9 +528,9 @@ This plan sequences work so each phase produces a **playable, demonstrable build
 
 ### 3.3 Farming actions
 
-- [ ] `src/server/FarmingSystem.lua` (new). RemoteEvents `PlantSeed(plot, seedItemId)`, `WaterCrop(plot)`, `HarvestCrop(plot)`. All rate-limited and distance-validated like `ResourceManager`.
-- [ ] Growth tick: a single server-wide loop iterates all planted plots every 10s, advances stage if watered and time elapsed; otherwise increments dryness counter.
-- [ ] Visual stages: swap the plot's child `Model` between 4 growth stages (sprout → leafy → flowering → ready).
+- [x] `src/server/FarmingSystem.lua` (new). RemoteEvents `PlantSeed(plot, seedItemId)`, `WaterCrop(plot)`, `HarvestCrop(plot)`. All rate-limited (0.5s/player) and distance-validated (12 studs). Server is sole authority on every state transition.
+- [x] `src/server/PlotManager.lua` (new). Two responsibilities: per-plot `ProximityPrompt`s (Plant / Water / Harvest, exactly one enabled at a time, driven reactively by `GetAttributeChangedSignal("PlotState")`); single server-wide growth tick (5s interval) that advances `Stage` based on elapsed-time fraction and flips `PlotState = "ready"` when both `WateringCount >= WaterRequirement` and `GrowthSeconds` have passed.
+- [x] Visual stage feedback (V1 placeholder): plot Color changes by stage — brown (tilled) → pale green (sprout) → mid green (leafy) → bright green (flowering) → gold (ready). Phase 3.4 will swap colours for child Model stages once Studio art lands.
 
 ### 3.4 UX
 

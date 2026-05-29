@@ -33,6 +33,12 @@ if isSurvival then
     require(script.Parent.WaveManager).Init()
     require(script.Parent.BuildingSystem).Init()
     require(script.Parent.VitalsSystem).Init()
+    -- Farming: PlotManager attaches to plots tagged by BuildingSystem,
+    -- so it must init AFTER BuildingSystem so any restored plots get
+    -- their prompts wired up. (Plots themselves aren't persisted, but
+    -- this ordering matters if a Survival hot-reload introduces them.)
+    require(script.Parent.PlotManager).Init()
+    require(script.Parent.FarmingSystem).Init()
 else
     print(string.format("[Server] >> Starting LOBBY Mode (PlaceId: %s) <<", game.PlaceId))
     require(script.Parent.MatchmakingService).Init()
