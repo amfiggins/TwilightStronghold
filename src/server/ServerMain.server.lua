@@ -22,6 +22,10 @@ local isSurvival = (game.PlaceId == GameConfig.PLACE_IDS.SurvivalZone) or GameCo
 
 if isSurvival then
     print(string.format("[Server] >> Starting SURVIVAL Mode (PlaceId: %s) <<", game.PlaceId))
+    -- MapManager must init first so the world has terrain before
+    -- StructurePersistence (called from BuildingSystem.Init) restores
+    -- structures and the wave AI starts pathfinding.
+    require(script.Parent.MapManager).Init()
     require(script.Parent.DayNightCycle).Init()
     -- CombatSystem must init before WaveManager so the Attack remote and
     -- enemy registry exist when the first enemy spawns.

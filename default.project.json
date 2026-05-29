@@ -12,6 +12,11 @@
         "$path": "src/server"
       }
     },
+    "ServerStorage": {
+      "Maps": {
+        "$path": "assets/maps"
+      }
+    },
     "StarterPlayer": {
       "StarterPlayerScripts": {
         "Client": {

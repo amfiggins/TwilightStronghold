@@ -276,7 +276,7 @@ This section reflects what is **actually in the repo** as of the last update. Up
 | Area | State |
 |---|---|
 | Toolchain | `aftman.toml` pins `rojo-rbx/rojo@7.4.4`, `JohnnyMorganz/StyLua@2.5.2`, `Kampfkarren/selene@0.31.0`. No Wally / TestEZ proper yet. |
-| Project files | Single `default.project.json` mapping `src/shared` → `ReplicatedStorage.Shared`, `src/server` → `ServerScriptService.Server`, `src/client` → `StarterPlayer.StarterPlayerScripts.Client`. CI publishes the same `.rbxl` to both Lobby and Survival Place IDs; runtime branching happens via `game.PlaceId` in `ServerMain.server.lua`. We'll split the project file at Phase 2.1 when Survival ships a different map. |
+| Project files | Single `default.project.json` mapping `src/shared` → `ReplicatedStorage.Shared`, `src/server` → `ServerScriptService.Server`, `assets/maps` → `ServerStorage.Maps`, `src/client` → `StarterPlayer.StarterPlayerScripts.Client`. CI publishes the same `.rbxl` to both Lobby and Survival Place IDs; runtime branching happens via `game.PlaceId` in `ServerMain.server.lua`. We'll split the project file once the Lobby and Survival places ship genuinely different content. |
 | Place IDs | Lobby `140360553864312`, Survival `114856846700519` (in `GameConfig.PLACE_IDS`). |
 | CI | `.github/workflows/publish.yml` builds one `.rbxl` with Rojo on push to `main`, then POSTs it to both Lobby and Survival places via the Roblox Open Cloud Places API using `secrets.ROBLOX_API_KEY` and the GitHub repo vars `UNIVERSE_ID`, `LOBBY_PLACE_ID`, `SURVIVAL_PLACE_ID`. `.github/workflows/lint.yml` runs `stylua --check` and `selene --allow-warnings` on every PR and push to `main`. |
 | `.luau-analyze.json` | Globals list for local Luau analysis only; not in CI. |
@@ -297,6 +297,7 @@ This section reflects what is **actually in the repo** as of the last update. Up
 | `LoadoutManager.lua` | `SetLoadout` RemoteEvent. Validates slot, type-checks itemId against `ItemDatabase`, enforces type per slot, rate-limits. | 🟡 (see bug list) |
 | `CombatSystem.lua` | `Attack` RemoteEvent. Validates equipped weapon, target is a registered enemy, range/cooldown. Tracks per-player damage contribution; awards proportional Rubies + XP on kill via `UnregisterEnemy`. | ✅ Real (Phase 1.1) |
 | `VitalsSystem.lua` | `EatItem` + `DrinkItem` + `VitalsUpdate` RemoteEvents. Staggered decay loop (Hunger −1/tick, Thirst −2/tick every 5s). Starvation/dehydration damage when either hits 0. Delegates consume logic to `PlayerDataHandler.ConsumeItem`. | ✅ Real (Phase 1.2) |
+| `MapManager.lua` | On Survival start, clones `ServerStorage.Maps.ForestKingdom` into `workspace.Map`. Counts gather-able nodes. Logs a warning and continues if the map is missing. | ✅ Real (Phase 2.1) |
 | `MatchmakingService.lua` | `JoinQueue` + `QueueUpdate` RemoteEvents. FIFO, 6 players → `TeleportAsync` to Survival with a `MatchId` GUID. Re-queues on teleport failure (ghost-cleanup). | ✅ Real |
 | `BuildingSystemTest.lua` | Module that mocks a player and asserts a Wall is created. Not auto-run, must be required from the command bar. | 🟡 Ad-hoc |
 | `VerifyResourceMappings.server.lua` | Iterates `NodeTypeMapping`, warns on unmapped resources. | ⚠️ Auto-runs in production |
@@ -351,7 +352,7 @@ Legend: ✅ implemented · 🟡 partial · ❌ missing
 | Hotbar | ❌ | Loadout panel exists; no number-key hotbar |
 | Farming | ❌ | Zero — no seeds, plots, growth, watering, harvest |
 | Crafting | ❌ | No `CraftingManager`, no recipes, no workbench |
-| Map / world generation | ❌ | No procedural or static map; nodes must be hand-placed in Studio |
+| Map / world generation | 🟡 | `MapManager` clones `ServerStorage.Maps.ForestKingdom` into `workspace.Map` on Survival start. Map authoring (`ForestKingdom.rbxm`) is a Studio task — see `assets/maps/README.md`. |
 | Audio | ❌ | Zero `SoundService` usage |
 | VFX | 🟡 | TweenService for enemy fade and UI tweens only |
 | Beast system (the vision pillar) | ❌ | None |
@@ -476,9 +477,10 @@ This plan sequences work so each phase produces a **playable, demonstrable build
 
 ### 2.1 Map
 
-- [ ] `src/server/MapManager.lua` (new). On Survival start, loads a static map from `ServerStorage.Maps.ForestKingdom` (a `.rbxm` we'll author in Studio). Spawns 30 Trees, 15 Rocks, and 3 Lakes at predefined nodes inside the map.
-- [ ] Author `ForestKingdom.rbxm` in Studio: a 1024×1024 baseplate with a clear stronghold pad in the middle, perimeter forest, two scattered rock outcrops, one pond. Save under `assets/maps/`.
-- [ ] Add a `SurvivalPortal` model to the lobby map with a `ProximityPrompt` named `EnterSurvival`.
+- [x] `src/server/MapManager.lua` (new). On Survival start, looks for `ServerStorage.Maps.ForestKingdom` and clones it into `workspace.Map`. Counts gather-able nodes for a startup sanity check. Logs a warning and continues if the map is missing so the server still boots.
+- [x] Rojo project files mount `assets/maps/` at `ServerStorage.Maps`. `assets/maps/README.md` documents how to author a `.rbxm` map in Studio.
+- [ ] **(Studio task)** Author `assets/maps/ForestKingdom.rbxm` in Studio: stronghold pad in the centre, perimeter forest with named trees, scattered rock outcrops, ponds. Each gather-able node needs a `ProximityPrompt` named "Gather". See `assets/maps/README.md`.
+- [ ] **(Studio task)** Add a `SurvivalPortal` model to the lobby map with a `ProximityPrompt` named `EnterSurvival`. Save under `assets/maps/Lobby.rbxm` (separate authoring task).
 
 ### 2.2 Resource respawn
 
