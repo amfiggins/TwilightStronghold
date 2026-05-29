@@ -1,13 +1,7 @@
---[[
-    Vitals.spec.lua
-    Verifies every Food/Drink item in ItemDatabase has the fields
-    VitalsSystem requires. Catches future items that forget HungerRestore
-    or ThirstRestore.
-]]
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local ItemDatabase = require(ReplicatedStorage.Shared.ItemDatabase)
+--!strict
+local ItemDatabase = require("../../src/shared/ItemDatabase")
 
-return function(test)
+return function(test: any)
     test.describe("Food items", function()
         test.it("raw_fish is Type Food with HungerRestore", function()
             local def = ItemDatabase.GetItem("raw_fish")

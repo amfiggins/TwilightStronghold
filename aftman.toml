@@ -3,6 +3,12 @@
 # https://github.com/rojo-rbx/rojo/releases
 rojo = "rojo-rbx/rojo@7.4.4"
 
+# Lune: standalone Luau runtime with a Roblox API simulator. Used by CI to
+# load the built tests.rbxl, run the test specs, and report pass/fail
+# headlessly (no Studio install required).
+# https://github.com/lune-org/lune/releases
+lune = "lune-org/lune@0.10.4"
+
 # StyLua: deterministic Luau code formatter
 # https://github.com/JohnnyMorganz/StyLua/releases
 stylua = "JohnnyMorganz/StyLua@2.5.2"

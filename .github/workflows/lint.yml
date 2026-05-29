@@ -1,9 +1,9 @@
-name: Lint
+name: CI
 
-# Runs StyLua and Selene on every PR and on pushes to main.
-# - StyLua: format check (fails on formatting drift).
-# - Selene: lint (fails on any error or warning — see Phase 0 cleanup
-#   notes in docs/VISION.md §2.7 BUG-15).
+# Runs on every PR and on pushes to main.
+# - lint: StyLua format check + Selene lint (no warnings allowed).
+# - test: Lune-based unit tests for pure-Lua modules. Studio-runtime
+#   integration tests under tests/unit/*.spec.lua are not in CI today.
 
 on:
   push:
@@ -34,3 +34,18 @@ jobs:
         # pass (BUG-15) reduced the pile from 24 warnings to 0, so we
         # gate hard going forward.
         run: selene src/ tests/
+
+  test:
+    name: Lune unit tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Aftman + tools
+        uses: ok-nick/setup-aftman@v0.4.2
+
+      - name: Run Lune tests
+        run: lune run tests/lune/runner.luau
