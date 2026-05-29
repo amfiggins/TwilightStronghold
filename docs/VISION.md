@@ -290,7 +290,8 @@ This section reflects what is **actually in the repo** as of the last update. Up
 | `PlayerDataHandler.lua` | DataStore-backed player data. Schema: `Stats {Rubies, Diamonds, Level, XP}`, `Inventory[]`, `Loadout {Weapon, BaseKit, Bag}`, `CodesRedeemed`. O(1) inventory lookup, swap-remove, NaN/`math.huge` validation, retry-with-backoff `GetAsync`, staggered autosave (60s window divided across players). | ✅ Mature |
 | `ResourceManager.lua` | `GatherResource` RemoteEvent handler. Validates rate limit (1s), distance (25 studs²), proximity prompt presence, maps node names to resource IDs via `NodeTypeMapping`, rolls rare drops, awards items, schedules respawn via `ResourceRespawn` if `DestroyOnGather`. | ✅ Real |
 | `ResourceRespawn.lua` | Snapshots gathered nodes into `ServerStorage.ResourceRespawnPool` and re-parents them back at the original CFrame 60–120s later. | ✅ Real (Phase 2.2) |
-| `BuildingSystem.lua` | `PlaceStructure` RemoteEvent. Rate limit (0.5s), NaN-CFrame validation, 20-stud range, deducts wood, spawns a flat Part. | 🟡 Skeletal |
+| `BuildingSystem.lua` | `PlaceStructure` RemoteEvent. Rate limit (0.5s), NaN-CFrame validation, 20-stud range, `OverlapParams` collision check, deducts wood, instantiates Part under `workspace.PlayerStructures`, tags with `TwilightStronghold_PlayerStructure`, persists via `StructurePersistence`. | ✅ Real |
+| `StructurePersistence.lua` | Per-Place DataStore. AddStructure() appends to in-memory list and schedules a debounced (5s) save. On Survival start, loads saved records and re-instantiates each via a renderer callback. BindToClose final flush. | ✅ Real (Phase 2.3) |
 | `DayNightCycle.lua` | 1Hz tick. Day=300s, Night=120s. Fires `PhaseChanged` to clients. Calls `WaveManager.StartWave` on night start. Sets `Lighting.ClockTime` only. | 🟡 Basic |
 | `WaveManager.lua` | Spawns enemies during night, deals touch damage with per-player cooldown, despawns at dawn, registers/unregisters with `CombatSystem`. Pathfinding+raycast LOS shortcut, tiered update rates. | 🟡 Single enemy type |
 | `LoadoutManager.lua` | `SetLoadout` RemoteEvent. Validates slot, type-checks itemId against `ItemDatabase`, enforces type per slot, rate-limits. | 🟡 (see bug list) |
@@ -338,7 +339,7 @@ Legend: ✅ implemented · 🟡 partial · ❌ missing
 |---|---|---|
 | Day/Night cycle | 🟡 | Basic; Day 150 milestone event fires; no countdown HUD _(wait, HUD landed in Phase 1.3 — see below)_ |
 | Resource gathering (wood/stone/fish) | ✅ | Solid security model; nodes respawn 60–120s after gather (Phase 2.2) |
-| Building system | 🟡 | Wall/Tower stubs; no collision check, no persistence, no destruction |
+| Building system | 🟡 | Wall/Tower placements with collision check, persist across restarts via `StructurePersistence`, tagged with `TwilightStronghold_PlayerStructure` for future raid AI. Still missing: health/damage, destruction |
 | Inventory | ✅ | O(1) lookup, bag capacity, swap-remove |
 | Loadout | 🟡 | Weapon/Kit work; **Bag-equip broken** end-to-end |
 | Combat | ✅ | Server-authoritative `CombatSystem`: weapon-equipped check, range + cooldown, damage application, proportional Ruby/XP rewards on kill |
@@ -393,13 +394,13 @@ Tagged so we can sweep them as a batch.
 | BUG-4 | High | ~~`PlayerDataHandler` has no `game:BindToClose` final flush — in-flight saves are dropped on shutdown.~~ **Fixed** in Phase 0 (BindToClose flushes all sessions in parallel with a 25s budget; skipped in Studio). |
 | BUG-5 | High | ~~No cross-server session lock — two servers can read/write the same player key during teleport handoff.~~ **Fixed** in Phase 0 (compare-and-swap session lock via `UpdateAsync` with 600s stale threshold and 5×6s teleport-handoff retries). |
 | BUG-6 | High | ~~Resource nodes never respawn after gather. Empty world after a few minutes.~~ **Fixed** in Phase 2.2 (`ResourceRespawn` snapshots gathered nodes into a holding folder, then re-parents them after 60–120s; preserves full hierarchy). |
-| BUG-7 | High | Built structures never persist across server restarts. |
+| BUG-7 | High | ~~Built structures never persist across server restarts.~~ **Fixed** in Phase 2.3 (`StructurePersistence` saves placements to a per-Place DataStore with 5s debounce + BindToClose flush, restores on Survival server start). |
 | BUG-8 | Critical-for-game | ~~Enemies cause no damage. Players cause no damage to enemies.~~ **Fixed** in Phase 1.1 (server-authoritative `CombatSystem` with weapon validation + range + cooldown; enemies deal touch damage with per-player cooldown; kill rewards split by damage contribution). |
 | BUG-9 | Low | ~~`survival.project.json` is byte-identical to `default.project.json` — pointless duplication.~~ **Fixed** in Phase 0 (deleted; CI builds once and publishes the same `.rbxl` to both Place IDs. Will reintroduce a differentiated project at Phase 2.1 when we add a real Forest Kingdom map). |
 | BUG-10 | Low | ~~Tower has Wall dimensions (`4,8,1`) and same color.~~ **Fixed** in Phase 0 (Tower is now `4×16×4` with darker color). |
 | BUG-11 | Low | ~~`WaveManager.StartWave` checks `Phase ~= "Night"` only after `task.wait(SPAWN_RATE)` — small window where a post-dawn enemy spawns.~~ **Fixed** in Phase 1.1 (loop waits in 0.5s slices and re-checks the phase before spawning). |
 | BUG-12 | Low | `MinigameController.target` is static at `0.5` — sine wave is commented out, so the minigame is trivially solvable. |
-| BUG-13 | Medium | `BuildingSystem.PlaceStructure` has a literal `-- Ensure no collision` TODO and no implementation. Walls can stack inside each other or terrain. |
+| BUG-13 | Medium | ~~`BuildingSystem.PlaceStructure` has a literal `-- Ensure no collision` TODO and no implementation. Walls can stack inside each other or terrain.~~ **Fixed** in Phase 2.3 (`hasCollision` uses `OverlapParams` + `workspace:GetPartBoundsInBox`, ignores the placer's own character). |
 | BUG-14 | Low | ~~`raw_fish` is a Consumable but has no Hunger/Heal value, and no eat handler exists.~~ **Fixed** in Phase 1.2 (`raw_fish` is now `Type Food` with `HungerRestore = 10`; `EatItem`/`DrinkItem` RemoteEvents wired through `VitalsSystem` → `PlayerDataHandler.ConsumeItem`). |
 | BUG-15 | Low | ~~No StyLua/Selene config; style is loose.~~ **Fixed** in Phase 0 (StyLua 2.5.2 + Selene 0.31.0 pinned in `aftman.toml`; configs at `stylua.toml` and `selene.toml`; CI runs `stylua --check` and `selene --allow-warnings` on every PR via `.github/workflows/lint.yml`). 24 existing warnings (unused vars, manual-fromscale, etc) remain as a separate cleanup task. |
 | BUG-16 | Low | ~~No automated test harness; `BuildingSystemTest.lua` and benchmarks are ad-hoc.~~ **Partially fixed** in Phase 0: scaffolding landed (`tests/` folder with `TestFramework.lua`, `TestRunner.server.lua`, `tests/unit/ItemDatabase.spec.lua`, plus `tests.project.json` for Studio runs). Tests are Studio-only today. Wiring CI execution via [run-in-roblox](https://github.com/rojo-rbx/run-in-roblox) or [Lune](https://github.com/lune-org/lune) is a follow-up. |
@@ -486,9 +487,9 @@ This plan sequences work so each phase produces a **playable, demonstrable build
 
 ### 2.3 Structure persistence
 
-- [ ] `src/server/StructurePersistence.lua` (new). On `BuildingSystem.PlaceStructure` success, save `{ structureType, cframeComponents, ownerUserId }` to a `StructuresDataStore_<MatchId>` keyed by match. On Survival server start, load and re-instantiate. [BUG-7]
-- [ ] Add a destroy/damage system: `Structure.Health = props.Health`. Enemies attack walls if no players are in 30 studs. On 0 health, `Destroy()` the structure and remove from the persistence registry.
-- [ ] Add collision check in `BuildingSystem.PlaceStructure` using `OverlapParams` and `workspace:GetPartBoundsInBox`. Reject if any non-terrain part is inside the proposed CFrame. [BUG-13]
+- [x] `src/server/StructurePersistence.lua` (new). On `BuildingSystem.PlaceStructure` success, append a `{ structureType, cframeComponents, ownerUserId }` record to a per-Place DataStore (`Structures_v<GAME_VERSION>` keyed by `Place_<PlaceId>`). Saves are debounced (5s); final flush via `BindToClose`. On Survival server start, loads the saved list and re-instantiates each via the BuildingSystem renderer. [BUG-7]
+- [ ] Add a destroy/damage system: `Structure.Health = props.Health`. Enemies attack walls if no players are in 30 studs. On 0 health, `Destroy()` the structure and remove from the persistence registry. _(deferred — Phase 5 raids)_
+- [x] Add collision check in `BuildingSystem.PlaceStructure` using `OverlapParams` and `workspace:GetPartBoundsInBox`. Reject if any non-terrain part (excluding the placer's own character) is inside the proposed CFrame. [BUG-13]
 
 ### 2.4 Build placement preview (UX)
 
