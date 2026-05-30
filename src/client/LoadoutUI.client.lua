@@ -33,7 +33,7 @@ frame.Parent = gui
 -- Title
 local title = Instance.new("TextLabel")
 title.Text = "Loadout (Meta-Link)"
-title.Size = UDim2.new(1, -30, 0, 30)
+title.Size = UDim2.new(1, -60, 0, 30)
 title.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 title.TextColor3 = Color3.fromRGB(255, 255, 255)
 title.BorderSizePixel = 0
@@ -43,7 +43,7 @@ title.Parent = frame
 local refreshContainer = Instance.new("Frame")
 refreshContainer.Name = "RefreshContainer"
 refreshContainer.Size = UDim2.new(0, 30, 1, 0)
-refreshContainer.Position = UDim2.new(1, -30, 0, 0)
+refreshContainer.Position = UDim2.new(1, 0, 0, 0)
 refreshContainer.BackgroundTransparency = 1
 refreshContainer.Parent = title
 
@@ -93,6 +93,40 @@ refreshBtn.SelectionLost:Connect(function()
 end)
 
 -- List Container (ScrollingFrame for Scanability)
+
+-- Close Container (Micro-UX / A11y)
+local closeContainer = Instance.new("Frame")
+closeContainer.Name = "CloseContainer"
+closeContainer.Size = UDim2.new(0, 30, 1, 0)
+closeContainer.Position = UDim2.new(1, 30, 0, 0)
+closeContainer.BackgroundTransparency = 1
+closeContainer.Parent = title
+
+-- Close Button
+local closeBtn = Instance.new("TextButton")
+closeBtn.Text = "×"
+closeBtn.Size = UDim2.fromScale(1, 1)
+closeBtn.Position = UDim2.fromScale(0.5, 0.5)
+closeBtn.AnchorPoint = Vector2.new(0.5, 0.5)
+closeBtn.BackgroundTransparency = 1
+closeBtn.TextColor3 = Color3.fromRGB(200, 200, 200)
+closeBtn.Font = Enum.Font.GothamBold
+closeBtn.TextSize = 24
+closeBtn.Parent = closeContainer
+
+local function updateCloseState(isActive)
+    closeBtn.TextColor3 = isActive and Color3.fromRGB(255, 100, 100) or Color3.fromRGB(200, 200, 200)
+end
+
+closeBtn.MouseEnter:Connect(function() updateCloseState(true) end)
+closeBtn.MouseLeave:Connect(function() updateCloseState(false) end)
+closeBtn.SelectionGained:Connect(function() updateCloseState(true) end)
+closeBtn.SelectionLost:Connect(function() updateCloseState(false) end)
+
+closeBtn.MouseButton1Click:Connect(function()
+    frame.Visible = false
+end)
+
 local listContainer = Instance.new("ScrollingFrame")
 listContainer.Size = UDim2.new(1, 0, 1, -30)
 listContainer.Position = UDim2.fromOffset(0, 30)
