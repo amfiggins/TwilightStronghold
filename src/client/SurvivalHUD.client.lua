@@ -42,6 +42,9 @@ local COLOR_TEXT = Color3.fromRGB(255, 255, 255)
 -- ── State ─────────────────────────────────────────────────────────────────
 local vitals = { Hunger = 100, Thirst = 100, MaxHunger = 100, MaxThirst = 100 }
 local phaseState = { phase = "Day", dayCount = 1, timeRemaining = 300 }
+-- ⚡ Bolt: Cache health ratio and timer text to avoid per-frame garbage collection
+local lastHealthRatio = -1
+local lastTimerText = ""
 
 -- ── Build UI ──────────────────────────────────────────────────────────────
 local gui = Instance.new("ScreenGui")
@@ -234,12 +237,20 @@ RunService.RenderStepped:Connect(function(dt)
     local character = player.Character
     local humanoid = character and character:FindFirstChildOfClass("Humanoid")
     if humanoid then
-        setBarFill(healthFill, humanoid.Health / math.max(1, humanoid.MaxHealth))
+        local currentHealthRatio = humanoid.Health / math.max(1, humanoid.MaxHealth)
+        if currentHealthRatio ~= lastHealthRatio then
+            setBarFill(healthFill, currentHealthRatio)
+            lastHealthRatio = currentHealthRatio
+        end
     end
 
     -- Countdown (client-side interpolation between server ticks)
     phaseState.timeRemaining = math.max(0, phaseState.timeRemaining - dt)
-    timerLabel.Text = formatTime(phaseState.timeRemaining)
+    local currentTimerText = formatTime(phaseState.timeRemaining)
+    if currentTimerText ~= lastTimerText then
+        timerLabel.Text = currentTimerText
+        lastTimerText = currentTimerText
+    end
 end)
 
 print("[SurvivalHUD] Initialized.")
