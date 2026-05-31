@@ -49,3 +49,6 @@
 ## 2027-05-01 - Minigame Success States
 **Learning:** Instantly removing the UI upon minigame success is jarring. Players need a brief moment to process the visual feedback of their success before the context shifts.
 **Action:** Always insert a short delay (e.g., 0.5s) and display a clear "Success" state (like text or color changes) before closing high-focus minigame UIs.
+## 2027-05-15 - UI Discoverability & Exiting
+**Learning:** Core systems like loadouts or inventories are difficult for users to discover if they rely purely on keyboard shortcuts (like Tab). Moreover, once open, users often struggle to find how to close them if an explicit "Close" button is missing.
+**Action:** Always provide explicit, on-screen toggle buttons for primary UI panels (for mobile/mouse users) and a clear 'X' close button within the panel itself.

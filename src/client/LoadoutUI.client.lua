@@ -23,6 +23,39 @@ gui.ResetOnSpawn = false
 gui.Parent = player:WaitForChild("PlayerGui")
 
 -- Container (hidden by default — toggle with Tab)
+local toggleBtn = Instance.new("TextButton")
+toggleBtn.Name = "LoadoutToggle"
+toggleBtn.Text = "🎒 Loadout"
+toggleBtn.Size = UDim2.fromOffset(120, 40)
+toggleBtn.Position = UDim2.new(0.05, 0, 0.5, -220)
+toggleBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+toggleBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+toggleBtn.Font = Enum.Font.GothamBold
+toggleBtn.TextSize = 14
+toggleBtn.BorderSizePixel = 0
+toggleBtn.Parent = gui
+
+local toggleCorner = Instance.new("UICorner")
+toggleCorner.CornerRadius = UDim.new(0, 6)
+toggleCorner.Parent = toggleBtn
+
+local function updateToggleHover(isHovered)
+    toggleBtn.BackgroundColor3 = isHovered and Color3.fromRGB(60, 60, 60) or Color3.fromRGB(40, 40, 40)
+end
+
+toggleBtn.MouseEnter:Connect(function()
+    updateToggleHover(true)
+end)
+toggleBtn.MouseLeave:Connect(function()
+    updateToggleHover(false)
+end)
+toggleBtn.SelectionGained:Connect(function()
+    updateToggleHover(true)
+end)
+toggleBtn.SelectionLost:Connect(function()
+    updateToggleHover(false)
+end)
+-- Container (hidden by default — toggle with Tab)
 local frame = Instance.new("Frame")
 frame.Size = UDim2.fromOffset(220, 350) -- Adjusted width for scrollbar
 frame.Position = UDim2.new(0.05, 0, 0.5, -175)
@@ -30,6 +63,35 @@ frame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
 frame.Visible = false -- BUG-17 fix: start hidden
 frame.Parent = gui
 
+-- Close Button
+local closeBtn = Instance.new("TextButton")
+closeBtn.Name = "CloseBtn"
+closeBtn.Text = "X"
+closeBtn.Size = UDim2.fromOffset(30, 30)
+closeBtn.Position = UDim2.new(1, -60, 0, 0)
+closeBtn.BackgroundTransparency = 1
+closeBtn.TextColor3 = Color3.fromRGB(200, 200, 200)
+closeBtn.Font = Enum.Font.GothamBold
+closeBtn.TextSize = 16
+closeBtn.Parent = frame
+closeBtn.ZIndex = 2
+
+local function updateCloseHover(isHovered)
+    closeBtn.TextColor3 = isHovered and Color3.fromRGB(255, 100, 100) or Color3.fromRGB(200, 200, 200)
+end
+
+closeBtn.MouseEnter:Connect(function()
+    updateCloseHover(true)
+end)
+closeBtn.MouseLeave:Connect(function()
+    updateCloseHover(false)
+end)
+closeBtn.SelectionGained:Connect(function()
+    updateCloseHover(true)
+end)
+closeBtn.SelectionLost:Connect(function()
+    updateCloseHover(false)
+end)
 -- Title
 local title = Instance.new("TextLabel")
 title.Text = "Loadout (Meta-Link)"
@@ -414,18 +476,25 @@ refreshBtn.MouseButton1Click:Connect(function()
     populateLoadout()
 end)
 
+local function toggleLoadout()
+    frame.Visible = not frame.Visible
+    if frame.Visible and not isRefreshing then
+        task.spawn(populateLoadout)
+    end
+end
+
+toggleBtn.MouseButton1Click:Connect(toggleLoadout)
+closeBtn.MouseButton1Click:Connect(function()
+    frame.Visible = false
+end)
+
 -- Toggle visibility with Tab (keyboard) or DPad-Down (gamepad). BUG-17 fix.
 UserInputService.InputBegan:Connect(function(input, gameProcessedEvent)
     if gameProcessedEvent then
         return
     end
     if input.KeyCode == Enum.KeyCode.Tab or input.KeyCode == Enum.KeyCode.DPadDown then
-        frame.Visible = not frame.Visible
-        -- Populate on first open so we don't fetch data until the player
-        -- actually wants to see the loadout.
-        if frame.Visible and not isRefreshing then
-            task.spawn(populateLoadout)
-        end
+        toggleLoadout()
     end
 end)
 
