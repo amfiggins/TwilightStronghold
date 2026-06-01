@@ -23,6 +23,23 @@ local items = {
         Stackable = false,
     },
 
+    -- Light Sources
+    -- BeastRepel : when present in the world (held tool, equipped attribute,
+    --              or placed structure), pushes the beast away to LightRetreat
+    --              studs. Phase 4.2 wires the detection in BeastSystem; Phase 5+
+    --              will wire the held-tool path so a carried torch actually
+    --              repels the beast.
+    -- Per docs/VISION.md §1.6, torches must be found or crafted, not given
+    -- to new players at spawn.
+    ["torch"] = {
+        Name = "Torch",
+        Type = "Tool",
+        Rarity = "Common",
+        BeastRepel = true,
+        Description = "A flickering torch. Beasts retreat from its light.",
+        Stackable = false,
+    },
+
     -- Weapons (Loadout Items)
     -- Damage   : hitpoints removed per swing
     -- Range    : max stud distance from attacker root to target root

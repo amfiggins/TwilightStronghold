@@ -299,7 +299,7 @@ This section reflects what is **actually in the repo** as of the last update. Up
 | `VitalsSystem.lua` | `EatItem` + `DrinkItem` + `VitalsUpdate` RemoteEvents. Staggered decay loop (Hunger −1/tick, Thirst −2/tick every 5s). Starvation/dehydration damage when either hits 0. Delegates consume logic to `PlayerDataHandler.ConsumeItem`. | ✅ Real (Phase 1.2) |
 | `FarmingSystem.lua` | `PlantSeed` + `WaterCrop` + `HarvestCrop` RemoteEvents. Rate-limited (0.5s) + distance-validated (12 studs). Drives `PlotState` / `CropKey` / `WateringCount` / `PlantedAt` attributes; awards crops on harvest. | ✅ Real (Phase 3.3) |
 | `PlotManager.lua` | Owns per-plot `ProximityPrompt`s (Plant / Water / Harvest), driven by `GetAttributeChangedSignal`. Runs the server-wide 5s growth tick that advances `Stage` and flips `PlotState` to `"ready"` when watering + time gates are met. Recolours plots as placeholder visual stage feedback. | ✅ Real (Phase 3.3) |
-| `BeastSystem.lua` | Spawns one biome-appropriate beast at night and despawns at dawn via `DayNightCycle.PhaseChangedBindable`. State machine: Stalk (drift at 50–100 studs) ↔ Glimpse (brief fade-in at 30 studs every 18–35s). Unkillable. | ✅ Real (Phase 4.1) |
+| `BeastSystem.lua` | Spawns one biome-appropriate beast at night and despawns at dawn via `DayNightCycle.PhaseChangedBindable`. State machine: Stalk (drift at 50–100 studs) ↔ Glimpse (brief fade-in at 30 studs every 18–35s). Light-respect: retreats from any part with `BeastRepel = true` within `LightRetreat` studs. Fires `BeastNearby` per-player with distance tier. Unkillable. | ✅ Real (Phase 4.1/4.2) |
 | `MapManager.lua` | On Survival start, clones `ServerStorage.Maps.ForestKingdom` into `workspace.Map`. Counts gather-able nodes. Logs a warning and continues if the map is missing. | ✅ Real (Phase 2.1) |
 | `MatchmakingService.lua` | `JoinQueue` + `QueueUpdate` RemoteEvents. FIFO, 6 players → `TeleportAsync` to Survival with a `MatchId` GUID. Re-queues on teleport failure (ghost-cleanup). | ✅ Real |
 | `BuildingSystemTest.lua` | Module that mocks a player and asserts a Wall is created. Not auto-run, must be required from the command bar. | 🟡 Ad-hoc |
@@ -317,6 +317,7 @@ This section reflects what is **actually in the repo** as of the last update. Up
 | `CombatClient.client.lua` | Survival-only. On M1 / gamepad R2, picks the model under the cursor and fires `Attack`. Server validates everything. No-ops in Lobby. | ✅ Real (Phase 1.1) |
 | `BuildPlacementClient.client.lua` | Survival-only. Press `B` to toggle build mode; `1`/`2`/`3` to pick Wall/Tower/Plot; mouse moves a translucent ghost; click fires `PlaceStructure`. Ghost is green when valid, red when out of range / colliding (mirrors server checks). | ✅ Real (Phase 2.4) |
 | `FarmingClient.client.lua` | Survival-only. Routes proximity prompts: Plant opens a seed selector filtered to inventory; Water/Harvest fire immediately. Hover tooltip shows plot status (water progress, time remaining, ready). | ✅ Real (Phase 3.4) |
+| `BeastAudioClient.client.lua` | Survival-only. Listens for `BeastNearby` tier events and plays layered 3D sounds (ambient howl / footsteps / branch snaps / breathing / growl) attached to invisible probe parts that follow the player at the tier's nominal radius. | ✅ Real (Phase 4.2) |
 | `MinigameController.lua` | "Fisch-style" hold-to-align minigame. Multi-input (keyboard / mouse / touch / gamepad). Recently improved with success-state delay, platform-aware hints, gamepad cache. | 🟡 Single static minigame |
 | `LoadoutUI.client.lua` | Always-visible left-side panel listing Weapons / Kits / Bags from inventory. Equip/unequip with rarity colors and tooltips. | 🟡 (Bag-equip broken — see bugs) |
 | `PortalController.client.lua` | Lobby-only. Listens for `EnterSurvival` prompt → fires `JoinQueue`. Toast on queue update. | ✅ Real |
@@ -331,9 +332,9 @@ Constants: `GAME_VERSION`, `IS_SURVIVAL_MODE`, `MAX_LOBBY_PLAYERS = 20`, `MAX_SE
 
 ### `ItemDatabase.lua`
 
-23 items in 8 categories: Tool (`wooden_rod`, `iron_pickaxe`, `hoe`, `watering_can`), Weapon (`wooden_sword`, `void_sword`), Kit (`watchtower_kit`), Bag (`starter_bag`/`leather_bag`/`reinforced_bag`), Material (`wood_log`, `golden_wood`, `stone_ore`, `fertilizer`), Food (`raw_fish`, `cooked_fish`, `berries`, `wheat`, `carrot`), Drink (`water_flask`), Seed (`wheat_seed`, `carrot_seed`, `berry_seed`).
+24 items in 8 categories: Tool (`wooden_rod`, `iron_pickaxe`, `torch`, `hoe`, `watering_can`), Weapon (`wooden_sword`, `void_sword`), Kit (`watchtower_kit`), Bag (`starter_bag`/`leather_bag`/`reinforced_bag`), Material (`wood_log`, `golden_wood`, `stone_ore`, `fertilizer`), Food (`raw_fish`, `cooked_fish`, `berries`, `wheat`, `carrot`), Drink (`water_flask`), Seed (`wheat_seed`, `carrot_seed`, `berry_seed`).
 
-Weapons declare `Damage`, `Range`, `Cooldown` (used by `CombatSystem`). Foods/Drinks declare `HungerRestore`/`ThirstRestore` (used by `VitalsSystem`). Seeds declare `SeedFor` pointing to a `CropDatabase` key (used by `FarmingSystem` from Phase 3.3 onward).
+Weapons declare `Damage`, `Range`, `Cooldown` (used by `CombatSystem`). Foods/Drinks declare `HungerRestore`/`ThirstRestore` (used by `VitalsSystem`). Seeds declare `SeedFor` pointing to a `CropDatabase` key (used by `FarmingSystem`). The `torch` Tool declares `BeastRepel = true` (used by `BeastSystem` once held-tool emission lands).
 
 ### `CropDatabase.lua`
 
@@ -362,9 +363,9 @@ Legend: ✅ implemented · 🟡 partial · ❌ missing
 | Farming | ✅ | Schema, plot placement, plant / water / harvest, server-wide growth tick with visual stage progression, seed-selector UI, hover tooltip. Studio art for stage models is the only thing left. |
 | Crafting | ❌ | No `CraftingManager`, no recipes, no workbench |
 | Map / world generation | 🟡 | `MapManager` clones `ServerStorage.Maps.ForestKingdom` into `workspace.Map` on Survival start. Map authoring (`ForestKingdom.rbxm`) is a Studio task — see `assets/maps/README.md`. |
-| Audio | ❌ | Zero `SoundService` usage |
+| Audio | 🟡 | `BeastAudioClient` plays layered 3D beast sounds (ambient/footsteps/breathing/growl) via `SoundConfig`. No other audio yet — chops, mines, hits, ambience per biome are deferred to Phase 7. |
 | VFX | 🟡 | TweenService for enemy fade and UI tweens only |
-| Beast system (the vision pillar) | 🟡 | `BeastSystem` + `BeastDatabase` ship one Wendigo per night with Stalk/Glimpse AI. Light-respect, audio cues, and Hunt/jump-scare still ahead. _(Phase 4.2/4.3)_ |
+| Beast system (the vision pillar) | 🟡 | `BeastSystem` + `BeastDatabase` ship one Wendigo per night with Stalk/Glimpse AI, light-repel, and per-player distance audio cues via `BeastAudioClient`. Hunt state + jump-scare still ahead. _(Phase 4.3)_ |
 | Sub-beasts | ❌ | None _(Phase 8)_ |
 | Stronghold light system | ❌ | None |
 | Residents (NPCs) | ❌ | None |
@@ -388,6 +389,7 @@ All under `ReplicatedStorage.Remotes`:
 | `PlantSeed` | RemoteEvent | `FarmingSystem` (Survival only) | C→S | Plant a seed on a tilled plot |
 | `WaterCrop` | RemoteEvent | `FarmingSystem` (Survival only) | C→S | Water a planted plot (increments WateringCount) |
 | `HarvestCrop` | RemoteEvent | `FarmingSystem` (Survival only) | C→S | Harvest a ready plot (awards crop yield, resets to tilled) |
+| `BeastNearby` | RemoteEvent | `BeastSystem` (Survival only) | S→C | Per-player distance tier (`growl` / `breathing` / `footstep` / `far` / `none`); throttled to ≤2/s |
 | `SetLoadout` | RemoteEvent | `LoadoutManager` | C→S | Equip/unequip Weapon or BaseKit |
 | `JoinQueue` | RemoteEvent | `MatchmakingService` (Lobby only) | C→S | Enter matchmaking queue |
 | `QueueUpdate` | RemoteEvent | `MatchmakingService` (Lobby only) | S→C | Notify queue join/leave + size |
@@ -550,12 +552,14 @@ This plan sequences work so each phase produces a **playable, demonstrable build
 - [x] `src/shared/BeastDatabase.lua` (new). `Wendigo`, `Yeti`, `DjinnStalker` definitions. Stores colour as `{R, G, B}` triples instead of `Color3` so the module loads under Lune CI. Public API: `GetBeast`, `GetBeastForBiome`, `GetAll`. Only Wendigo is wired into the spawn logic at launch.
 - [x] `src/server/BeastSystem.lua` (new). Spawns one beast at night and despawns it at dawn via `DayNightCycle.PhaseChangedBindable`. State machine (V1): `Stalk` (drift around the nearest player at 50–100 studs) and `Glimpse` (briefly fade in to ~70% transparency at 30 studs every 18–35s, then back to fully invisible). Unkillable in V1 — high HP, never registered with `CombatSystem`, never damages players (combat lands in Phase 4.3 with the Hunt state and lunge).
 - [x] `src/server/DayNightCycle.lua`: added `PhaseChangedBindable` for clean server-side fanout. WaveManager now subscribes via the bindable instead of being directly required from DayNightCycle.
-- [ ] Beast respects light: any source with `BeastRepel = true` attribute within `LightRetreat` studs forces beast to retreat. Stronghold's main light has a larger radius. _(Phase 4.2)_
+- [x] Beast respects light: any source with `BeastRepel = true` attribute within `LightRetreat` studs forces beast to retreat. Phase 4.2 wires the detection via `workspace:GetPartBoundsInRadius`. Stronghold's main light (Phase 5) and held torches (when held-tool system lands) will both produce repel sources.
 
 ### 4.2 Audio cues
 
-- [ ] `src/client/BeastAudioClient.client.lua` (new). On beast proximity (server fires a throttled `BeastNearby` RemoteEvent with distance bucket), play a layered sound: footsteps under 50 studs, breathing under 30, growl under 15. Use `SoundService` 3D sounds attached to invisible probe parts, not the beast itself, to keep the cues spooky-vague.
-- [ ] Author/import 6 beast audio assets: ambient howl, footstep, branch snap, breathing, growl, chase music. Asset IDs in a new `src/shared/SoundConfig.lua`.
+- [x] `src/client/BeastAudioClient.client.lua` (new). Listens for `BeastNearby` events fired by the server with a distance-tier (`growl` / `breathing` / `footstep` / `far` / `none`) and plays layered 3D sounds attached to invisible probe parts. Probes are positioned at the tier's nominal radius around the player in a random direction so panning is convincing without leaking the beast's exact location.
+- [x] `src/shared/SoundConfig.lua` (new). Centralised mapping from logical sound keys to `rbxassetid://` URIs. Six beast sounds defined: ambient howl, footstep, branch snap, breathing, growl, chase music. Lune-tested for shape and well-formedness.
+- [x] `src/server/BeastSystem.lua`: added `BeastNearby` RemoteEvent broadcast (per-player, throttled at 0.5s, fires on tier change or every 0.5s) and `findNearestBeastRepel` so the beast retreats from any part with `BeastRepel = true` within `def.LightRetreat` studs.
+- [x] `torch` item added to `ItemDatabase` with `BeastRepel = true` flag. Per vision §1.6, torches must be found or crafted, not given to new players. Held-tool emission of the repel attribute is deferred to the held-tool system (Phase 5+).
 
 ### 4.3 Jump-scare encounter
 

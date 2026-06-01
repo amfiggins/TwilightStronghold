@@ -55,11 +55,47 @@ local GLIMPSE_INTERVAL_MAX = 35
 local GLIMPSE_VISIBLE_SECONDS = 0.4
 local GLIMPSE_TRANSPARENCY = 0.7
 
+-- ── BeastNearby distance tiers ────────────────────────────────────────────
+-- The server fires BeastNearby:FireClient(player, tier) at most once per
+-- BEAST_NEARBY_THROTTLE_SECONDS so the client can layer audio cues without
+-- being spammed. Tiers map to the audio buckets in vision §1.6:
+--   "far"       50–100 studs : ambient
+--   "footstep"  30–50  studs : footstep + branch snap
+--   "breathing" 15–30  studs : breathing
+--   "growl"      0–15  studs : growl (closest)
+--   "none"     >100   studs : silence (also fired when night ends)
+local BEAST_NEARBY_THROTTLE_SECONDS = 0.5
+
+local function tierForDistance(d)
+    if d <= 15 then
+        return "growl"
+    elseif d <= 30 then
+        return "breathing"
+    elseif d <= 50 then
+        return "footstep"
+    elseif d <= 100 then
+        return "far"
+    else
+        return "none"
+    end
+end
+
 -- ── State ─────────────────────────────────────────────────────────────────
 BeastSystem.Active = nil :: Model? -- the current beast instance, if any
 local stateMachineThread = nil
 local nextGlimpseAt = 0
 local currentState = "Stalk" -- "Stalk" | "Glimpse"
+-- [UserId] = { tier = "growl" | ..., lastFireAt = number }
+local playerTierState = {}
+
+-- ── Remotes ───────────────────────────────────────────────────────────────
+local Remotes = ReplicatedStorage:WaitForChild("Remotes")
+local BeastNearbyEvent = Remotes:FindFirstChild("BeastNearby")
+if not BeastNearbyEvent then
+    BeastNearbyEvent = Instance.new("RemoteEvent")
+    BeastNearbyEvent.Name = "BeastNearby"
+    BeastNearbyEvent.Parent = Remotes
+end
 
 -- ── Helpers ───────────────────────────────────────────────────────────────
 local function rgbColor(rgb)
@@ -82,6 +118,62 @@ local function findNearestPlayer(position)
         end
     end
     return nearest, math.sqrt(minSq)
+end
+
+-- Find the nearest BasePart with the BeastRepel attribute (set to true)
+-- within `radius` studs of `position`. Returns the part and distance, or
+-- nil. Used to push the beast away from torches, the StrongholdLight,
+-- placed campfires, etc. Cheap: GetPartBoundsInRadius is bounded and
+-- BeastRepel-bearing parts will be sparse in the world.
+local function findNearestBeastRepel(position, radius)
+    local overlapParams = OverlapParams.new()
+    if BeastSystem.Active then
+        overlapParams.FilterType = Enum.RaycastFilterType.Exclude
+        overlapParams.FilterDescendantsInstances = { BeastSystem.Active }
+    end
+    local hits = workspace:GetPartBoundsInRadius(position, radius, overlapParams)
+    local nearest = nil
+    local minSq = math.huge
+    for _, part in ipairs(hits) do
+        if part:GetAttribute("BeastRepel") then
+            local delta = part.Position - position
+            local distSq = delta.X * delta.X + delta.Y * delta.Y + delta.Z * delta.Z
+            if distSq < minSq then
+                minSq = distSq
+                nearest = part
+            end
+        end
+    end
+    if nearest then
+        return nearest, math.sqrt(minSq)
+    end
+    return nil, math.huge
+end
+
+-- Broadcast distance-bucket changes to each player. Throttled per-player
+-- so a wandering beast doesn't spam tier transitions.
+local function broadcastNearbyTiers(beastPos)
+    local now = os.clock()
+    for _, player in ipairs(Players:GetPlayers()) do
+        local character = player.Character
+        local rootPart = character and character.PrimaryPart
+        if rootPart then
+            local delta = rootPart.Position - beastPos
+            local dist = math.sqrt(delta.X * delta.X + delta.Y * delta.Y + delta.Z * delta.Z)
+            local tier = tierForDistance(dist)
+            local state = playerTierState[player.UserId]
+            if not state then
+                state = { tier = "none", lastFireAt = 0 }
+                playerTierState[player.UserId] = state
+            end
+            -- Always fire on tier change; otherwise rate-limit.
+            if state.tier ~= tier or (now - state.lastFireAt) >= BEAST_NEARBY_THROTTLE_SECONDS then
+                state.tier = tier
+                state.lastFireAt = now
+                BeastNearbyEvent:FireClient(player, tier)
+            end
+        end
+    end
 end
 
 -- Build a placeholder beast model. Studio art replaces this in a future
@@ -207,15 +299,34 @@ local function tick(beast, def)
         return
     end
 
+    -- Light repel check first. If a BeastRepel source is within
+    -- LightRetreat studs, walk directly away from it. This overrides
+    -- glimpse and stalk for this tick.
+    local repelSource, repelDist = findNearestBeastRepel(rootPart.Position, def.LightRetreat)
+    if repelSource then
+        local away = rootPart.Position - repelSource.Position
+        if away.Magnitude < 0.01 then
+            -- Beast is on top of the source; pick a random direction.
+            local angle = math.random() * math.pi * 2
+            away = Vector3.new(math.cos(angle), 0, math.sin(angle))
+        end
+        local retreatPoint = rootPart.Position + away.Unit * (def.LightRetreat + 10 - repelDist)
+        humanoid:MoveTo(retreatPoint)
+        broadcastNearbyTiers(rootPart.Position)
+        return
+    end
+
     -- If Stalking, possibly initiate a glimpse.
     if currentState == "Stalk" and os.clock() >= nextGlimpseAt then
         performGlimpse(beast, def)
+        broadcastNearbyTiers(rootPart.Position)
         return
     end
 
     if currentState == "Stalk" then
         local nearest, dist = findNearestPlayer(rootPart.Position)
         if not nearest then
+            broadcastNearbyTiers(rootPart.Position)
             return -- empty server; sit still
         end
 
@@ -231,6 +342,8 @@ local function tick(beast, def)
             end
         end
     end
+
+    broadcastNearbyTiers(rootPart.Position)
 end
 
 -- ── Spawn / despawn ───────────────────────────────────────────────────────
@@ -275,6 +388,14 @@ function BeastSystem.despawn()
         -- The thread checks Active and exits naturally.
         stateMachineThread = nil
     end
+
+    -- Tell every client that the beast is gone so audio clients can
+    -- stop their loops cleanly. Reset the per-player tier state.
+    for _, player in ipairs(Players:GetPlayers()) do
+        BeastNearbyEvent:FireClient(player, "none")
+    end
+    playerTierState = {}
+
     print("[BeastSystem] Beast retreats with the dawn.")
     active:Destroy()
 end
@@ -293,6 +414,12 @@ function BeastSystem.Init()
         else
             BeastSystem.despawn()
         end
+    end)
+
+    -- Forget per-player tier state when they leave so we don't leak
+    -- entries across reconnects.
+    Players.PlayerRemoving:Connect(function(player)
+        playerTierState[player.UserId] = nil
     end)
 
     print("[BeastSystem] Initialized. Awaiting nightfall.")
