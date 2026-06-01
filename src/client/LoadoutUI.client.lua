@@ -38,10 +38,18 @@ local function updateToggleState(isActive)
     toggleBtn.BackgroundColor3 = isActive and Color3.fromRGB(50, 50, 50) or Color3.fromRGB(30, 30, 30)
 end
 
-toggleBtn.MouseEnter:Connect(function() updateToggleState(true) end)
-toggleBtn.MouseLeave:Connect(function() updateToggleState(false) end)
-toggleBtn.SelectionGained:Connect(function() updateToggleState(true) end)
-toggleBtn.SelectionLost:Connect(function() updateToggleState(false) end)
+toggleBtn.MouseEnter:Connect(function()
+    updateToggleState(true)
+end)
+toggleBtn.MouseLeave:Connect(function()
+    updateToggleState(false)
+end)
+toggleBtn.SelectionGained:Connect(function()
+    updateToggleState(true)
+end)
+toggleBtn.SelectionLost:Connect(function()
+    updateToggleState(false)
+end)
 
 -- Container (hidden by default — toggle with Tab)
 local frame = Instance.new("Frame")
@@ -103,10 +111,18 @@ local function updateCloseState(isActive)
     closeTooltip.Visible = isActive
 end
 
-closeBtn.MouseEnter:Connect(function() updateCloseState(true) end)
-closeBtn.MouseLeave:Connect(function() updateCloseState(false) end)
-closeBtn.SelectionGained:Connect(function() updateCloseState(true) end)
-closeBtn.SelectionLost:Connect(function() updateCloseState(false) end)
+closeBtn.MouseEnter:Connect(function()
+    updateCloseState(true)
+end)
+closeBtn.MouseLeave:Connect(function()
+    updateCloseState(false)
+end)
+closeBtn.SelectionGained:Connect(function()
+    updateCloseState(true)
+end)
+closeBtn.SelectionLost:Connect(function()
+    updateCloseState(false)
+end)
 refreshContainer.BackgroundTransparency = 1
 refreshContainer.Parent = title
 
