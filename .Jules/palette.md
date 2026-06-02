@@ -42,3 +42,6 @@
 ## 2027-04-01 - Matchmaking Queue Visibility
 **Learning:** Players joining a matchmaking queue via an interactable object (like a Portal) often feel uncertain if their action registered when the feedback is limited to console prints or delayed teleports.
 **Action:** Always provide immediate, on-screen visual confirmation (like a toast notification) indicating successful queue entry and current queue size.
+## 2026-06-02 - UI Toggle Discoverability
+**Learning:** Core UI elements that lack explicit on-screen toggle buttons and rely entirely on keyboard shortcuts (like Tab) severely harm discoverability and exclude mobile/mouse-only users from accessing necessary functionality.
+**Action:** Always implement explicit, on-screen toggle buttons (e.g., "🎒 Loadout") and explicitly visible "Close" buttons inside panels to ensure universal accessibility.
