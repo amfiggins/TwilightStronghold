@@ -59,10 +59,18 @@ closeBtn.Font = Enum.Font.GothamBold
 closeBtn.TextSize = 18
 closeBtn.Parent = closeContainer
 
-closeBtn.MouseEnter:Connect(function() closeBtn.TextColor3 = Color3.fromRGB(255, 100, 100) end)
-closeBtn.MouseLeave:Connect(function() closeBtn.TextColor3 = Color3.fromRGB(200, 200, 200) end)
-closeBtn.SelectionGained:Connect(function() closeBtn.TextColor3 = Color3.fromRGB(255, 100, 100) end)
-closeBtn.SelectionLost:Connect(function() closeBtn.TextColor3 = Color3.fromRGB(200, 200, 200) end)
+closeBtn.MouseEnter:Connect(function()
+    closeBtn.TextColor3 = Color3.fromRGB(255, 100, 100)
+end)
+closeBtn.MouseLeave:Connect(function()
+    closeBtn.TextColor3 = Color3.fromRGB(200, 200, 200)
+end)
+closeBtn.SelectionGained:Connect(function()
+    closeBtn.TextColor3 = Color3.fromRGB(255, 100, 100)
+end)
+closeBtn.SelectionLost:Connect(function()
+    closeBtn.TextColor3 = Color3.fromRGB(200, 200, 200)
+end)
 
 closeBtn.MouseButton1Click:Connect(function()
     frame.Visible = false
@@ -456,10 +464,18 @@ openBtn.TextSize = 14
 openBtn.BorderSizePixel = 0
 openBtn.Parent = gui
 
-openBtn.MouseEnter:Connect(function() openBtn.BackgroundColor3 = Color3.fromRGB(50, 50, 50) end)
-openBtn.MouseLeave:Connect(function() openBtn.BackgroundColor3 = Color3.fromRGB(30, 30, 30) end)
-openBtn.SelectionGained:Connect(function() openBtn.BackgroundColor3 = Color3.fromRGB(50, 50, 50) end)
-openBtn.SelectionLost:Connect(function() openBtn.BackgroundColor3 = Color3.fromRGB(30, 30, 30) end)
+openBtn.MouseEnter:Connect(function()
+    openBtn.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+end)
+openBtn.MouseLeave:Connect(function()
+    openBtn.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+end)
+openBtn.SelectionGained:Connect(function()
+    openBtn.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+end)
+openBtn.SelectionLost:Connect(function()
+    openBtn.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+end)
 
 local function toggleLoadout()
     frame.Visible = not frame.Visible
