@@ -1,13 +1,7 @@
 {
     "luau-analyze": {
         "globals": [
-            "game",
-            "workspace",
-            "Instance",
-            "Vector3",
-            "CFrame",
             "UDim2",
-            "UDim",
             "Vector2",
             "script",
             "setmetatable",
@@ -29,14 +23,26 @@
             "TweenInfo",
             "RaycastParams",
             "os",
-            "HttpService",
-            "DataStoreService",
-            "ReplicatedStorage",
-            "Players",
-            "TeleportService",
-            "ProximityPromptService",
-            "TweenService",
-            "PathfindingService"
+            "game",
+            "workspace",
+            "Instance",
+            "Vector3",
+            "CFrame",
+            "RunService",
+            "ContextActionService",
+            "UserInputService",
+            "CollectionService",
+            "Lighting",
+            "SoundService",
+            "StarterGui",
+            "StarterPlayer",
+            "Debris",
+            "assert",
+            "error",
+            "coroutine",
+            "string",
+            "table",
+            "UDim"
         ]
     },
     "globals": [
@@ -80,6 +86,7 @@
         "error",
         "coroutine",
         "string",
-        "table"
+        "table",
+        "UDim"
     ]
 }

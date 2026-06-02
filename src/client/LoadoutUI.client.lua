@@ -39,11 +39,48 @@ title.TextColor3 = Color3.fromRGB(255, 255, 255)
 title.BorderSizePixel = 0
 title.Parent = frame
 
+-- Close Container (Micro-UX)
+local closeContainer = Instance.new("Frame")
+closeContainer.Name = "CloseContainer"
+closeContainer.Size = UDim2.new(0, 30, 1, 0)
+closeContainer.Position = UDim2.new(1, -30, 0, 0)
+closeContainer.BackgroundTransparency = 1
+closeContainer.Parent = title
+
+-- Close Button (Micro-UX)
+local closeBtn = Instance.new("TextButton")
+closeBtn.Text = "✕"
+closeBtn.Size = UDim2.fromScale(1, 1)
+closeBtn.Position = UDim2.fromScale(0.5, 0.5)
+closeBtn.AnchorPoint = Vector2.new(0.5, 0.5)
+closeBtn.BackgroundTransparency = 1
+closeBtn.TextColor3 = Color3.fromRGB(200, 200, 200)
+closeBtn.Font = Enum.Font.GothamBold
+closeBtn.TextSize = 18
+closeBtn.Parent = closeContainer
+
+closeBtn.MouseEnter:Connect(function()
+    closeBtn.TextColor3 = Color3.fromRGB(255, 100, 100)
+end)
+closeBtn.MouseLeave:Connect(function()
+    closeBtn.TextColor3 = Color3.fromRGB(200, 200, 200)
+end)
+closeBtn.SelectionGained:Connect(function()
+    closeBtn.TextColor3 = Color3.fromRGB(255, 100, 100)
+end)
+closeBtn.SelectionLost:Connect(function()
+    closeBtn.TextColor3 = Color3.fromRGB(200, 200, 200)
+end)
+
+closeBtn.MouseButton1Click:Connect(function()
+    frame.Visible = false
+end)
+
 -- Refresh Container (Micro-UX)
 local refreshContainer = Instance.new("Frame")
 refreshContainer.Name = "RefreshContainer"
 refreshContainer.Size = UDim2.new(0, 30, 1, 0)
-refreshContainer.Position = UDim2.new(1, -30, 0, 0)
+refreshContainer.Position = UDim2.new(1, -60, 0, 0)
 refreshContainer.BackgroundTransparency = 1
 refreshContainer.Parent = title
 
@@ -414,18 +451,48 @@ refreshBtn.MouseButton1Click:Connect(function()
     populateLoadout()
 end)
 
+-- Open Loadout Toggle Button (Micro-UX for discoverability)
+local openBtn = Instance.new("TextButton")
+openBtn.Name = "OpenLoadoutBtn"
+openBtn.Text = "🎒 Loadout"
+openBtn.Size = UDim2.fromOffset(120, 30)
+openBtn.Position = UDim2.new(1, -140, 0, 20)
+openBtn.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+openBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+openBtn.Font = Enum.Font.GothamBold
+openBtn.TextSize = 14
+openBtn.BorderSizePixel = 0
+openBtn.Parent = gui
+
+openBtn.MouseEnter:Connect(function()
+    openBtn.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+end)
+openBtn.MouseLeave:Connect(function()
+    openBtn.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+end)
+openBtn.SelectionGained:Connect(function()
+    openBtn.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+end)
+openBtn.SelectionLost:Connect(function()
+    openBtn.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+end)
+
+local function toggleLoadout()
+    frame.Visible = not frame.Visible
+    if frame.Visible and not isRefreshing then
+        task.spawn(populateLoadout)
+    end
+end
+
+openBtn.MouseButton1Click:Connect(toggleLoadout)
+
 -- Toggle visibility with Tab (keyboard) or DPad-Down (gamepad). BUG-17 fix.
 UserInputService.InputBegan:Connect(function(input, gameProcessedEvent)
     if gameProcessedEvent then
         return
     end
     if input.KeyCode == Enum.KeyCode.Tab or input.KeyCode == Enum.KeyCode.DPadDown then
-        frame.Visible = not frame.Visible
-        -- Populate on first open so we don't fetch data until the player
-        -- actually wants to see the loadout.
-        if frame.Visible and not isRefreshing then
-            task.spawn(populateLoadout)
-        end
+        toggleLoadout()
     end
 end)
 
