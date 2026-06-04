@@ -49,3 +49,6 @@
 ## 2027-05-01 - Minigame Success States
 **Learning:** Instantly removing the UI upon minigame success is jarring. Players need a brief moment to process the visual feedback of their success before the context shifts.
 **Action:** Always insert a short delay (e.g., 0.5s) and display a clear "Success" state (like text or color changes) before closing high-focus minigame UIs.
+## 2026-06-04 - Gamepad and Keyboard Accessibility
+**Learning:** For Roblox Luau UI accessibility, ensure interactive elements (like buttons) include `SelectionGained` and `SelectionLost` event handlers that mirror `MouseEnter` and `MouseLeave` visual state changes, providing necessary feedback for gamepad and keyboard navigation.
+**Action:** Always implement `SelectionGained` and `SelectionLost` alongside hover events for all interactive UI elements to maintain consistent accessibility.
