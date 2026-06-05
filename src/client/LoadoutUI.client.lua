@@ -425,7 +425,7 @@ end
 local closeBtn = Instance.new("TextButton")
 closeBtn.Text = "✕"
 closeBtn.Size = UDim2.fromOffset(30, 30)
-closeBtn.Position = UDim2.new(1, 0, 0, 0)
+closeBtn.Position = UDim2.fromScale(1, 0)
 closeBtn.AnchorPoint = Vector2.new(1, 0)
 closeBtn.BackgroundTransparency = 1
 closeBtn.TextColor3 = Color3.fromRGB(200, 200, 200)

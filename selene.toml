@@ -8,3 +8,4 @@ std = "roblox"
 global_usage = "allow"
 # StyLua handles formatting; selene doesn't need to flag mixed table types.
 mixed_table = "allow"
+incorrect_standard_library_use = "allow"
