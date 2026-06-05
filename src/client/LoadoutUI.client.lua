@@ -414,18 +414,85 @@ refreshBtn.MouseButton1Click:Connect(function()
     populateLoadout()
 end)
 
+local function toggleLoadout()
+    frame.Visible = not frame.Visible
+    if frame.Visible and not isRefreshing then
+        task.spawn(populateLoadout)
+    end
+end
+
+-- Close Button
+local closeBtn = Instance.new("TextButton")
+closeBtn.Text = "✕"
+closeBtn.Size = UDim2.fromOffset(30, 30)
+closeBtn.Position = UDim2.fromScale(1, 0)
+closeBtn.AnchorPoint = Vector2.new(1, 0)
+closeBtn.BackgroundTransparency = 1
+closeBtn.TextColor3 = Color3.fromRGB(200, 200, 200)
+closeBtn.Font = Enum.Font.GothamBold
+closeBtn.TextSize = 16
+closeBtn.Parent = title
+
+local function updateCloseState(isHovered)
+    closeBtn.TextColor3 = isHovered and Color3.fromRGB(255, 100, 100) or Color3.fromRGB(200, 200, 200)
+end
+
+closeBtn.MouseEnter:Connect(function()
+    updateCloseState(true)
+end)
+closeBtn.MouseLeave:Connect(function()
+    updateCloseState(false)
+end)
+closeBtn.SelectionGained:Connect(function()
+    updateCloseState(true)
+end)
+closeBtn.SelectionLost:Connect(function()
+    updateCloseState(false)
+end)
+closeBtn.MouseButton1Click:Connect(toggleLoadout)
+
+-- Open Button (Discoverability)
+local openBtn = Instance.new("TextButton")
+openBtn.Text = "🎒 Loadout"
+openBtn.Size = UDim2.fromOffset(120, 40)
+openBtn.Position = UDim2.new(1, -20, 1, -20)
+openBtn.AnchorPoint = Vector2.new(1, 1)
+openBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+openBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+openBtn.Font = Enum.Font.GothamBold
+openBtn.TextSize = 14
+openBtn.BorderSizePixel = 0
+openBtn.Parent = gui
+
+local openCorner = Instance.new("UICorner")
+openCorner.CornerRadius = UDim.new(0, 8)
+openCorner.Parent = openBtn
+
+local function updateOpenState(isHovered)
+    openBtn.BackgroundColor3 = isHovered and Color3.fromRGB(60, 60, 60) or Color3.fromRGB(40, 40, 40)
+end
+
+openBtn.MouseEnter:Connect(function()
+    updateOpenState(true)
+end)
+openBtn.MouseLeave:Connect(function()
+    updateOpenState(false)
+end)
+openBtn.SelectionGained:Connect(function()
+    updateOpenState(true)
+end)
+openBtn.SelectionLost:Connect(function()
+    updateOpenState(false)
+end)
+openBtn.MouseButton1Click:Connect(toggleLoadout)
+
 -- Toggle visibility with Tab (keyboard) or DPad-Down (gamepad). BUG-17 fix.
 UserInputService.InputBegan:Connect(function(input, gameProcessedEvent)
     if gameProcessedEvent then
         return
     end
     if input.KeyCode == Enum.KeyCode.Tab or input.KeyCode == Enum.KeyCode.DPadDown then
-        frame.Visible = not frame.Visible
-        -- Populate on first open so we don't fetch data until the player
-        -- actually wants to see the loadout.
-        if frame.Visible and not isRefreshing then
-            task.spawn(populateLoadout)
-        end
+        toggleLoadout()
     end
 end)
 

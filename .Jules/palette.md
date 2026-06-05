@@ -42,3 +42,7 @@
 ## 2027-04-01 - Matchmaking Queue Visibility
 **Learning:** Players joining a matchmaking queue via an interactable object (like a Portal) often feel uncertain if their action registered when the feedback is limited to console prints or delayed teleports.
 **Action:** Always provide immediate, on-screen visual confirmation (like a toast notification) indicating successful queue entry and current queue size.
+
+## 2024-06-05 - UI Panel Discoverability
+**Learning:** Core UI panels (like Loadouts or Inventories) that rely solely on keyboard shortcuts (e.g., Tab) for visibility are undiscoverable for mouse-only and mobile users, creating a significant accessibility barrier.
+**Action:** Always pair keyboard shortcuts with explicit, on-screen toggle buttons, and include clear "Close" buttons within the panels themselves to ensure universal discoverability.
