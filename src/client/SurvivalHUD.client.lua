@@ -148,7 +148,9 @@ timerLabel.Parent = topFrame
 local lastFillValues = {}
 local function setBarFill(fill, ratio)
     local clamped = math.clamp(ratio, 0, 1)
-    if lastFillValues[fill] == clamped then return end
+    if lastFillValues[fill] == clamped then
+        return
+    end
     lastFillValues[fill] = clamped
 
     TweenService:Create(fill, TweenInfo.new(0.2, Enum.EasingStyle.Quad), {
