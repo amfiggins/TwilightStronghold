@@ -22,6 +22,37 @@ gui.Name = "LoadoutUI"
 gui.ResetOnSpawn = false
 gui.Parent = player:WaitForChild("PlayerGui")
 
+-- Open Loadout Button (Micro-UX: Discoverability)
+local openBtn = Instance.new("TextButton")
+openBtn.Name = "OpenLoadoutBtn"
+openBtn.Text = "🎒 Loadout"
+openBtn.Size = UDim2.fromOffset(120, 40)
+openBtn.Position = UDim2.new(0.05, 0, 0.9, -50)
+openBtn.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+openBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+openBtn.Font = Enum.Font.GothamBold
+openBtn.TextSize = 16
+openBtn.BorderSizePixel = 0
+openBtn.Parent = gui
+
+-- Open Button Interaction states
+local function updateOpenBtnState(isActive)
+    openBtn.BackgroundColor3 = isActive and Color3.fromRGB(60, 60, 60) or Color3.fromRGB(30, 30, 30)
+end
+
+openBtn.MouseEnter:Connect(function()
+    updateOpenBtnState(true)
+end)
+openBtn.MouseLeave:Connect(function()
+    updateOpenBtnState(false)
+end)
+openBtn.SelectionGained:Connect(function()
+    updateOpenBtnState(true)
+end)
+openBtn.SelectionLost:Connect(function()
+    updateOpenBtnState(false)
+end)
+
 -- Container (hidden by default — toggle with Tab)
 local frame = Instance.new("Frame")
 frame.Size = UDim2.fromOffset(220, 350) -- Adjusted width for scrollbar
@@ -46,6 +77,43 @@ refreshContainer.Size = UDim2.new(0, 30, 1, 0)
 refreshContainer.Position = UDim2.new(1, -30, 0, 0)
 refreshContainer.BackgroundTransparency = 1
 refreshContainer.Parent = title
+
+-- Close Container (Micro-UX)
+local closeContainer = Instance.new("Frame")
+closeContainer.Name = "CloseContainer"
+closeContainer.Size = UDim2.new(0, 30, 1, 0)
+closeContainer.Position = UDim2.new(1, -60, 0, 0)
+closeContainer.BackgroundTransparency = 1
+closeContainer.Parent = title
+
+-- Close Button (Micro-UX: Discoverability)
+local closeBtn = Instance.new("TextButton")
+closeBtn.Text = "X"
+closeBtn.Size = UDim2.fromScale(1, 1)
+closeBtn.Position = UDim2.fromScale(0.5, 0.5)
+closeBtn.AnchorPoint = Vector2.new(0.5, 0.5)
+closeBtn.BackgroundTransparency = 1
+closeBtn.TextColor3 = Color3.fromRGB(200, 200, 200)
+closeBtn.Font = Enum.Font.GothamBold
+closeBtn.TextSize = 18
+closeBtn.Parent = closeContainer
+
+local function updateCloseState(isActive)
+    closeBtn.TextColor3 = isActive and Color3.fromRGB(255, 100, 100) or Color3.fromRGB(200, 200, 200)
+end
+
+closeBtn.MouseEnter:Connect(function()
+    updateCloseState(true)
+end)
+closeBtn.MouseLeave:Connect(function()
+    updateCloseState(false)
+end)
+closeBtn.SelectionGained:Connect(function()
+    updateCloseState(true)
+end)
+closeBtn.SelectionLost:Connect(function()
+    updateCloseState(false)
+end)
 
 -- Refresh Button (Micro-UX)
 local refreshBtn = Instance.new("TextButton")
@@ -414,18 +482,25 @@ refreshBtn.MouseButton1Click:Connect(function()
     populateLoadout()
 end)
 
+local function toggleLoadout()
+    frame.Visible = not frame.Visible
+    if frame.Visible and not isRefreshing then
+        task.spawn(populateLoadout)
+    end
+end
+
+openBtn.MouseButton1Click:Connect(toggleLoadout)
+closeBtn.MouseButton1Click:Connect(function()
+    frame.Visible = false
+end)
+
 -- Toggle visibility with Tab (keyboard) or DPad-Down (gamepad). BUG-17 fix.
 UserInputService.InputBegan:Connect(function(input, gameProcessedEvent)
     if gameProcessedEvent then
         return
     end
     if input.KeyCode == Enum.KeyCode.Tab or input.KeyCode == Enum.KeyCode.DPadDown then
-        frame.Visible = not frame.Visible
-        -- Populate on first open so we don't fetch data until the player
-        -- actually wants to see the loadout.
-        if frame.Visible and not isRefreshing then
-            task.spawn(populateLoadout)
-        end
+        toggleLoadout()
     end
 end)
 
