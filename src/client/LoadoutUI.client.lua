@@ -47,66 +47,6 @@ refreshContainer.Position = UDim2.new(1, -30, 0, 0)
 refreshContainer.BackgroundTransparency = 1
 refreshContainer.Parent = title
 
--- Close Button (Accessibility)
-local closeBtn = Instance.new("TextButton")
-closeBtn.Name = "CloseBtn"
-closeBtn.Text = "X"
-closeBtn.Size = UDim2.new(0, 30, 0, 30)
-closeBtn.Position = UDim2.new(1, -30, 0, 0)
-closeBtn.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
-closeBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-closeBtn.BorderSizePixel = 0
-closeBtn.Font = Enum.Font.GothamBold
-closeBtn.TextSize = 14
-closeBtn.Parent = frame
-
--- Toggle Button (Always visible on screen for mouse/mobile accessibility)
-local toggleBtn = Instance.new("TextButton")
-toggleBtn.Name = "LoadoutToggle"
-toggleBtn.Text = "🎒 Loadout"
-toggleBtn.Size = UDim2.fromOffset(120, 40)
-toggleBtn.Position = UDim2.new(0.05, 0, 0.9, -50)
-toggleBtn.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-toggleBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-toggleBtn.BorderSizePixel = 0
-toggleBtn.Font = Enum.Font.GothamBold
-toggleBtn.TextSize = 14
-toggleBtn.Parent = gui
-
-local function updateCloseBtnState(isHovered)
-    closeBtn.BackgroundColor3 = isHovered and Color3.fromRGB(220, 70, 70) or Color3.fromRGB(200, 50, 50)
-end
-
-closeBtn.MouseEnter:Connect(function()
-    updateCloseBtnState(true)
-end)
-closeBtn.MouseLeave:Connect(function()
-    updateCloseBtnState(false)
-end)
-closeBtn.SelectionGained:Connect(function()
-    updateCloseBtnState(true)
-end)
-closeBtn.SelectionLost:Connect(function()
-    updateCloseBtnState(false)
-end)
-
-local function updateToggleBtnState(isHovered)
-    toggleBtn.BackgroundColor3 = isHovered and Color3.fromRGB(50, 50, 50) or Color3.fromRGB(30, 30, 30)
-end
-
-toggleBtn.MouseEnter:Connect(function()
-    updateToggleBtnState(true)
-end)
-toggleBtn.MouseLeave:Connect(function()
-    updateToggleBtnState(false)
-end)
-toggleBtn.SelectionGained:Connect(function()
-    updateToggleBtnState(true)
-end)
-toggleBtn.SelectionLost:Connect(function()
-    updateToggleBtnState(false)
-end)
-
 -- Refresh Button (Micro-UX)
 local refreshBtn = Instance.new("TextButton")
 refreshBtn.Text = "↻"
@@ -176,6 +116,17 @@ padding.PaddingLeft = UDim.new(0, 10)
 padding.PaddingRight = UDim.new(0, 10)
 padding.PaddingBottom = UDim.new(0, 10)
 padding.Parent = listContainer
+
+-- Micro-UX: Keyboard shortcut hint
+local shortcutHint = Instance.new("TextLabel")
+shortcutHint.Text = "Press Tab or DPad-Down to toggle"
+shortcutHint.Size = UDim2.fromOffset(220, 15)
+shortcutHint.Position = UDim2.fromScale(0, 1)
+shortcutHint.BackgroundTransparency = 1
+shortcutHint.TextColor3 = Color3.fromRGB(150, 150, 150)
+shortcutHint.Font = Enum.Font.SourceSansItalic
+shortcutHint.TextSize = 12
+shortcutHint.Parent = frame
 
 -- Helper: Toast Notification
 local function showToast(text)
@@ -474,28 +425,19 @@ refreshBtn.MouseButton1Click:Connect(function()
     populateLoadout()
 end)
 
-local function toggleLoadout()
-    frame.Visible = not frame.Visible
-    if frame.Visible and not isRefreshing then
-        task.spawn(populateLoadout)
-    end
-end
-
 -- Toggle visibility with Tab (keyboard) or DPad-Down (gamepad). BUG-17 fix.
 UserInputService.InputBegan:Connect(function(input, gameProcessedEvent)
     if gameProcessedEvent then
         return
     end
     if input.KeyCode == Enum.KeyCode.Tab or input.KeyCode == Enum.KeyCode.DPadDown then
-        toggleLoadout()
+        frame.Visible = not frame.Visible
+        -- Populate on first open so we don't fetch data until the player
+        -- actually wants to see the loadout.
+        if frame.Visible and not isRefreshing then
+            task.spawn(populateLoadout)
+        end
     end
 end)
-
--- Accessible close/toggle button handlers
-closeBtn.MouseButton1Click:Connect(function()
-    frame.Visible = false
-end)
-
-toggleBtn.MouseButton1Click:Connect(toggleLoadout)
 
 -- Do NOT auto-populate on startup — wait for the player to open the panel.
