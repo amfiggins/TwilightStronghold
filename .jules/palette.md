@@ -49,3 +49,6 @@
 ## 2027-05-01 - Minigame Success States
 **Learning:** Instantly removing the UI upon minigame success is jarring. Players need a brief moment to process the visual feedback of their success before the context shifts.
 **Action:** Always insert a short delay (e.g., 0.5s) and display a clear "Success" state (like text or color changes) before closing high-focus minigame UIs.
+## 2026-06-11 - Add explicitly accessible Close and Toggle buttons
+**Learning:** For Roblox Luau UI accessibility, relying solely on keyboard shortcuts (like Tab) for visibility toggling is insufficient. Interactive core elements like loadouts must provide explicit, on-screen toggle and close buttons to ensure discoverability and accessibility for mouse-only and mobile users. Additionally, ensuring interactive elements include `SelectionGained` and `SelectionLost` handlers that mirror `MouseEnter` and `MouseLeave` provides necessary visual feedback for gamepad and keyboard navigation.
+**Action:** When designing or updating core UI elements, always include an explicit on-screen toggle button with a clear visual state, and a clear 'Close' button within the panel. Ensure all interactive buttons map `SelectionGained`/`SelectionLost` to their hover state logic for full input parity.
