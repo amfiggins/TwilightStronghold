@@ -33,7 +33,7 @@ frame.Parent = gui
 -- Title
 local title = Instance.new("TextLabel")
 title.Text = "Loadout (Meta-Link)"
-title.Size = UDim2.new(1, -60, 0, 30)
+title.Size = UDim2.new(1, -30, 0, 30)
 title.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 title.TextColor3 = Color3.fromRGB(255, 255, 255)
 title.BorderSizePixel = 0
@@ -42,65 +42,10 @@ title.Parent = frame
 -- Refresh Container (Micro-UX)
 local refreshContainer = Instance.new("Frame")
 refreshContainer.Name = "RefreshContainer"
-refreshContainer.Size = UDim2.new(0, 30, 0, 30)
-refreshContainer.Position = UDim2.new(1, -60, 0, 0)
+refreshContainer.Size = UDim2.new(0, 30, 1, 0)
+refreshContainer.Position = UDim2.new(1, -30, 0, 0)
 refreshContainer.BackgroundTransparency = 1
-refreshContainer.Parent = frame
-
--- Close Container
-local closeContainer = Instance.new("Frame")
-closeContainer.Name = "CloseContainer"
-closeContainer.Size = UDim2.new(0, 30, 0, 30)
-closeContainer.Position = UDim2.new(1, -30, 0, 0)
-closeContainer.BackgroundTransparency = 1
-closeContainer.Parent = frame
-
-local closeBtn = Instance.new("TextButton")
-closeBtn.Text = "X"
-closeBtn.Size = UDim2.fromScale(1, 1)
-closeBtn.Position = UDim2.fromScale(0.5, 0.5)
-closeBtn.AnchorPoint = Vector2.new(0.5, 0.5)
-closeBtn.BackgroundTransparency = 1
-closeBtn.TextColor3 = Color3.fromRGB(200, 200, 200)
-closeBtn.Font = Enum.Font.GothamBold
-closeBtn.TextSize = 16
-closeBtn.Parent = closeContainer
-
-local closeTooltip = Instance.new("TextLabel")
-closeTooltip.Text = "Close"
-closeTooltip.Size = UDim2.fromOffset(60, 24)
-closeTooltip.AnchorPoint = Vector2.new(1, 0)
-closeTooltip.Position = UDim2.new(1, 0, -1, -5)
-closeTooltip.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-closeTooltip.TextColor3 = Color3.fromRGB(255, 255, 255)
-closeTooltip.BorderSizePixel = 0
-closeTooltip.Font = Enum.Font.SourceSans
-closeTooltip.TextSize = 12
-closeTooltip.Visible = false
-closeTooltip.ZIndex = 10
-closeTooltip.Parent = closeContainer
-
-local function updateCloseState(isActive)
-    closeBtn.TextColor3 = isActive and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(200, 200, 200)
-    closeTooltip.Visible = isActive
-end
-
-closeBtn.MouseEnter:Connect(function()
-    updateCloseState(true)
-end)
-closeBtn.MouseLeave:Connect(function()
-    updateCloseState(false)
-end)
-closeBtn.SelectionGained:Connect(function()
-    updateCloseState(true)
-end)
-closeBtn.SelectionLost:Connect(function()
-    updateCloseState(false)
-end)
-
-closeBtn.MouseButton1Click:Connect(function()
-    frame.Visible = false
-end)
+refreshContainer.Parent = title
 
 -- Refresh Button (Micro-UX)
 local refreshBtn = Instance.new("TextButton")
@@ -467,48 +412,6 @@ refreshBtn.MouseButton1Click:Connect(function()
     end)
 
     populateLoadout()
-end)
-
--- Open Loadout Toggle Button (always visible)
-local openToggleBtn = Instance.new("TextButton")
-openToggleBtn.Name = "OpenLoadoutBtn"
-openToggleBtn.Text = "🎒 Loadout"
-openToggleBtn.Size = UDim2.fromOffset(100, 36)
-openToggleBtn.Position = UDim2.new(0, 12, 0.5, 0) -- Left side, vertically centered
-openToggleBtn.AnchorPoint = Vector2.new(0, 0.5)
-openToggleBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-openToggleBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-openToggleBtn.Font = Enum.Font.GothamBold
-openToggleBtn.TextSize = 14
-openToggleBtn.BorderSizePixel = 0
-openToggleBtn.Parent = gui
-
-local openToggleCorner = Instance.new("UICorner")
-openToggleCorner.CornerRadius = UDim.new(0, 6)
-openToggleCorner.Parent = openToggleBtn
-
-local function updateOpenToggleState(isActive)
-    openToggleBtn.BackgroundColor3 = isActive and Color3.fromRGB(60, 60, 60) or Color3.fromRGB(40, 40, 40)
-end
-
-openToggleBtn.MouseEnter:Connect(function()
-    updateOpenToggleState(true)
-end)
-openToggleBtn.MouseLeave:Connect(function()
-    updateOpenToggleState(false)
-end)
-openToggleBtn.SelectionGained:Connect(function()
-    updateOpenToggleState(true)
-end)
-openToggleBtn.SelectionLost:Connect(function()
-    updateOpenToggleState(false)
-end)
-
-openToggleBtn.MouseButton1Click:Connect(function()
-    frame.Visible = not frame.Visible
-    if frame.Visible and not isRefreshing then
-        task.spawn(populateLoadout)
-    end
 end)
 
 -- Toggle visibility with Tab (keyboard) or DPad-Down (gamepad). BUG-17 fix.

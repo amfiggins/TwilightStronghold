@@ -127,20 +127,6 @@ local function openSelector(plot)
     closeBtn.TextSize = 18
     closeBtn.Text = "✕"
     closeBtn.Parent = frame
-
-    closeBtn.MouseEnter:Connect(function()
-        closeBtn.TextColor3 = Color3.fromRGB(200, 200, 200)
-    end)
-    closeBtn.MouseLeave:Connect(function()
-        closeBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    end)
-    closeBtn.SelectionGained:Connect(function()
-        closeBtn.TextColor3 = Color3.fromRGB(200, 200, 200)
-    end)
-    closeBtn.SelectionLost:Connect(function()
-        closeBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    end)
-
     closeBtn.MouseButton1Click:Connect(closeSelector)
 
     -- Scroll list
