@@ -49,3 +49,7 @@
 ## 2027-05-01 - Minigame Success States
 **Learning:** Instantly removing the UI upon minigame success is jarring. Players need a brief moment to process the visual feedback of their success before the context shifts.
 **Action:** Always insert a short delay (e.g., 0.5s) and display a clear "Success" state (like text or color changes) before closing high-focus minigame UIs.
+
+## 2023-10-25 - Explicit UI Toggles for Core Systems
+**Learning:** Core systems like Loadout UI were relying exclusively on keyboard/gamepad shortcuts (Tab/DPad-Down) for discoverability, effectively hiding them from mouse-only and mobile users. Interactive elements also lacked critical SelectionGained/SelectionLost handlers for gamepad accessibility.
+**Action:** Always provide explicit, persistent on-screen toggles for critical UI panels, include clear 'Close' buttons, and strictly bind SelectionGained/SelectionLost events to mirror MouseEnter/MouseLeave visual feedback for unified accessibility.
