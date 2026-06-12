@@ -85,10 +85,18 @@ local function updateCloseState(isActive)
     closeTooltip.Visible = isActive
 end
 
-closeBtn.MouseEnter:Connect(function() updateCloseState(true) end)
-closeBtn.MouseLeave:Connect(function() updateCloseState(false) end)
-closeBtn.SelectionGained:Connect(function() updateCloseState(true) end)
-closeBtn.SelectionLost:Connect(function() updateCloseState(false) end)
+closeBtn.MouseEnter:Connect(function()
+    updateCloseState(true)
+end)
+closeBtn.MouseLeave:Connect(function()
+    updateCloseState(false)
+end)
+closeBtn.SelectionGained:Connect(function()
+    updateCloseState(true)
+end)
+closeBtn.SelectionLost:Connect(function()
+    updateCloseState(false)
+end)
 
 closeBtn.MouseButton1Click:Connect(function()
     frame.Visible = false
@@ -483,10 +491,18 @@ local function updateOpenToggleState(isActive)
     openToggleBtn.BackgroundColor3 = isActive and Color3.fromRGB(60, 60, 60) or Color3.fromRGB(40, 40, 40)
 end
 
-openToggleBtn.MouseEnter:Connect(function() updateOpenToggleState(true) end)
-openToggleBtn.MouseLeave:Connect(function() updateOpenToggleState(false) end)
-openToggleBtn.SelectionGained:Connect(function() updateOpenToggleState(true) end)
-openToggleBtn.SelectionLost:Connect(function() updateOpenToggleState(false) end)
+openToggleBtn.MouseEnter:Connect(function()
+    updateOpenToggleState(true)
+end)
+openToggleBtn.MouseLeave:Connect(function()
+    updateOpenToggleState(false)
+end)
+openToggleBtn.SelectionGained:Connect(function()
+    updateOpenToggleState(true)
+end)
+openToggleBtn.SelectionLost:Connect(function()
+    updateOpenToggleState(false)
+end)
 
 openToggleBtn.MouseButton1Click:Connect(function()
     frame.Visible = not frame.Visible
