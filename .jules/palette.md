@@ -49,3 +49,7 @@
 ## 2027-05-01 - Minigame Success States
 **Learning:** Instantly removing the UI upon minigame success is jarring. Players need a brief moment to process the visual feedback of their success before the context shifts.
 **Action:** Always insert a short delay (e.g., 0.5s) and display a clear "Success" state (like text or color changes) before closing high-focus minigame UIs.
+
+## 2026-06-13 - Universal Gamepad Accessibility
+**Learning:** Roblox UI elements (like dynamic buttons in scrolling lists or popup close buttons) often lack gamepad-specific hover equivalents, leading to invisible selections. Relying solely on `MouseEnter` or ignoring simple interactive elements limits accessibility.
+**Action:** Always implement `SelectionGained` and `SelectionLost` handlers that mirror standard hover visual updates for all interactable UI elements, including close buttons and dynamically generated list items.
