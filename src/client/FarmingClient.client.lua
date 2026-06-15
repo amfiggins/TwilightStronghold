@@ -132,10 +132,18 @@ local function openSelector(plot)
         closeBtn.TextColor3 = isHovered and Color3.fromRGB(255, 100, 100) or Color3.fromRGB(255, 255, 255)
     end
 
-    closeBtn.MouseEnter:Connect(function() updateCloseBtnState(true) end)
-    closeBtn.MouseLeave:Connect(function() updateCloseBtnState(false) end)
-    closeBtn.SelectionGained:Connect(function() updateCloseBtnState(true) end)
-    closeBtn.SelectionLost:Connect(function() updateCloseBtnState(false) end)
+    closeBtn.MouseEnter:Connect(function()
+        updateCloseBtnState(true)
+    end)
+    closeBtn.MouseLeave:Connect(function()
+        updateCloseBtnState(false)
+    end)
+    closeBtn.SelectionGained:Connect(function()
+        updateCloseBtnState(true)
+    end)
+    closeBtn.SelectionLost:Connect(function()
+        updateCloseBtnState(false)
+    end)
 
     closeBtn.MouseButton1Click:Connect(closeSelector)
 
