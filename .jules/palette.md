@@ -49,3 +49,7 @@
 ## 2027-05-01 - Minigame Success States
 **Learning:** Instantly removing the UI upon minigame success is jarring. Players need a brief moment to process the visual feedback of their success before the context shifts.
 **Action:** Always insert a short delay (e.g., 0.5s) and display a clear "Success" state (like text or color changes) before closing high-focus minigame UIs.
+
+## 2027-05-15 - Urgency Indicators for Timers
+**Learning:** Static countdown timers fail to effectively draw user attention when critical phase transitions (like day turning to night) are imminent, leading to player unpreparedness.
+**Action:** Always implement a visual urgency cue (like a color pulse) during the final moments of a critical timer to passively alert the user without interrupting gameplay.
