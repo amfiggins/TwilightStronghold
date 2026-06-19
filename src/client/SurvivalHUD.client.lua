@@ -229,17 +229,29 @@ if Day150ReachedEvent then
 end
 
 -- ── RenderStepped: health bar + timer countdown ───────────────────────────
+local lastHealthRatio = -1
+local lastTimeText = ""
+
+-- ⚡ Bolt: Cache UI state to prevent TweenService garbage collection and Lua-C string property overhead on every frame
 RunService.RenderStepped:Connect(function(dt)
     -- Health bar
     local character = player.Character
     local humanoid = character and character:FindFirstChildOfClass("Humanoid")
     if humanoid then
-        setBarFill(healthFill, humanoid.Health / math.max(1, humanoid.MaxHealth))
+        local ratio = humanoid.Health / math.max(1, humanoid.MaxHealth)
+        if ratio ~= lastHealthRatio then
+            lastHealthRatio = ratio
+            setBarFill(healthFill, ratio)
+        end
     end
 
     -- Countdown (client-side interpolation between server ticks)
     phaseState.timeRemaining = math.max(0, phaseState.timeRemaining - dt)
-    timerLabel.Text = formatTime(phaseState.timeRemaining)
+    local newTimeText = formatTime(phaseState.timeRemaining)
+    if newTimeText ~= lastTimeText then
+        lastTimeText = newTimeText
+        timerLabel.Text = newTimeText
+    end
 end)
 
 print("[SurvivalHUD] Initialized.")
