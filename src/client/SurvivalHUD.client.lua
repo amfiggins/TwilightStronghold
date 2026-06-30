@@ -145,8 +145,16 @@ timerLabel.Text = "5:00"
 timerLabel.Parent = topFrame
 
 -- ── Update helpers ────────────────────────────────────────────────────────
+-- ⚡ Bolt: Cache target scales to prevent unnecessary TweenService:Create allocations every frame
+local barTargetScales = {}
+
 local function setBarFill(fill, ratio)
     local clamped = math.clamp(ratio, 0, 1)
+    if barTargetScales[fill] == clamped then
+        return
+    end
+    barTargetScales[fill] = clamped
+
     TweenService:Create(fill, TweenInfo.new(0.2, Enum.EasingStyle.Quad), {
         Size = UDim2.fromScale(clamped, 1),
     }):Play()
@@ -239,7 +247,12 @@ RunService.RenderStepped:Connect(function(dt)
 
     -- Countdown (client-side interpolation between server ticks)
     phaseState.timeRemaining = math.max(0, phaseState.timeRemaining - dt)
-    timerLabel.Text = formatTime(phaseState.timeRemaining)
+
+    -- ⚡ Bolt: Only update Text property when the formatted string actually changes to reduce string allocations and layout recalcs
+    local newTimeText = formatTime(phaseState.timeRemaining)
+    if timerLabel.Text ~= newTimeText then
+        timerLabel.Text = newTimeText
+    end
 end)
 
 print("[SurvivalHUD] Initialized.")

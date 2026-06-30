@@ -13,3 +13,7 @@
 ## 2024-05-26 - GetConnectedGamepads Allocation Overhead
 **Learning:** Calling `UserInputService:GetConnectedGamepads()` repeatedly (e.g., inside a `RenderStepped` loop) allocates a new table on every invocation, causing unnecessary garbage collection pressure and stuttering in high-frequency loops.
 **Action:** Always maintain a module-level cached list of gamepads using the `GamepadConnected` and `GamepadDisconnected` events instead of polling `GetConnectedGamepads()` every frame.
+
+## 2024-06-30 - RenderStepped UI Update Overheads
+**Learning:** Unconditionally calling `TweenService:Create` or updating string properties (like `TextLabel.Text`) inside high-frequency per-frame loops like `RenderStepped` causes severe garbage collection and Lua-C boundary overhead, as well as layout recalculations.
+**Action:** Always cache previous state values (e.g., target UI scales or formatted text) and conditionally gate UI property updates so they only execute when the value actually changes.
