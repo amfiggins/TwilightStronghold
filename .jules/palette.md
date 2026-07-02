@@ -49,3 +49,7 @@
 ## 2027-05-01 - Minigame Success States
 **Learning:** Instantly removing the UI upon minigame success is jarring. Players need a brief moment to process the visual feedback of their success before the context shifts.
 **Action:** Always insert a short delay (e.g., 0.5s) and display a clear "Success" state (like text or color changes) before closing high-focus minigame UIs.
+
+## 2027-07-02 - Farming UI Interactions
+**Learning:** Roblox UI lists lack inherent visual feedback for non-mouse interactions like keyboard/gamepad navigation. If `SelectionGained`/`SelectionLost` aren't implemented to mirror `MouseEnter`/`MouseLeave` states, players using those input methods receive no indication of what is focused.
+**Action:** Always implement explicit selection tracking and state updates for custom UI elements to support full accessibility across all inputs.
