@@ -131,7 +131,8 @@ local function openSelector(plot)
     local closeIsHovered = false
     local closeIsSelected = false
     local function updateCloseBtnState()
-        closeBtn.TextColor3 = (closeIsHovered or closeIsSelected) and Color3.fromRGB(255, 100, 100) or Color3.fromRGB(255, 255, 255)
+        closeBtn.TextColor3 = (closeIsHovered or closeIsSelected) and Color3.fromRGB(255, 100, 100)
+            or Color3.fromRGB(255, 255, 255)
     end
 
     closeBtn.MouseEnter:Connect(function()
@@ -207,7 +208,8 @@ local function openSelector(plot)
             local isHovered = false
             local isSelected = false
             local function updateBtnState()
-                btn.BackgroundColor3 = (isHovered or isSelected) and Color3.fromRGB(80, 100, 80) or Color3.fromRGB(60, 60, 60)
+                btn.BackgroundColor3 = (isHovered or isSelected) and Color3.fromRGB(80, 100, 80)
+                    or Color3.fromRGB(60, 60, 60)
             end
             btn.MouseEnter:Connect(function()
                 isHovered = true
