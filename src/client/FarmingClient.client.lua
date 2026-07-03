@@ -127,6 +127,30 @@ local function openSelector(plot)
     closeBtn.TextSize = 18
     closeBtn.Text = "✕"
     closeBtn.Parent = frame
+
+    local closeIsHovered = false
+    local closeIsSelected = false
+    local function updateCloseBtnState()
+        closeBtn.TextColor3 = (closeIsHovered or closeIsSelected) and Color3.fromRGB(255, 100, 100) or Color3.fromRGB(255, 255, 255)
+    end
+
+    closeBtn.MouseEnter:Connect(function()
+        closeIsHovered = true
+        updateCloseBtnState()
+    end)
+    closeBtn.MouseLeave:Connect(function()
+        closeIsHovered = false
+        updateCloseBtnState()
+    end)
+    closeBtn.SelectionGained:Connect(function()
+        closeIsSelected = true
+        updateCloseBtnState()
+    end)
+    closeBtn.SelectionLost:Connect(function()
+        closeIsSelected = false
+        updateCloseBtnState()
+    end)
+
     closeBtn.MouseButton1Click:Connect(closeSelector)
 
     -- Scroll list
@@ -180,11 +204,26 @@ local function openSelector(plot)
             btnCorner.CornerRadius = UDim.new(0, 6)
             btnCorner.Parent = btn
 
+            local isHovered = false
+            local isSelected = false
+            local function updateBtnState()
+                btn.BackgroundColor3 = (isHovered or isSelected) and Color3.fromRGB(80, 100, 80) or Color3.fromRGB(60, 60, 60)
+            end
             btn.MouseEnter:Connect(function()
-                btn.BackgroundColor3 = Color3.fromRGB(80, 100, 80)
+                isHovered = true
+                updateBtnState()
             end)
             btn.MouseLeave:Connect(function()
-                btn.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+                isHovered = false
+                updateBtnState()
+            end)
+            btn.SelectionGained:Connect(function()
+                isSelected = true
+                updateBtnState()
+            end)
+            btn.SelectionLost:Connect(function()
+                isSelected = false
+                updateBtnState()
             end)
             btn.MouseButton1Click:Connect(function()
                 PlantSeedEvent:FireServer(plot, seed.itemId)
