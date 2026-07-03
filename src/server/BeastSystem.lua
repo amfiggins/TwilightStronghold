@@ -33,6 +33,21 @@ local BeastDatabase = require(ReplicatedStorage.Shared.BeastDatabase)
 
 local BeastSystem = {}
 
+-- ⚡ Bolt: Cache player list to avoid Players:GetPlayers() allocation overhead per AI tick
+local activePlayers = {}
+for _, player in ipairs(Players:GetPlayers()) do
+    table.insert(activePlayers, player)
+end
+Players.PlayerAdded:Connect(function(player)
+    table.insert(activePlayers, player)
+end)
+Players.PlayerRemoving:Connect(function(player)
+    local idx = table.find(activePlayers, player)
+    if idx then
+        table.remove(activePlayers, idx)
+    end
+end)
+
 -- ── Config ────────────────────────────────────────────────────────────────
 -- Default beast key when MapManager doesn't tell us a biome (e.g., the
 -- default flat baseplate playtest setup). Phase 4 ships with Wendigo only.
@@ -66,14 +81,15 @@ local GLIMPSE_TRANSPARENCY = 0.7
 --   "none"     >100   studs : silence (also fired when night ends)
 local BEAST_NEARBY_THROTTLE_SECONDS = 0.5
 
-local function tierForDistance(d)
-    if d <= 15 then
+-- ⚡ Bolt: Use squared distance checks to avoid math.sqrt in AI loops
+local function tierForDistanceSq(dSq)
+    if dSq <= 225 then -- 15^2
         return "growl"
-    elseif d <= 30 then
+    elseif dSq <= 900 then -- 30^2
         return "breathing"
-    elseif d <= 50 then
+    elseif dSq <= 2500 then -- 50^2
         return "footstep"
-    elseif d <= 100 then
+    elseif dSq <= 10000 then -- 100^2
         return "far"
     else
         return "none"
@@ -105,7 +121,7 @@ end
 local function findNearestPlayer(position)
     local nearest = nil
     local minSq = math.huge
-    for _, player in ipairs(Players:GetPlayers()) do
+    for _, player in ipairs(activePlayers) do
         local character = player.Character
         local rootPart = character and character.PrimaryPart
         if rootPart then
@@ -117,7 +133,7 @@ local function findNearestPlayer(position)
             end
         end
     end
-    return nearest, math.sqrt(minSq)
+    return nearest, minSq -- ⚡ Bolt: Returning squared distance to skip math.sqrt
 end
 
 -- Find the nearest BasePart with the BeastRepel attribute (set to true)
@@ -145,7 +161,7 @@ local function findNearestBeastRepel(position, radius)
         end
     end
     if nearest then
-        return nearest, math.sqrt(minSq)
+        return nearest, minSq -- ⚡ Bolt: Return squared distance
     end
     return nil, math.huge
 end
@@ -154,13 +170,13 @@ end
 -- so a wandering beast doesn't spam tier transitions.
 local function broadcastNearbyTiers(beastPos)
     local now = os.clock()
-    for _, player in ipairs(Players:GetPlayers()) do
+    for _, player in ipairs(activePlayers) do
         local character = player.Character
         local rootPart = character and character.PrimaryPart
         if rootPart then
             local delta = rootPart.Position - beastPos
-            local dist = math.sqrt(delta.X * delta.X + delta.Y * delta.Y + delta.Z * delta.Z)
-            local tier = tierForDistance(dist)
+            local distSq = delta.X * delta.X + delta.Y * delta.Y + delta.Z * delta.Z
+            local tier = tierForDistanceSq(distSq)
             local state = playerTierState[player.UserId]
             if not state then
                 state = { tier = "none", lastFireAt = 0 }
@@ -302,7 +318,7 @@ local function tick(beast, def)
     -- Light repel check first. If a BeastRepel source is within
     -- LightRetreat studs, walk directly away from it. This overrides
     -- glimpse and stalk for this tick.
-    local repelSource, repelDist = findNearestBeastRepel(rootPart.Position, def.LightRetreat)
+    local repelSource, repelDistSq = findNearestBeastRepel(rootPart.Position, def.LightRetreat)
     if repelSource then
         local away = rootPart.Position - repelSource.Position
         if away.Magnitude < 0.01 then
@@ -310,6 +326,8 @@ local function tick(beast, def)
             local angle = math.random() * math.pi * 2
             away = Vector3.new(math.cos(angle), 0, math.sin(angle))
         end
+        -- ⚡ Bolt: Use math.sqrt only when necessary for vector math
+        local repelDist = math.sqrt(repelDistSq)
         local retreatPoint = rootPart.Position + away.Unit * (def.LightRetreat + 10 - repelDist)
         humanoid:MoveTo(retreatPoint)
         broadcastNearbyTiers(rootPart.Position)
@@ -324,7 +342,7 @@ local function tick(beast, def)
     end
 
     if currentState == "Stalk" then
-        local nearest, dist = findNearestPlayer(rootPart.Position)
+        local nearest, distSq = findNearestPlayer(rootPart.Position)
         if not nearest then
             broadcastNearbyTiers(rootPart.Position)
             return -- empty server; sit still
@@ -334,7 +352,10 @@ local function tick(beast, def)
         -- If inside the band, only re-target ~30% of the time so the beast
         -- doesn't twitch on every tick — gives a more menacing 'pacing'
         -- feel.
-        local mustMove = dist < def.StalkRangeMin or dist > def.StalkRangeMax
+        -- ⚡ Bolt: Using squared comparison to avoid math.sqrt
+        local minSq = def.StalkRangeMin * def.StalkRangeMin
+        local maxSq = def.StalkRangeMax * def.StalkRangeMax
+        local mustMove = distSq < minSq or distSq > maxSq
         if mustMove or math.random() < 0.3 then
             local target = pickStalkTarget(nearest, def)
             if target then
@@ -391,7 +412,7 @@ function BeastSystem.despawn()
 
     -- Tell every client that the beast is gone so audio clients can
     -- stop their loops cleanly. Reset the per-player tier state.
-    for _, player in ipairs(Players:GetPlayers()) do
+    for _, player in ipairs(activePlayers) do
         BeastNearbyEvent:FireClient(player, "none")
     end
     playerTierState = {}
