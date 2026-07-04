@@ -145,11 +145,21 @@ timerLabel.Text = "5:00"
 timerLabel.Parent = topFrame
 
 -- ── Update helpers ────────────────────────────────────────────────────────
+local lastFillSizes = {} -- ⚡ Bolt: Cache target sizes to avoid redundant Tweens
+setmetatable(lastFillSizes, { __mode = "k" }) -- Ensure weak keys so we don't leak destroyed UI elements
+
 local function setBarFill(fill, ratio)
     local clamped = math.clamp(ratio, 0, 1)
-    TweenService:Create(fill, TweenInfo.new(0.2, Enum.EasingStyle.Quad), {
-        Size = UDim2.fromScale(clamped, 1),
-    }):Play()
+    local targetSize = UDim2.fromScale(clamped, 1)
+
+    -- ⚡ Bolt: Only create and play a Tween if the visual size is actually changing.
+    -- Unconditional TweenService:Create inside RenderStepped generates severe GC overhead.
+    if lastFillSizes[fill] ~= targetSize then
+        lastFillSizes[fill] = targetSize
+        TweenService:Create(fill, TweenInfo.new(0.2, Enum.EasingStyle.Quad), {
+            Size = targetSize,
+        }):Play()
+    end
 end
 
 local function formatTime(seconds)
