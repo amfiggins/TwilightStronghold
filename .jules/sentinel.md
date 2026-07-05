@@ -82,3 +82,8 @@
 **Vulnerability:** Distance checks evaluating `distSq > MAX_DISTANCE` could be bypassed if the client spoofed a coordinate containing `NaN` (Not-a-Number), as relational comparisons with `NaN` evaluate to false.
 **Learning:** This is a classic Roblox exploit vector. Clients have full control over the properties of the objects they replicate and the arguments sent via RemoteEvents, including injecting non-finite numbers like `NaN`.
 **Prevention:** Always use inverted comparison logic (e.g., `not (dist <= MAX)`) or explicitly validate that coordinates are finite (`math.abs(x) ~= math.huge and x == x`) before performing spatial checks on client-supplied data. Avoid passing potentially `NaN` data to functions like `string.format` or `math.sqrt`.
+
+## 2024-05-24 - Fix spatial distance validation bypass (NaN spoofing)
+**Vulnerability:** Range validation in CombatSystem used `distSq > maxRangeSquared` which fails open (returns false) if `distSq` is NaN (e.g. from a spoofed client position).
+**Learning:** Any spatial check relying on user-controlled input (like character position) must assume values can be NaN. Standard comparison operators fail insecurely when evaluating NaN.
+**Prevention:** Always use inverted logic (e.g., `not (distSq <= maxRangeSquared)`) for boundary and distance checks to ensure NaN values fail securely.
