@@ -145,8 +145,17 @@ timerLabel.Text = "5:00"
 timerLabel.Parent = topFrame
 
 -- ── Update helpers ────────────────────────────────────────────────────────
+local fillTargetRatios = {} -- ⚡ Bolt: Cache target ratios
 local function setBarFill(fill, ratio)
     local clamped = math.clamp(ratio, 0, 1)
+
+    -- ⚡ Bolt: Only create and play a new Tween if the target ratio actually changed.
+    -- Unconditionally creating Tweens in RenderStepped causes severe GC overhead.
+    if fillTargetRatios[fill] == clamped then
+        return
+    end
+    fillTargetRatios[fill] = clamped
+
     TweenService:Create(fill, TweenInfo.new(0.2, Enum.EasingStyle.Quad), {
         Size = UDim2.fromScale(clamped, 1),
     }):Play()
@@ -239,7 +248,12 @@ RunService.RenderStepped:Connect(function(dt)
 
     -- Countdown (client-side interpolation between server ticks)
     phaseState.timeRemaining = math.max(0, phaseState.timeRemaining - dt)
-    timerLabel.Text = formatTime(phaseState.timeRemaining)
+    local newTimerText = formatTime(phaseState.timeRemaining)
+
+    -- ⚡ Bolt: Only update Text property if the formatted string actually changed
+    if timerLabel.Text ~= newTimerText then
+        timerLabel.Text = newTimerText
+    end
 end)
 
 print("[SurvivalHUD] Initialized.")
