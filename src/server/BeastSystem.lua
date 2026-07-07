@@ -66,14 +66,15 @@ local GLIMPSE_TRANSPARENCY = 0.7
 --   "none"     >100   studs : silence (also fired when night ends)
 local BEAST_NEARBY_THROTTLE_SECONDS = 0.5
 
-local function tierForDistance(d)
-    if d <= 15 then
+-- ⚡ Bolt: Fast squared distance calculation to avoid math.sqrt
+local function tierForDistanceSq(dSq)
+    if dSq <= 225 then -- 15^2
         return "growl"
-    elseif d <= 30 then
+    elseif dSq <= 900 then -- 30^2
         return "breathing"
-    elseif d <= 50 then
+    elseif dSq <= 2500 then -- 50^2
         return "footstep"
-    elseif d <= 100 then
+    elseif dSq <= 10000 then -- 100^2
         return "far"
     else
         return "none"
@@ -117,7 +118,7 @@ local function findNearestPlayer(position)
             end
         end
     end
-    return nearest, math.sqrt(minSq)
+    return nearest, minSq
 end
 
 -- Find the nearest BasePart with the BeastRepel attribute (set to true)
@@ -145,7 +146,7 @@ local function findNearestBeastRepel(position, radius)
         end
     end
     if nearest then
-        return nearest, math.sqrt(minSq)
+        return nearest, minSq
     end
     return nil, math.huge
 end
@@ -159,8 +160,8 @@ local function broadcastNearbyTiers(beastPos)
         local rootPart = character and character.PrimaryPart
         if rootPart then
             local delta = rootPart.Position - beastPos
-            local dist = math.sqrt(delta.X * delta.X + delta.Y * delta.Y + delta.Z * delta.Z)
-            local tier = tierForDistance(dist)
+            local distSq = delta.X * delta.X + delta.Y * delta.Y + delta.Z * delta.Z
+            local tier = tierForDistanceSq(distSq)
             local state = playerTierState[player.UserId]
             if not state then
                 state = { tier = "none", lastFireAt = 0 }
@@ -302,14 +303,15 @@ local function tick(beast, def)
     -- Light repel check first. If a BeastRepel source is within
     -- LightRetreat studs, walk directly away from it. This overrides
     -- glimpse and stalk for this tick.
-    local repelSource, repelDist = findNearestBeastRepel(rootPart.Position, def.LightRetreat)
+    local repelSource, repelDistSq = findNearestBeastRepel(rootPart.Position, def.LightRetreat)
     if repelSource then
         local away = rootPart.Position - repelSource.Position
-        if away.Magnitude < 0.01 then
+        if away.X * away.X + away.Y * away.Y + away.Z * away.Z < 0.0001 then
             -- Beast is on top of the source; pick a random direction.
             local angle = math.random() * math.pi * 2
             away = Vector3.new(math.cos(angle), 0, math.sin(angle))
         end
+        local repelDist = math.sqrt(repelDistSq)
         local retreatPoint = rootPart.Position + away.Unit * (def.LightRetreat + 10 - repelDist)
         humanoid:MoveTo(retreatPoint)
         broadcastNearbyTiers(rootPart.Position)
@@ -324,7 +326,7 @@ local function tick(beast, def)
     end
 
     if currentState == "Stalk" then
-        local nearest, dist = findNearestPlayer(rootPart.Position)
+        local nearest, distSq = findNearestPlayer(rootPart.Position)
         if not nearest then
             broadcastNearbyTiers(rootPart.Position)
             return -- empty server; sit still
@@ -334,7 +336,8 @@ local function tick(beast, def)
         -- If inside the band, only re-target ~30% of the time so the beast
         -- doesn't twitch on every tick — gives a more menacing 'pacing'
         -- feel.
-        local mustMove = dist < def.StalkRangeMin or dist > def.StalkRangeMax
+        local mustMove = distSq < def.StalkRangeMin * def.StalkRangeMin
+            or distSq > def.StalkRangeMax * def.StalkRangeMax
         if mustMove or math.random() < 0.3 then
             local target = pickStalkTarget(nearest, def)
             if target then
