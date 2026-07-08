@@ -33,7 +33,7 @@ frame.Parent = gui
 -- Title
 local title = Instance.new("TextLabel")
 title.Text = "Loadout (Meta-Link)"
-title.Size = UDim2.new(1, -30, 0, 30)
+title.Size = UDim2.new(1, 0, 0, 30)
 title.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 title.TextColor3 = Color3.fromRGB(255, 255, 255)
 title.BorderSizePixel = 0
@@ -43,9 +43,45 @@ title.Parent = frame
 local refreshContainer = Instance.new("Frame")
 refreshContainer.Name = "RefreshContainer"
 refreshContainer.Size = UDim2.new(0, 30, 1, 0)
-refreshContainer.Position = UDim2.new(1, -30, 0, 0)
+refreshContainer.Position = UDim2.new(1, -60, 0, 0)
 refreshContainer.BackgroundTransparency = 1
 refreshContainer.Parent = title
+
+-- Close Button (Micro-UX)
+local closeContainer = Instance.new("Frame")
+closeContainer.Name = "CloseContainer"
+closeContainer.Size = UDim2.new(0, 30, 1, 0)
+closeContainer.Position = UDim2.new(1, -30, 0, 0)
+closeContainer.BackgroundTransparency = 1
+closeContainer.Parent = title
+
+local closeBtn = Instance.new("TextButton")
+closeBtn.Text = "✕"
+closeBtn.Size = UDim2.fromScale(1, 1)
+closeBtn.Position = UDim2.fromScale(0.5, 0.5)
+closeBtn.AnchorPoint = Vector2.new(0.5, 0.5)
+closeBtn.BackgroundTransparency = 1
+closeBtn.TextColor3 = Color3.fromRGB(200, 200, 200)
+closeBtn.Font = Enum.Font.GothamBold
+closeBtn.TextSize = 18
+closeBtn.Parent = closeContainer
+
+local function updateCloseState(isActive)
+    closeBtn.TextColor3 = isActive and Color3.fromRGB(255, 100, 100) or Color3.fromRGB(200, 200, 200)
+end
+
+closeBtn.MouseEnter:Connect(function()
+    updateCloseState(true)
+end)
+closeBtn.MouseLeave:Connect(function()
+    updateCloseState(false)
+end)
+closeBtn.SelectionGained:Connect(function()
+    updateCloseState(true)
+end)
+closeBtn.SelectionLost:Connect(function()
+    updateCloseState(false)
+end)
 
 -- Refresh Button (Micro-UX)
 local refreshBtn = Instance.new("TextButton")
@@ -110,12 +146,12 @@ layout.Padding = UDim.new(0, 5)
 layout.SortOrder = Enum.SortOrder.LayoutOrder
 
 -- Padding
-local padding = Instance.new("UIPadding")
-padding.PaddingTop = UDim.new(0, 10) -- Adjusted padding since title is separate
-padding.PaddingLeft = UDim.new(0, 10)
-padding.PaddingRight = UDim.new(0, 10)
-padding.PaddingBottom = UDim.new(0, 10)
-padding.Parent = listContainer
+local btnPadding = Instance.new("UIPadding")
+listPadding.PaddingTop = UDim.new(0, 10) -- Adjusted padding since title is separate
+btnPadding.PaddingLeft = UDim.new(0, 10)
+listPadding.PaddingRight = UDim.new(0, 10)
+listPadding.PaddingBottom = UDim.new(0, 10)
+listPadding.Parent = listContainer
 
 -- Helper: Toast Notification
 local function showToast(text)
@@ -415,17 +451,58 @@ refreshBtn.MouseButton1Click:Connect(function()
 end)
 
 -- Toggle visibility with Tab (keyboard) or DPad-Down (gamepad). BUG-17 fix.
+-- Toggle Button (Discoverability)
+local toggleBtn = Instance.new("TextButton")
+toggleBtn.Name = "ToggleLoadoutBtn"
+toggleBtn.Text = "🎒 Loadout [TAB]"
+toggleBtn.Size = UDim2.fromOffset(150, 40)
+toggleBtn.Position = UDim2.new(0.05, 0, 0.5, 185) -- Below the main frame
+toggleBtn.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+toggleBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+toggleBtn.Font = Enum.Font.GothamBold
+toggleBtn.TextSize = 14
+toggleBtn.BorderSizePixel = 0
+toggleBtn.Parent = gui
+
+local toggleCorner = Instance.new("UICorner")
+toggleCorner.CornerRadius = UDim.new(0, 8)
+toggleCorner.Parent = toggleBtn
+
+local function updateToggleState(isActive)
+    toggleBtn.BackgroundColor3 = isActive and Color3.fromRGB(50, 50, 50) or Color3.fromRGB(30, 30, 30)
+end
+
+toggleBtn.MouseEnter:Connect(function()
+    updateToggleState(true)
+end)
+toggleBtn.MouseLeave:Connect(function()
+    updateToggleState(false)
+end)
+toggleBtn.SelectionGained:Connect(function()
+    updateToggleState(true)
+end)
+toggleBtn.SelectionLost:Connect(function()
+    updateToggleState(false)
+end)
+
+local function toggleLoadout()
+    frame.Visible = not frame.Visible
+    if frame.Visible and not isRefreshing then
+        task.spawn(populateLoadout)
+    end
+end
+
+toggleBtn.MouseButton1Click:Connect(toggleLoadout)
+closeBtn.MouseButton1Click:Connect(function()
+    frame.Visible = false
+end)
+
 UserInputService.InputBegan:Connect(function(input, gameProcessedEvent)
     if gameProcessedEvent then
         return
     end
     if input.KeyCode == Enum.KeyCode.Tab or input.KeyCode == Enum.KeyCode.DPadDown then
-        frame.Visible = not frame.Visible
-        -- Populate on first open so we don't fetch data until the player
-        -- actually wants to see the loadout.
-        if frame.Visible and not isRefreshing then
-            task.spawn(populateLoadout)
-        end
+        toggleLoadout()
     end
 end)
 

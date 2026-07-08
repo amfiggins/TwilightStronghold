@@ -42,3 +42,7 @@
 ## 2027-04-01 - Matchmaking Queue Visibility
 **Learning:** Players joining a matchmaking queue via an interactable object (like a Portal) often feel uncertain if their action registered when the feedback is limited to console prints or delayed teleports.
 **Action:** Always provide immediate, on-screen visual confirmation (like a toast notification) indicating successful queue entry and current queue size.
+
+## 2026-05-29 - Hidden UI Discoverability
+**Learning:** Relying exclusively on keyboard shortcuts (like Tab) for core UI like Loadouts makes them undiscoverable and inaccessible to mouse/mobile users.
+**Action:** Always provide an explicit, on-screen toggle button for hidden core UI elements, and include a clear "Close" button within the panel.
