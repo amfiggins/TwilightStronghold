@@ -152,7 +152,9 @@ local fillRatios = setmetatable({}, { __mode = "k" })
 
 local function setBarFill(fill, ratio)
     local clamped = math.clamp(ratio, 0, 1)
-    if fillRatios[fill] == clamped then return end
+    if fillRatios[fill] == clamped then
+        return
+    end
     fillRatios[fill] = clamped
 
     TweenService:Create(fill, cachedBarTweenInfo, {
