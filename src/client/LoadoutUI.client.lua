@@ -74,22 +74,29 @@ refreshTooltip.Visible = false
 refreshTooltip.ZIndex = 10
 refreshTooltip.Parent = refreshContainer
 
-local function updateRefreshState(isActive)
+local refreshHovered = false
+local refreshSelected = false
+local function updateRefreshState()
+    local isActive = refreshHovered or refreshSelected
     refreshBtn.TextColor3 = isActive and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(200, 200, 200)
     refreshTooltip.Visible = isActive
 end
 
 refreshBtn.MouseEnter:Connect(function()
-    updateRefreshState(true)
+    refreshHovered = true
+    updateRefreshState()
 end)
 refreshBtn.MouseLeave:Connect(function()
-    updateRefreshState(false)
+    refreshHovered = false
+    updateRefreshState()
 end)
 refreshBtn.SelectionGained:Connect(function()
-    updateRefreshState(true)
+    refreshSelected = true
+    updateRefreshState()
 end)
 refreshBtn.SelectionLost:Connect(function()
-    updateRefreshState(false)
+    refreshSelected = false
+    updateRefreshState()
 end)
 
 -- List Container (ScrollingFrame for Scanability)
@@ -197,31 +204,38 @@ local function createButton(text, onClick, rarityColor, isEquipped, rarityName, 
         end
     end
 
-    local function updateState(isHovered)
+    local isHovered = false
+    local isSelected = false
+    local function updateState()
+        local isActive = isHovered or isSelected
         -- Always show rarity on hover for scanability
         if rarityLabel then
-            rarityLabel.Visible = isHovered
+            rarityLabel.Visible = isActive
         end
 
         if isEquipped then
             -- Interactive feedback even for equipped items (Brighter Green)
-            btn.BackgroundColor3 = isHovered and Color3.fromRGB(40, 100, 40) or Color3.fromRGB(30, 80, 30)
+            btn.BackgroundColor3 = isActive and Color3.fromRGB(40, 100, 40) or Color3.fromRGB(30, 80, 30)
         else
-            btn.BackgroundColor3 = isHovered and Color3.fromRGB(80, 80, 80) or Color3.fromRGB(60, 60, 60)
+            btn.BackgroundColor3 = isActive and Color3.fromRGB(80, 80, 80) or Color3.fromRGB(60, 60, 60)
         end
     end
 
     btn.MouseEnter:Connect(function()
-        updateState(true)
+        isHovered = true
+        updateState()
     end)
     btn.MouseLeave:Connect(function()
-        updateState(false)
+        isHovered = false
+        updateState()
     end)
     btn.SelectionGained:Connect(function()
-        updateState(true)
+        isSelected = true
+        updateState()
     end)
     btn.SelectionLost:Connect(function()
-        updateState(false)
+        isSelected = false
+        updateState()
     end)
 
     btn.MouseButton1Click:Connect(function()
