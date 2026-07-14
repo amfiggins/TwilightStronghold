@@ -145,9 +145,18 @@ timerLabel.Text = "5:00"
 timerLabel.Parent = topFrame
 
 -- ── Update helpers ────────────────────────────────────────────────────────
+local BAR_TWEEN_INFO = TweenInfo.new(0.2, Enum.EasingStyle.Quad)
+-- ⚡ Bolt: Weak-keyed cache for bar ratios to prevent memory leaks if instances are destroyed
+local cachedRatios = setmetatable({}, { __mode = "k" })
+
 local function setBarFill(fill, ratio)
     local clamped = math.clamp(ratio, 0, 1)
-    TweenService:Create(fill, TweenInfo.new(0.2, Enum.EasingStyle.Quad), {
+    -- ⚡ Bolt: Cache previous state values and conditionally create Tweens to avoid severe GC overhead in RenderStepped
+    if cachedRatios[fill] == clamped then
+        return
+    end
+    cachedRatios[fill] = clamped
+    TweenService:Create(fill, BAR_TWEEN_INFO, {
         Size = UDim2.fromScale(clamped, 1),
     }):Play()
 end
