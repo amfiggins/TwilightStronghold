@@ -145,9 +145,18 @@ timerLabel.Text = "5:00"
 timerLabel.Parent = topFrame
 
 -- ── Update helpers ────────────────────────────────────────────────────────
+local FILL_TWEEN_INFO = TweenInfo.new(0.2, Enum.EasingStyle.Quad)
+local lastRatios = setmetatable({}, { __mode = "k" })
+
 local function setBarFill(fill, ratio)
     local clamped = math.clamp(ratio, 0, 1)
-    TweenService:Create(fill, TweenInfo.new(0.2, Enum.EasingStyle.Quad), {
+    -- ⚡ Bolt: Cache ratio and TweenInfo to avoid recreating Tweens every RenderStepped frame
+    if lastRatios[fill] == clamped then
+        return
+    end
+    lastRatios[fill] = clamped
+
+    TweenService:Create(fill, FILL_TWEEN_INFO, {
         Size = UDim2.fromScale(clamped, 1),
     }):Play()
 end
