@@ -184,7 +184,8 @@ local function openSelector(plot)
             local isSelected = false
 
             local function updateBtnState()
-                btn.BackgroundColor3 = (isHovered or isSelected) and Color3.fromRGB(80, 100, 80) or Color3.fromRGB(60, 60, 60)
+                btn.BackgroundColor3 = (isHovered or isSelected) and Color3.fromRGB(80, 100, 80)
+                    or Color3.fromRGB(60, 60, 60)
             end
 
             btn.MouseEnter:Connect(function()
