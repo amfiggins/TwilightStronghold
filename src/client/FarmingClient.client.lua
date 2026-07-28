@@ -128,25 +128,25 @@ local function openSelector(plot)
     closeBtn.Text = "✕"
     closeBtn.Parent = frame
 
-    local isHovered, isSelected = false, false
+    local isCloseHovered, isCloseSelected = false, false
     local function updateCloseState()
-        local active = isHovered or isSelected
+        local active = isCloseHovered or isCloseSelected
         closeBtn.TextColor3 = active and Color3.fromRGB(255, 100, 100) or Color3.fromRGB(255, 255, 255)
     end
     closeBtn.MouseEnter:Connect(function()
-        isHovered = true
+        isCloseHovered = true
         updateCloseState()
     end)
     closeBtn.MouseLeave:Connect(function()
-        isHovered = false
+        isCloseHovered = false
         updateCloseState()
     end)
     closeBtn.SelectionGained:Connect(function()
-        isSelected = true
+        isCloseSelected = true
         updateCloseState()
     end)
     closeBtn.SelectionLost:Connect(function()
-        isSelected = false
+        isCloseSelected = false
         updateCloseState()
     end)
 
