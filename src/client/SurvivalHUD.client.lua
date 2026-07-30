@@ -240,6 +240,14 @@ RunService.RenderStepped:Connect(function(dt)
     -- Countdown (client-side interpolation between server ticks)
     phaseState.timeRemaining = math.max(0, phaseState.timeRemaining - dt)
     timerLabel.Text = formatTime(phaseState.timeRemaining)
+
+    -- Micro-UX: Visual urgency when phase time is running out (<= 30s)
+    if phaseState.timeRemaining <= 30 and phaseState.timeRemaining > 0 then
+        local pulse = (math.sin(os.clock() * 8) + 1) / 2
+        timerLabel.TextColor3 = COLOR_TEXT:Lerp(Color3.fromRGB(255, 60, 60), pulse)
+    else
+        timerLabel.TextColor3 = COLOR_TEXT
+    end
 end)
 
 print("[SurvivalHUD] Initialized.")
