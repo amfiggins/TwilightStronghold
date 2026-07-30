@@ -49,3 +49,6 @@
 ## 2027-05-01 - Minigame Success States
 **Learning:** Instantly removing the UI upon minigame success is jarring. Players need a brief moment to process the visual feedback of their success before the context shifts.
 **Action:** Always insert a short delay (e.g., 0.5s) and display a clear "Success" state (like text or color changes) before closing high-focus minigame UIs.
+## 2024-06-10 - Explicit toggles for Loadout/Inventory
+**Learning:** When designing core UI elements in Roblox (like loadouts), do not rely exclusively on keyboard shortcuts (e.g., Tab) for visibility toggling.
+**Action:** Always provide an explicit, on-screen toggle button to ensure discoverability and accessibility for mouse-only and mobile users, along with a clear 'Close' button within the panel. Ensure interactive elements include SelectionGained and SelectionLost handlers for gamepad.
