@@ -145,8 +145,16 @@ timerLabel.Text = "5:00"
 timerLabel.Parent = topFrame
 
 -- ── Update helpers ────────────────────────────────────────────────────────
+local fillCache = setmetatable({}, { __mode = "k" })
+
 local function setBarFill(fill, ratio)
     local clamped = math.clamp(ratio, 0, 1)
+    if fillCache[fill] == clamped then
+        return
+    end
+    fillCache[fill] = clamped
+
+    -- ⚡ Bolt: Cache UI fill targets to prevent allocating Tweens on every frame
     TweenService:Create(fill, TweenInfo.new(0.2, Enum.EasingStyle.Quad), {
         Size = UDim2.fromScale(clamped, 1),
     }):Play()
