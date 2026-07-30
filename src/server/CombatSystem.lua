@@ -170,7 +170,8 @@ function CombatSystem.Init()
         local maxRange = (weaponDef.Range or 6) + RANGE_TOLERANCE_STUDS
         local delta = target.PrimaryPart.Position - rootPart.Position
         local distSq = delta.X * delta.X + delta.Y * delta.Y + delta.Z * delta.Z
-        if distSq > maxRange * maxRange then
+        -- 🛡️ Sentinel: Fix NaN spatial bypass vulnerability. By using inverted logic, if distSq is NaN, `distSq <= maxRange * maxRange` evaluates to false, and `not false` correctly evaluates to true, thus returning early.
+        if not (distSq <= maxRange * maxRange) then
             return
         end
 
