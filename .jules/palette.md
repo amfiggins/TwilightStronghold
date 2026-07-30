@@ -49,3 +49,7 @@
 ## 2027-05-01 - Minigame Success States
 **Learning:** Instantly removing the UI upon minigame success is jarring. Players need a brief moment to process the visual feedback of their success before the context shifts.
 **Action:** Always insert a short delay (e.g., 0.5s) and display a clear "Success" state (like text or color changes) before closing high-focus minigame UIs.
+
+## 2023-10-25 - Gamepad Focus States
+**Learning:** Interactive elements like buttons were missing `SelectionGained` and `SelectionLost` event handlers, causing them to lack visual focus feedback for gamepad and keyboard navigation users.
+**Action:** Always ensure UI buttons include `SelectionGained` and `SelectionLost` bindings that mirror `MouseEnter` and `MouseLeave` visual updates to provide unified accessibility feedback.
