@@ -49,3 +49,7 @@
 ## 2027-05-01 - Minigame Success States
 **Learning:** Instantly removing the UI upon minigame success is jarring. Players need a brief moment to process the visual feedback of their success before the context shifts.
 **Action:** Always insert a short delay (e.g., 0.5s) and display a clear "Success" state (like text or color changes) before closing high-focus minigame UIs.
+
+## 2027-05-15 - Utility Button Interactivity
+**Learning:** Small utility buttons (like a plain "✕" close button) are easily overlooked by users and feel unresponsive if they lack interaction feedback. This is exacerbated for Gamepad users who rely on visual focus indicators.
+**Action:** Always bind `MouseEnter`, `MouseLeave`, `SelectionGained`, and `SelectionLost` events to visual state changes even for the smallest generic utility buttons to maintain a consistent interactive experience across inputs.
