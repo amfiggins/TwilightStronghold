@@ -180,12 +180,34 @@ local function openSelector(plot)
             btnCorner.CornerRadius = UDim.new(0, 6)
             btnCorner.Parent = btn
 
+            local isHovered = false
+            local isSelected = false
+
+            local function updateVisualState()
+                if isHovered or isSelected then
+                    btn.BackgroundColor3 = Color3.fromRGB(80, 100, 80)
+                else
+                    btn.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+                end
+            end
+
             btn.MouseEnter:Connect(function()
-                btn.BackgroundColor3 = Color3.fromRGB(80, 100, 80)
+                isHovered = true
+                updateVisualState()
             end)
             btn.MouseLeave:Connect(function()
-                btn.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+                isHovered = false
+                updateVisualState()
             end)
+            btn.SelectionGained:Connect(function()
+                isSelected = true
+                updateVisualState()
+            end)
+            btn.SelectionLost:Connect(function()
+                isSelected = false
+                updateVisualState()
+            end)
+
             btn.MouseButton1Click:Connect(function()
                 PlantSeedEvent:FireServer(plot, seed.itemId)
                 closeSelector()
