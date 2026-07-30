@@ -80,6 +80,13 @@
         "error",
         "coroutine",
         "string",
-        "table"
+        "table",
+        "UDim",
+        "TweenService",
+        "PathfindingService",
+        "HttpService",
+        "OverlapParams",
+        "RaycastFilterType",
+        "Material"
     ]
 }
