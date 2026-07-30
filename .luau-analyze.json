@@ -80,6 +80,18 @@
         "error",
         "coroutine",
         "string",
-        "table"
+        "table",
+        "UDim",
+        "OverlapParams",
+        "ColorSequence",
+        "ColorSequenceKeypoint",
+        "NumberSequence",
+        "NumberSequenceKeypoint",
+        "Region3",
+        "Faces",
+        "Rect",
+        "PathfindingService",
+        "TweenService",
+        "Ray"
     ]
 }
