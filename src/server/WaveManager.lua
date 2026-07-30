@@ -255,9 +255,10 @@ function WaveManager.SpawnEnemy(difficulty)
                 local delta = targetPos - rootPart.Position
                 local distSq = delta.X * delta.X + delta.Y * delta.Y + delta.Z * delta.Z
 
-                if distSq > 10000 then -- 100^2
+                -- 🛡️ Sentinel: Use inverted comparison to prevent NaN coordinate spoofing from bypassing spatial checks
+                if not (distSq <= 10000) then -- 100^2
                     updateRate = 2.0
-                elseif distSq > 2500 then -- 50^2
+                elseif not (distSq <= 2500) then -- 50^2
                     updateRate = 1.0
                 end
 
