@@ -145,9 +145,18 @@ timerLabel.Text = "5:00"
 timerLabel.Parent = topFrame
 
 -- ── Update helpers ────────────────────────────────────────────────────────
+-- ⚡ Bolt: Cache TweenInfo and last ratios to prevent allocating Tweens every frame in RenderStepped
+local cachedTweenInfo = TweenInfo.new(0.2, Enum.EasingStyle.Quad)
+local cachedRatios = setmetatable({}, { __mode = "k" })
+
 local function setBarFill(fill, ratio)
     local clamped = math.clamp(ratio, 0, 1)
-    TweenService:Create(fill, TweenInfo.new(0.2, Enum.EasingStyle.Quad), {
+    if cachedRatios[fill] == clamped then
+        return
+    end
+    cachedRatios[fill] = clamped
+
+    TweenService:Create(fill, cachedTweenInfo, {
         Size = UDim2.fromScale(clamped, 1),
     }):Play()
 end
