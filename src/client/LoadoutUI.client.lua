@@ -117,6 +117,17 @@ padding.PaddingRight = UDim.new(0, 10)
 padding.PaddingBottom = UDim.new(0, 10)
 padding.Parent = listContainer
 
+-- Micro-UX: Keyboard shortcut hint
+local shortcutHint = Instance.new("TextLabel")
+shortcutHint.Text = "Press Tab or DPad-Down to toggle"
+shortcutHint.Size = UDim2.fromOffset(220, 15)
+shortcutHint.Position = UDim2.fromScale(0, 1)
+shortcutHint.BackgroundTransparency = 1
+shortcutHint.TextColor3 = Color3.fromRGB(150, 150, 150)
+shortcutHint.Font = Enum.Font.SourceSansItalic
+shortcutHint.TextSize = 12
+shortcutHint.Parent = frame
+
 -- Helper: Toast Notification
 local function showToast(text)
     local toast = Instance.new("TextLabel")
