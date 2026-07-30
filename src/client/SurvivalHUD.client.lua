@@ -145,8 +145,15 @@ timerLabel.Text = "5:00"
 timerLabel.Parent = topFrame
 
 -- ── Update helpers ────────────────────────────────────────────────────────
+-- ⚡ Bolt: Cache current bar ratio to prevent unconditional TweenService:Create allocations per frame
+local currentRatios = {}
+
 local function setBarFill(fill, ratio)
     local clamped = math.clamp(ratio, 0, 1)
+    if currentRatios[fill] == clamped then
+        return
+    end
+    currentRatios[fill] = clamped
     TweenService:Create(fill, TweenInfo.new(0.2, Enum.EasingStyle.Quad), {
         Size = UDim2.fromScale(clamped, 1),
     }):Play()
@@ -229,6 +236,8 @@ if Day150ReachedEvent then
 end
 
 -- ── RenderStepped: health bar + timer countdown ───────────────────────────
+-- ⚡ Bolt: Cache current timer text to prevent unconditional string formatting and UI property updates per frame
+local lastTimerText = ""
 RunService.RenderStepped:Connect(function(dt)
     -- Health bar
     local character = player.Character
@@ -239,7 +248,12 @@ RunService.RenderStepped:Connect(function(dt)
 
     -- Countdown (client-side interpolation between server ticks)
     phaseState.timeRemaining = math.max(0, phaseState.timeRemaining - dt)
-    timerLabel.Text = formatTime(phaseState.timeRemaining)
+
+    local newTimerText = formatTime(phaseState.timeRemaining)
+    if newTimerText ~= lastTimerText then
+        lastTimerText = newTimerText
+        timerLabel.Text = newTimerText
+    end
 end)
 
 print("[SurvivalHUD] Initialized.")
