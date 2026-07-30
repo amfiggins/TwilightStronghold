@@ -49,3 +49,7 @@
 ## 2027-05-01 - Minigame Success States
 **Learning:** Instantly removing the UI upon minigame success is jarring. Players need a brief moment to process the visual feedback of their success before the context shifts.
 **Action:** Always insert a short delay (e.g., 0.5s) and display a clear "Success" state (like text or color changes) before closing high-focus minigame UIs.
+
+## 2026-06-23 - Keyboard/Gamepad Accessibility on Custom List Items
+**Learning:** Roblox UI elements generated programmatically via loops (like the `FarmingClient` dynamic SeedSelector items) completely lack visual focus indicators for users navigating via Gamepad or Keyboard, as the built-in `AutoButtonColor` logic only handles mouse clicks natively and doesn't fire `SelectionGained/Lost` visual states automatically.
+**Action:** Always manually bind `SelectionGained` and `SelectionLost` events for dynamically generated `TextButton` list items to match their `MouseEnter` and `MouseLeave` logic, ensuring non-mouse users receive critical visual feedback.
