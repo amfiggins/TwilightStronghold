@@ -170,7 +170,11 @@ function CombatSystem.Init()
         local maxRange = (weaponDef.Range or 6) + RANGE_TOLERANCE_STUDS
         local delta = target.PrimaryPart.Position - rootPart.Position
         local distSq = delta.X * delta.X + delta.Y * delta.Y + delta.Z * delta.Z
-        if distSq > maxRange * maxRange then
+
+        -- 🛡️ Sentinel: Secure spatial distance check using inverted logic
+        -- to prevent NaN coordinate spoofing from bypassing the range limit.
+        if not (distSq <= maxRange * maxRange) then
+            warn(string.format("[CombatSystem] Suspicious attack: %s is too far or provided NaN position", player.Name))
             return
         end
 
