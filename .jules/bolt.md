@@ -13,3 +13,7 @@
 ## 2024-05-26 - GetConnectedGamepads Allocation Overhead
 **Learning:** Calling `UserInputService:GetConnectedGamepads()` repeatedly (e.g., inside a `RenderStepped` loop) allocates a new table on every invocation, causing unnecessary garbage collection pressure and stuttering in high-frequency loops.
 **Action:** Always maintain a module-level cached list of gamepads using the `GamepadConnected` and `GamepadDisconnected` events instead of polling `GetConnectedGamepads()` every frame.
+
+## 2024-08-01 - Avoid Tween and String Allocation Overhead in RenderStepped
+**Learning:** Calling `TweenService:Create`, allocating static `TweenInfo` objects, and dynamically formatting strings (`string.format`) unconditionally within high-frequency loops like `RunService.RenderStepped` causes severe garbage collection and CPU overhead in Roblox Luau.
+**Action:** Always cache underlying state values (e.g., target UI ratios, integer seconds) outside the loop, conditionally execute these operations only when the state actually changes, and cache static objects (like `TweenInfo`) at the module level.
