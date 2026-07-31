@@ -49,3 +49,7 @@
 ## 2027-05-01 - Minigame Success States
 **Learning:** Instantly removing the UI upon minigame success is jarring. Players need a brief moment to process the visual feedback of their success before the context shifts.
 **Action:** Always insert a short delay (e.g., 0.5s) and display a clear "Success" state (like text or color changes) before closing high-focus minigame UIs.
+
+## 2024-05-25 - Mixed Input Visual Glitches
+**Learning:** When implementing custom focus states for Roblox UI elements using both Mouse (MouseEnter/MouseLeave) and Gamepad/Keyboard (SelectionGained/SelectionLost) events, a bug occurs if users mix input methods (e.g. mouse hover -> gamepad select -> mouse leave). The element loses its highlight even though it is still selected via gamepad.
+**Action:** Always independently track `isHovered` and `isSelected` boolean states for UI elements, calculating the final visual state by checking if either is true.
