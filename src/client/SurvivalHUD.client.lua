@@ -145,9 +145,19 @@ timerLabel.Text = "5:00"
 timerLabel.Parent = topFrame
 
 -- ── Update helpers ────────────────────────────────────────────────────────
+local cachedTweenInfo = TweenInfo.new(0.2, Enum.EasingStyle.Quad)
+local fillCache = setmetatable({}, { __mode = "k" })
+
 local function setBarFill(fill, ratio)
     local clamped = math.clamp(ratio, 0, 1)
-    TweenService:Create(fill, TweenInfo.new(0.2, Enum.EasingStyle.Quad), {
+
+    -- ⚡ Bolt: Cache health ratio to avoid Tween creation and garbage collection on every frame
+    if fillCache[fill] == clamped then
+        return
+    end
+    fillCache[fill] = clamped
+
+    TweenService:Create(fill, cachedTweenInfo, {
         Size = UDim2.fromScale(clamped, 1),
     }):Play()
 end
@@ -229,6 +239,8 @@ if Day150ReachedEvent then
 end
 
 -- ── RenderStepped: health bar + timer countdown ───────────────────────────
+local lastTimerSeconds = -1
+
 RunService.RenderStepped:Connect(function(dt)
     -- Health bar
     local character = player.Character
@@ -239,7 +251,13 @@ RunService.RenderStepped:Connect(function(dt)
 
     -- Countdown (client-side interpolation between server ticks)
     phaseState.timeRemaining = math.max(0, phaseState.timeRemaining - dt)
-    timerLabel.Text = formatTime(phaseState.timeRemaining)
+
+    -- ⚡ Bolt: Cache integer seconds to prevent string allocation and UI assignment on every frame
+    local currentSeconds = math.floor(phaseState.timeRemaining)
+    if currentSeconds ~= lastTimerSeconds then
+        lastTimerSeconds = currentSeconds
+        timerLabel.Text = formatTime(phaseState.timeRemaining)
+    end
 end)
 
 print("[SurvivalHUD] Initialized.")
