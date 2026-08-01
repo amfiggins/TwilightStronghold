@@ -13,3 +13,7 @@
 ## 2024-05-26 - GetConnectedGamepads Allocation Overhead
 **Learning:** Calling `UserInputService:GetConnectedGamepads()` repeatedly (e.g., inside a `RenderStepped` loop) allocates a new table on every invocation, causing unnecessary garbage collection pressure and stuttering in high-frequency loops.
 **Action:** Always maintain a module-level cached list of gamepads using the `GamepadConnected` and `GamepadDisconnected` events instead of polling `GetConnectedGamepads()` every frame.
+
+## 2024-06-25 - Avoid Tween Creation and String Allocation in Render Loops
+**Learning:** Unconditionally calling `TweenService:Create` or executing string allocations (like `string.format` for UI Text) inside high-frequency loops (like `RunService.RenderStepped`) causes severe garbage collection overhead.
+**Action:** Optimize by caching previous state values and only conditionally creating new Tweens/strings when the underlying UI state actually changes. Cache static objects like `TweenInfo`. Use weak-keyed metatables when caching by Instance to prevent memory leaks.
