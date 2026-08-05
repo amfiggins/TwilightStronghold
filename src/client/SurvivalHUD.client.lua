@@ -42,6 +42,7 @@ local COLOR_TEXT = Color3.fromRGB(255, 255, 255)
 -- ── State ─────────────────────────────────────────────────────────────────
 local vitals = { Hunger = 100, Thirst = 100, MaxHunger = 100, MaxThirst = 100 }
 local phaseState = { phase = "Day", dayCount = 1, timeRemaining = 300 }
+local lastTimerSeconds = -1
 
 -- ── Build UI ──────────────────────────────────────────────────────────────
 local gui = Instance.new("ScreenGui")
@@ -145,9 +146,19 @@ timerLabel.Text = "5:00"
 timerLabel.Parent = topFrame
 
 -- ── Update helpers ────────────────────────────────────────────────────────
+local FILL_TWEEN_INFO = TweenInfo.new(0.2, Enum.EasingStyle.Quad)
+local fillRatios = {}
+setmetatable(fillRatios, { __mode = "k" })
+
 local function setBarFill(fill, ratio)
     local clamped = math.clamp(ratio, 0, 1)
-    TweenService:Create(fill, TweenInfo.new(0.2, Enum.EasingStyle.Quad), {
+    if fillRatios[fill] == clamped then
+        return
+    end
+    fillRatios[fill] = clamped
+
+    -- ⚡ Bolt: Cached TweenInfo and conditional creation to prevent GC overhead
+    TweenService:Create(fill, FILL_TWEEN_INFO, {
         Size = UDim2.fromScale(clamped, 1),
     }):Play()
 end
@@ -166,7 +177,10 @@ local function updatePhaseLabel()
         phaseLabel.TextColor3 = COLOR_DAY
     end
     dayLabel.Text = "Day " .. tostring(phaseState.dayCount)
-    timerLabel.Text = formatTime(phaseState.timeRemaining)
+
+    local currentSeconds = math.max(0, math.floor(phaseState.timeRemaining))
+    lastTimerSeconds = currentSeconds
+    timerLabel.Text = formatTime(currentSeconds)
 end
 
 -- ── Day 150 milestone banner ──────────────────────────────────────────────
@@ -239,7 +253,13 @@ RunService.RenderStepped:Connect(function(dt)
 
     -- Countdown (client-side interpolation between server ticks)
     phaseState.timeRemaining = math.max(0, phaseState.timeRemaining - dt)
-    timerLabel.Text = formatTime(phaseState.timeRemaining)
+
+    -- ⚡ Bolt: Cache integer seconds to prevent string allocation and UI property assignment every frame
+    local currentSeconds = math.max(0, math.floor(phaseState.timeRemaining))
+    if currentSeconds ~= lastTimerSeconds then
+        lastTimerSeconds = currentSeconds
+        timerLabel.Text = formatTime(currentSeconds)
+    end
 end)
 
 print("[SurvivalHUD] Initialized.")
