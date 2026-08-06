@@ -25,6 +25,8 @@ jobs:
       # versions pinned in aftman.toml.
       - name: Install Aftman + tools
         uses: ok-nick/setup-aftman@v0.4.2
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: StyLua --check
         run: stylua --check src/ tests/
@@ -46,6 +48,8 @@ jobs:
 
       - name: Install Aftman + tools
         uses: ok-nick/setup-aftman@v0.4.2
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Run Lune tests
         run: lune run tests/lune/runner.luau
