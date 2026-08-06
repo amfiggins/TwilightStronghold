@@ -49,3 +49,6 @@
 ## 2027-05-01 - Minigame Success States
 **Learning:** Instantly removing the UI upon minigame success is jarring. Players need a brief moment to process the visual feedback of their success before the context shifts.
 **Action:** Always insert a short delay (e.g., 0.5s) and display a clear "Success" state (like text or color changes) before closing high-focus minigame UIs.
+## 2024-08-06 - Independent Focus Tracking for Cross-Input Support
+**Learning:** When implementing custom focus states for Roblox UI elements using both Mouse (MouseEnter/MouseLeave) and Gamepad/Keyboard (SelectionGained/SelectionLost) events, a single boolean state or direct visual assignment can cause visual highlighting to become stuck when players mix input methods (e.g., clicking with mouse and then navigating with keyboard).
+**Action:** Always independently track `isHovered` and `isSelected` boolean states in Roblox UI components, calculating the final visual state by checking if either is true, to prevent visual regressions when input methods overlap.
