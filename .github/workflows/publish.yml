@@ -40,6 +40,8 @@ jobs:
       # Aftman reads aftman.toml to install the pinned Rojo version.
       - name: Install Rojo
         uses: ok-nick/setup-aftman@v0.4.2
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Install tools via Aftman
         run: aftman install
