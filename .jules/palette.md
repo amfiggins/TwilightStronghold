@@ -49,3 +49,7 @@
 ## 2027-05-01 - Minigame Success States
 **Learning:** Instantly removing the UI upon minigame success is jarring. Players need a brief moment to process the visual feedback of their success before the context shifts.
 **Action:** Always insert a short delay (e.g., 0.5s) and display a clear "Success" state (like text or color changes) before closing high-focus minigame UIs.
+
+## 2024-08-08 - Mixed Input Methods UI State Stuck
+**Learning:** When users mix input methods (e.g., using both Mouse and Gamepad/Keyboard), simply mapping `MouseEnter` and `SelectionGained` to a single active boolean can lead to stuck or lost visual highlighting.
+**Action:** Independently track `isHovered` and `isSelected` boolean states, calculating the final visual state by checking if either is true, to prevent visual glitches when input methods overlap.
