@@ -13,6 +13,9 @@ local MatchmakingService = {}
 local queue = {} -- List of players waiting
 local queueSet = {} -- O(1) lookup for queue membership
 
+local JOIN_COOLDOWN = 1.0
+local lastJoinRequestTimes = {} -- [UserId] = timestamp
+
 -- Remotes
 local Remotes = ReplicatedStorage:WaitForChild("Remotes")
 local JoinQueueEvent = Instance.new("RemoteEvent")
@@ -31,11 +34,20 @@ function MatchmakingService.Init()
 
     -- Listen for Client Requests
     JoinQueueEvent.OnServerEvent:Connect(function(player)
+        -- 🛡️ Sentinel: Rate Limit requests to prevent log-flooding/DoS
+        local now = os.clock()
+        local lastRequest = lastJoinRequestTimes[player.UserId] or 0
+        if (now - lastRequest) < JOIN_COOLDOWN then
+            -- Silent return to prevent log spam vulnerability
+            return false, "RateLimited"
+        end
+        lastJoinRequestTimes[player.UserId] = now
         MatchmakingService.JoinQueue(player)
     end)
 
     -- Remove players from queue when they disconnect
     Players.PlayerRemoving:Connect(function(player)
+        lastJoinRequestTimes[player.UserId] = nil
         MatchmakingService.LeaveQueue(player)
     end)
 
