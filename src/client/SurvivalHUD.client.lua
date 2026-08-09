@@ -145,9 +145,11 @@ timerLabel.Text = "5:00"
 timerLabel.Parent = topFrame
 
 -- ── Update helpers ────────────────────────────────────────────────────────
+local barTweenInfo = TweenInfo.new(0.2, Enum.EasingStyle.Quad)
+
 local function setBarFill(fill, ratio)
     local clamped = math.clamp(ratio, 0, 1)
-    TweenService:Create(fill, TweenInfo.new(0.2, Enum.EasingStyle.Quad), {
+    TweenService:Create(fill, barTweenInfo, {
         Size = UDim2.fromScale(clamped, 1),
     }):Play()
 end
@@ -156,6 +158,8 @@ local function formatTime(seconds)
     local s = math.max(0, math.floor(seconds))
     return string.format("%d:%02d", math.floor(s / 60), s % 60)
 end
+
+local cachedTimerSeconds = -1
 
 local function updatePhaseLabel()
     if phaseState.phase == "Night" then
@@ -166,6 +170,7 @@ local function updatePhaseLabel()
         phaseLabel.TextColor3 = COLOR_DAY
     end
     dayLabel.Text = "Day " .. tostring(phaseState.dayCount)
+    cachedTimerSeconds = math.floor(phaseState.timeRemaining)
     timerLabel.Text = formatTime(phaseState.timeRemaining)
 end
 
@@ -229,17 +234,29 @@ if Day150ReachedEvent then
 end
 
 -- ── RenderStepped: health bar + timer countdown ───────────────────────────
+local cachedHealthRatio = -1
+
 RunService.RenderStepped:Connect(function(dt)
     -- Health bar
     local character = player.Character
     local humanoid = character and character:FindFirstChildOfClass("Humanoid")
     if humanoid then
-        setBarFill(healthFill, humanoid.Health / math.max(1, humanoid.MaxHealth))
+        local healthRatio = humanoid.Health / math.max(1, humanoid.MaxHealth)
+        -- ⚡ Bolt: Cache health ratio to avoid Tween creation and garbage collection overhead in RenderStepped
+        if math.abs(healthRatio - cachedHealthRatio) > 0.001 then
+            cachedHealthRatio = healthRatio
+            setBarFill(healthFill, healthRatio)
+        end
     end
 
     -- Countdown (client-side interpolation between server ticks)
     phaseState.timeRemaining = math.max(0, phaseState.timeRemaining - dt)
-    timerLabel.Text = formatTime(phaseState.timeRemaining)
+    local currentSeconds = math.floor(phaseState.timeRemaining)
+    -- ⚡ Bolt: Cache integer seconds to avoid string allocation and UI Text property assignments every frame
+    if currentSeconds ~= cachedTimerSeconds then
+        cachedTimerSeconds = currentSeconds
+        timerLabel.Text = formatTime(phaseState.timeRemaining)
+    end
 end)
 
 print("[SurvivalHUD] Initialized.")
