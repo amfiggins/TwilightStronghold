@@ -251,6 +251,13 @@ local function formatRemaining(seconds)
     return string.format("%ds remaining", s)
 end
 
+local cachedTarget = nil
+local cachedState = nil
+local cachedCropKey = nil
+local cachedWatering = nil
+local cachedTimeRemaining = nil
+local cachedText = nil
+
 RunService.RenderStepped:Connect(function()
     local target = mouse.Target
     if not target or target.Name ~= "Plot" then
@@ -277,36 +284,63 @@ RunService.RenderStepped:Connect(function()
     local cropItem = cropDef and ItemDatabase.GetItem(cropDef.CropItemId)
     local cropName = (cropItem and cropItem.Name) or cropKey
 
-    local text
-    if state == "tilled" then
-        text = "<b>Empty plot</b>\n<font size='11' color='#BBBBBB'>Press the prompt to plant a seed</font>"
-    elseif state == "ready" then
-        text = string.format("<b>%s</b>\n<font size='11' color='#FFD66A'>Ready to harvest</font>", cropName or "Crop")
-    elseif state == "planted" and cropDef then
+    -- ⚡ Bolt: Cache underlying values to prevent string.format allocation and Text property assignment overhead every frame
+    local timeRemainingInt = nil
+    if state == "planted" and cropDef then
         local plantedAt = target:GetAttribute("PlantedAt") or 0
-        local watering = target:GetAttribute("WateringCount") or 0
-        local timeRemaining = (plantedAt + cropDef.GrowthSeconds) - os.time()
-        local needsWater = watering < cropDef.WaterRequirement
-        if needsWater then
-            text = string.format(
-                "<b>%s</b>\n<font size='11' color='#79B8FF'>Water %d / %d</font>",
-                cropName or "Crop",
-                watering,
-                cropDef.WaterRequirement
-            )
-        else
-            text = string.format(
-                "<b>%s</b>\n<font size='11' color='#BBBBBB'>%s</font>",
-                cropName or "Crop",
-                formatRemaining(timeRemaining)
-            )
+        timeRemainingInt = math.floor((plantedAt + cropDef.GrowthSeconds) - os.time())
+    end
+
+    local watering = target:GetAttribute("WateringCount") or 0
+
+    if
+        target ~= cachedTarget
+        or state ~= cachedState
+        or cropKey ~= cachedCropKey
+        or watering ~= cachedWatering
+        or timeRemainingInt ~= cachedTimeRemaining
+    then
+        cachedTarget = target
+        cachedState = state
+        cachedCropKey = cropKey
+        cachedWatering = watering
+        cachedTimeRemaining = timeRemainingInt
+
+        local text
+        if state == "tilled" then
+            text = "<b>Empty plot</b>\n<font size='11' color='#BBBBBB'>Press the prompt to plant a seed</font>"
+        elseif state == "ready" then
+            text =
+                string.format("<b>%s</b>\n<font size='11' color='#FFD66A'>Ready to harvest</font>", cropName or "Crop")
+        elseif state == "planted" and cropDef then
+            local needsWater = watering < cropDef.WaterRequirement
+            if needsWater then
+                text = string.format(
+                    "<b>%s</b>\n<font size='11' color='#79B8FF'>Water %d / %d</font>",
+                    cropName or "Crop",
+                    watering,
+                    cropDef.WaterRequirement
+                )
+            else
+                text = string.format(
+                    "<b>%s</b>\n<font size='11' color='#BBBBBB'>%s</font>",
+                    cropName or "Crop",
+                    formatRemaining(timeRemainingInt)
+                )
+            end
         end
-    else
+        cachedText = text
+    end
+
+    if not cachedText then
         tooltipLabel.Visible = false
         return
     end
 
-    tooltipLabel.Text = text
+    if tooltipLabel.Text ~= cachedText then
+        tooltipLabel.Text = cachedText
+    end
+
     tooltipLabel.Position = UDim2.fromOffset(mouse.X + 16, mouse.Y + 16)
     tooltipLabel.Visible = true
 end)
