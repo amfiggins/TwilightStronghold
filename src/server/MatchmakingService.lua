@@ -26,16 +26,26 @@ QueueUpdateEvent.Parent = Remotes
 -- Constants
 local REQUIRED_PLAYERS = GameConfig.MAX_SESSION_PLAYERS -- Ensure full squads are formed
 
+local JOIN_QUEUE_COOLDOWN = 1.0
+local lastJoinRequestTimes = {}
+
 function MatchmakingService.Init()
     print("[MatchmakingService] Initialized.")
 
     -- Listen for Client Requests
     JoinQueueEvent.OnServerEvent:Connect(function(player)
+        local now = os.clock()
+        local lastRequest = lastJoinRequestTimes[player.UserId] or 0
+        if (now - lastRequest) < JOIN_QUEUE_COOLDOWN then
+            return
+        end
+        lastJoinRequestTimes[player.UserId] = now
         MatchmakingService.JoinQueue(player)
     end)
 
     -- Remove players from queue when they disconnect
     Players.PlayerRemoving:Connect(function(player)
+        lastJoinRequestTimes[player.UserId] = nil
         MatchmakingService.LeaveQueue(player)
     end)
 
