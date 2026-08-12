@@ -157,7 +157,10 @@ local function formatTime(seconds)
     return string.format("%d:%02d", math.floor(s / 60), s % 60)
 end
 
+local hasInitializedPhase = false
+
 local function updatePhaseLabel()
+    local oldPhase = phaseLabel.Text
     if phaseState.phase == "Night" then
         phaseLabel.Text = "🌙 Night"
         phaseLabel.TextColor3 = COLOR_NIGHT
@@ -167,6 +170,13 @@ local function updatePhaseLabel()
     end
     dayLabel.Text = "Day " .. tostring(phaseState.dayCount)
     timerLabel.Text = formatTime(phaseState.timeRemaining)
+
+    if hasInitializedPhase and oldPhase ~= phaseLabel.Text then
+        local pulseInfo = TweenInfo.new(0.3, Enum.EasingStyle.Sine, Enum.EasingDirection.Out, 0, true)
+        TweenService:Create(phaseLabel, pulseInfo, { TextSize = 18 }):Play()
+        TweenService:Create(dayLabel, pulseInfo, { TextSize = 18 }):Play()
+    end
+    hasInitializedPhase = true
 end
 
 -- ── Day 150 milestone banner ──────────────────────────────────────────────

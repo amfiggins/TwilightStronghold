@@ -49,3 +49,7 @@
 ## 2027-05-01 - Minigame Success States
 **Learning:** Instantly removing the UI upon minigame success is jarring. Players need a brief moment to process the visual feedback of their success before the context shifts.
 **Action:** Always insert a short delay (e.g., 0.5s) and display a clear "Success" state (like text or color changes) before closing high-focus minigame UIs.
+
+## 2025-01-01 - Peripheral Status Transitions
+**Learning:** Players frequently miss critical game state transitions (like Day turning to Night) when the peripheral UI relies solely on static text swaps, as the change blends into the background.
+**Action:** Always implement a brief, non-blocking 'pulse' animation (e.g., momentarily increasing text size) to peripheral UI labels during state changes to naturally draw the player's eye without interrupting gameplay.
