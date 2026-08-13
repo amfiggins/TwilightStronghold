@@ -77,6 +77,11 @@ local function applyDecay(player)
 end
 
 local function handleConsume(player, itemId)
+    -- 🛡️ Sentinel: Validate itemId is a string before it propagates to table indexing to prevent thread crash DoS
+    if type(itemId) ~= "string" then
+        return
+    end
+
     -- Rate limit
     local now = os.clock()
     if (now - (lastConsumeAt[player.UserId] or 0)) < CONSUME_COOLDOWN then
