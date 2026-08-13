@@ -174,6 +174,10 @@ function BuildingSystem.PlaceStructure(player, structureType, cframe)
     lastBuildTimes[player.UserId] = now
 
     -- 1. Validate Cost Existence
+    -- 🛡️ Sentinel: Validate structureType is a string before table indexing to prevent nil-index thread crash DoS
+    if type(structureType) ~= "string" then
+        return false, "InvalidStructure"
+    end
     local cost = GameConfig.StructureCosts[structureType]
     if not cost then
         return false, "InvalidStructure"
