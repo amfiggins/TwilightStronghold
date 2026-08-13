@@ -127,6 +127,24 @@ local function openSelector(plot)
     closeBtn.TextSize = 18
     closeBtn.Text = "✕"
     closeBtn.Parent = frame
+
+    local function updateCloseBtnState(isHovered)
+        closeBtn.TextColor3 = isHovered and Color3.fromRGB(200, 200, 200) or Color3.fromRGB(255, 255, 255)
+    end
+
+    closeBtn.MouseEnter:Connect(function()
+        updateCloseBtnState(true)
+    end)
+    closeBtn.MouseLeave:Connect(function()
+        updateCloseBtnState(false)
+    end)
+    closeBtn.SelectionGained:Connect(function()
+        updateCloseBtnState(true)
+    end)
+    closeBtn.SelectionLost:Connect(function()
+        updateCloseBtnState(false)
+    end)
+
     closeBtn.MouseButton1Click:Connect(closeSelector)
 
     -- Scroll list
@@ -184,6 +202,12 @@ local function openSelector(plot)
                 btn.BackgroundColor3 = Color3.fromRGB(80, 100, 80)
             end)
             btn.MouseLeave:Connect(function()
+                btn.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+            end)
+            btn.SelectionGained:Connect(function()
+                btn.BackgroundColor3 = Color3.fromRGB(80, 100, 80)
+            end)
+            btn.SelectionLost:Connect(function()
                 btn.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
             end)
             btn.MouseButton1Click:Connect(function()
