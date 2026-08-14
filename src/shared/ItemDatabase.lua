@@ -205,6 +205,10 @@ local items = {
 
 -- Public API: Get Item Definition
 function ItemDatabase.GetItem(itemId)
+    -- 🛡️ Sentinel: Validate itemId is a non-nil string to prevent thread-crashing DoS from indexing with nil
+    if type(itemId) ~= "string" then
+        return nil
+    end
     return items[itemId]
 end
 
