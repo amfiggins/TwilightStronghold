@@ -82,3 +82,8 @@
 **Vulnerability:** Distance checks evaluating `distSq > MAX_DISTANCE` could be bypassed if the client spoofed a coordinate containing `NaN` (Not-a-Number), as relational comparisons with `NaN` evaluate to false.
 **Learning:** This is a classic Roblox exploit vector. Clients have full control over the properties of the objects they replicate and the arguments sent via RemoteEvents, including injecting non-finite numbers like `NaN`.
 **Prevention:** Always use inverted comparison logic (e.g., `not (dist <= MAX)`) or explicitly validate that coordinates are finite (`math.abs(x) ~= math.huge and x == x`) before performing spatial checks on client-supplied data. Avoid passing potentially `NaN` data to functions like `string.format` or `math.sqrt`.
+
+## 2024-08-14 - Thread-Crashing DoS via nil Table Indexing
+**Vulnerability:** Endpoints accepted unvalidated client input which could be `nil` and used it directly as a key for table indexing (e.g., `items[itemId]`). In Roblox Luau, indexing a table with a `nil` value throws an error and crashes the thread.
+**Learning:** Even simple lookup functions can become a vector for Denial of Service if the key originates from a RemoteEvent without explicit type validation. `nil` is not a valid table key and will cause an unhandled exception.
+**Prevention:** Always validate that client-provided keys are non-nil (e.g., `type(key) == "string"`) before using them to index tables or dictionaries.
