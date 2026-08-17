@@ -13,3 +13,7 @@
 ## 2024-05-26 - GetConnectedGamepads Allocation Overhead
 **Learning:** Calling `UserInputService:GetConnectedGamepads()` repeatedly (e.g., inside a `RenderStepped` loop) allocates a new table on every invocation, causing unnecessary garbage collection pressure and stuttering in high-frequency loops.
 **Action:** Always maintain a module-level cached list of gamepads using the `GamepadConnected` and `GamepadDisconnected` events instead of polling `GetConnectedGamepads()` every frame.
+
+## 2024-05-27 - RenderStepped UI Allocation Overhead
+**Learning:** Updating UI properties (like `Text`), calling `string.format`, or creating Tween objects on every `RenderStepped` frame causes significant memory allocation and garbage collection overhead, even if the visual outcome hasn't meaningfully changed.
+**Action:** Cache underlying state values (e.g., integer seconds for strings, or floating-point ratios checked against a small tolerance threshold like `> 0.001`) and only trigger UI updates or allocations when the value changes.
