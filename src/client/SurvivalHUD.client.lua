@@ -228,18 +228,30 @@ if Day150ReachedEvent then
     Day150ReachedEvent.OnClientEvent:Connect(showMilestoneBanner)
 end
 
+-- ⚡ Bolt: Cache health ratio and display seconds to prevent string allocation and Tween creation every frame
+local lastHealthRatio = -1
+local lastDisplaySeconds = -1
+
 -- ── RenderStepped: health bar + timer countdown ───────────────────────────
 RunService.RenderStepped:Connect(function(dt)
     -- Health bar
     local character = player.Character
     local humanoid = character and character:FindFirstChildOfClass("Humanoid")
     if humanoid then
-        setBarFill(healthFill, humanoid.Health / math.max(1, humanoid.MaxHealth))
+        local ratio = humanoid.Health / math.max(1, humanoid.MaxHealth)
+        if math.abs(ratio - lastHealthRatio) > 0.001 then
+            lastHealthRatio = ratio
+            setBarFill(healthFill, ratio)
+        end
     end
 
     -- Countdown (client-side interpolation between server ticks)
     phaseState.timeRemaining = math.max(0, phaseState.timeRemaining - dt)
-    timerLabel.Text = formatTime(phaseState.timeRemaining)
+    local currentSeconds = math.floor(phaseState.timeRemaining)
+    if currentSeconds ~= lastDisplaySeconds then
+        lastDisplaySeconds = currentSeconds
+        timerLabel.Text = formatTime(phaseState.timeRemaining)
+    end
 end)
 
 print("[SurvivalHUD] Initialized.")
