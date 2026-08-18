@@ -98,7 +98,7 @@ local function findNearestPlayer(position)
         if character and character.PrimaryPart then
             local delta = character.PrimaryPart.Position - position
             local distanceSq = delta.X * delta.X + delta.Y * delta.Y + delta.Z * delta.Z
-            if distanceSq < minDistanceSq then
+            if distanceSq < minDistanceSq and distanceSq == distanceSq then
                 minDistanceSq = distanceSq
                 nearestPlayer = player
             end
@@ -255,14 +255,14 @@ function WaveManager.SpawnEnemy(difficulty)
                 local delta = targetPos - rootPart.Position
                 local distSq = delta.X * delta.X + delta.Y * delta.Y + delta.Z * delta.Z
 
-                if distSq > 10000 then -- 100^2
+                if not (distSq <= 10000) then -- 100^2
                     updateRate = 2.0
-                elseif distSq > 2500 then -- 50^2
+                elseif not (distSq <= 2500) then -- 50^2
                     updateRate = 1.0
                 end
 
                 local usePathfinding = true
-                if distSq < 900 then -- 30^2
+                if distSq < 900 and distSq == distSq then -- 30^2, with NaN check
                     rayParams.FilterDescendantsInstances = { enemy, targetPlayer.Character }
                     local direction = targetPos - rootPart.Position
                     local result = workspace:Raycast(rootPart.Position, direction, rayParams)
