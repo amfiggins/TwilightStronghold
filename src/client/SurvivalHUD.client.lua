@@ -229,6 +229,7 @@ if Day150ReachedEvent then
 end
 
 -- ── RenderStepped: health bar + timer countdown ───────────────────────────
+local lastTimerValue = -1
 RunService.RenderStepped:Connect(function(dt)
     -- Health bar
     local character = player.Character
@@ -239,7 +240,12 @@ RunService.RenderStepped:Connect(function(dt)
 
     -- Countdown (client-side interpolation between server ticks)
     phaseState.timeRemaining = math.max(0, phaseState.timeRemaining - dt)
-    timerLabel.Text = formatTime(phaseState.timeRemaining)
+    local newTimerValue = math.floor(phaseState.timeRemaining)
+    if newTimerValue ~= lastTimerValue then
+        -- ⚡ Bolt: Cache formatted string to avoid allocation and UI update on every frame
+        timerLabel.Text = formatTime(phaseState.timeRemaining)
+        lastTimerValue = newTimerValue
+    end
 end)
 
 print("[SurvivalHUD] Initialized.")
