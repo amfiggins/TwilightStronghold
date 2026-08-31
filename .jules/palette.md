@@ -49,3 +49,7 @@
 ## 2027-05-01 - Minigame Success States
 **Learning:** Instantly removing the UI upon minigame success is jarring. Players need a brief moment to process the visual feedback of their success before the context shifts.
 **Action:** Always insert a short delay (e.g., 0.5s) and display a clear "Success" state (like text or color changes) before closing high-focus minigame UIs.
+
+## 2027-06-18 - Mixed Input Focus Glitches
+**Learning:** When adding Gamepad/Keyboard support, simply reusing a hover state function (e.g., passing `true`/`false`) causes visual glitches if a user mixes inputs (e.g., hovering with a mouse, then navigating with a keyboard, then moving the mouse away). The element visually unhovers even though it's still selected.
+**Action:** Always independently track `isHovered` and `isSelected` boolean states, calculating the final visual state by checking if either is true (`isHovered or isSelected`).
