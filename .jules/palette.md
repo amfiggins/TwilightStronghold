@@ -49,3 +49,7 @@
 ## 2027-05-01 - Minigame Success States
 **Learning:** Instantly removing the UI upon minigame success is jarring. Players need a brief moment to process the visual feedback of their success before the context shifts.
 **Action:** Always insert a short delay (e.g., 0.5s) and display a clear "Success" state (like text or color changes) before closing high-focus minigame UIs.
+## 2027-05-10 - Seed Selector Button Feedback
+
+**Learning:** Seed selector UI buttons in FarmingClient lack gamepad/keyboard hover states (SelectionGained/SelectionLost) resulting in poor visual feedback for non-mouse users navigating the list and closing the UI.
+**Action:** Always implement custom SelectionGained/SelectionLost handlers for interactive UI elements in dynamic lists to ensure accessibility for all input methods.
