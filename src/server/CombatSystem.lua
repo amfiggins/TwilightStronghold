@@ -170,7 +170,9 @@ function CombatSystem.Init()
         local maxRange = (weaponDef.Range or 6) + RANGE_TOLERANCE_STUDS
         local delta = target.PrimaryPart.Position - rootPart.Position
         local distSq = delta.X * delta.X + delta.Y * delta.Y + delta.Z * delta.Z
-        if distSq > maxRange * maxRange then
+
+        -- 🛡️ Sentinel: Use inverted comparison to prevent NaN coordinate spoofing bypass
+        if not (distSq <= maxRange * maxRange) then
             return
         end
 
