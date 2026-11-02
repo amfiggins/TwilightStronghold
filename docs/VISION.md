@@ -3,7 +3,7 @@
 **Living document.** This is the single source of truth for what Twilight Stronghold is, what we have built, and what is left to build. Keep it current.
 
 - **Status:** Pre-alpha (`GAME_VERSION = 0.1.0-alpha`)
-- **Last updated:** 2026-05-28 (Phase 0 in progress)
+- **Last updated:** 2026-11-02 (Phases 0 through 4.2 done; Phase 4.3 next)
 - **Owners:** @amfiggins
 - **Update rules:** see [How to keep this doc alive](#how-to-keep-this-doc-alive) at the bottom.
 
@@ -294,7 +294,7 @@ This section reflects what is **actually in the repo** as of the last update. Up
 | `StructurePersistence.lua` | Per-Place DataStore. AddStructure() appends to in-memory list and schedules a debounced (5s) save. On Survival start, loads saved records and re-instantiates each via a renderer callback. BindToClose final flush. | ✅ Real (Phase 2.3) |
 | `DayNightCycle.lua` | 1Hz tick. Day=300s, Night=120s. Fires `PhaseChanged` (RemoteEvent → all clients) and `PhaseChangedBindable` (server-side). `Day150Reached` fires once at the milestone. Sets `Lighting.ClockTime`. | 🟡 Basic |
 | `WaveManager.lua` | Spawns enemies during night, deals touch damage with per-player cooldown, despawns at dawn, registers/unregisters with `CombatSystem`. Pathfinding+raycast LOS shortcut, tiered update rates. | 🟡 Single enemy type |
-| `LoadoutManager.lua` | `SetLoadout` RemoteEvent. Validates slot, type-checks itemId against `ItemDatabase`, enforces type per slot, rate-limits. | 🟡 (see bug list) |
+| `LoadoutManager.lua` | `SetLoadout` RemoteEvent. Validates slot, type-checks itemId against `ItemDatabase`, enforces type per slot (Weapon, BaseKit, Bag), rate-limits. | ✅ Real |
 | `CombatSystem.lua` | `Attack` RemoteEvent. Validates equipped weapon, target is a registered enemy, range/cooldown. Tracks per-player damage contribution; awards proportional Rubies + XP on kill via `UnregisterEnemy`. | ✅ Real (Phase 1.1) |
 | `VitalsSystem.lua` | `EatItem` + `DrinkItem` + `VitalsUpdate` RemoteEvents. Staggered decay loop (Hunger −1/tick, Thirst −2/tick every 5s). Starvation/dehydration damage when either hits 0. Delegates consume logic to `PlayerDataHandler.ConsumeItem`. | ✅ Real (Phase 1.2) |
 | `FarmingSystem.lua` | `PlantSeed` + `WaterCrop` + `HarvestCrop` RemoteEvents. Rate-limited (0.5s) + distance-validated (12 studs). Drives `PlotState` / `CropKey` / `WateringCount` / `PlantedAt` attributes; awards crops on harvest. | ✅ Real (Phase 3.3) |
@@ -302,12 +302,8 @@ This section reflects what is **actually in the repo** as of the last update. Up
 | `BeastSystem.lua` | Spawns one biome-appropriate beast at night and despawns at dawn via `DayNightCycle.PhaseChangedBindable`. State machine: Stalk (drift at 50–100 studs) ↔ Glimpse (brief fade-in at 30 studs every 18–35s). Light-respect: retreats from any part with `BeastRepel = true` within `LightRetreat` studs. Fires `BeastNearby` per-player with distance tier. Unkillable. | ✅ Real (Phase 4.1/4.2) |
 | `MapManager.lua` | On Survival start, clones `ServerStorage.Maps.ForestKingdom` into `workspace.Map`. Counts gather-able nodes. Logs a warning and continues if the map is missing. | ✅ Real (Phase 2.1) |
 | `MatchmakingService.lua` | `JoinQueue` + `QueueUpdate` RemoteEvents. FIFO, 6 players → `TeleportAsync` to Survival with a `MatchId` GUID. Re-queues on teleport failure (ghost-cleanup). | ✅ Real |
-| `BuildingSystemTest.lua` | Module that mocks a player and asserts a Wall is created. Not auto-run, must be required from the command bar. | 🟡 Ad-hoc |
-| `VerifyResourceMappings.server.lua` | Iterates `NodeTypeMapping`, warns on unmapped resources. | ⚠️ Auto-runs in production |
-| `VerifyWaveManager.server.lua` | Re-runs `WaveManager.Init()` (duplicate of ServerMain), asserts shape. | ⚠️ Auto-runs in production |
-| `EnemySpawnBenchmark.lua` | Allocates/destroys 10,000 parts. | ⚠️ Auto-runs in production |
-| `QueueBenchmark.lua` | 100-iteration queue benchmark. | ⚠️ Auto-runs in production |
-| `InventoryBenchmark.lua`, `PathfindingBenchmark.lua`, `RetryBenchmark.lua` | Module benchmarks. | 🟡 Manual only |
+
+Benchmarks, verify scripts, and `BuildingSystemTest.lua` live in top-level `dev/`, which no Rojo project syncs, so none of them ship (moved out of `src/server/` in Phase 0, BUG-3). See `dev/README.md`.
 
 ## 2.3 Client systems (`src/client/`)
 
@@ -319,16 +315,15 @@ This section reflects what is **actually in the repo** as of the last update. Up
 | `FarmingClient.client.lua` | Survival-only. Routes proximity prompts: Plant opens a seed selector filtered to inventory; Water/Harvest fire immediately. Hover tooltip shows plot status (water progress, time remaining, ready). | ✅ Real (Phase 3.4) |
 | `BeastAudioClient.client.lua` | Survival-only. Listens for `BeastNearby` tier events and plays layered 3D sounds (ambient howl / footsteps / branch snaps / breathing / growl) attached to invisible probe parts that follow the player at the tier's nominal radius. | ✅ Real (Phase 4.2) |
 | `MinigameController.lua` | "Fisch-style" hold-to-align minigame. Multi-input (keyboard / mouse / touch / gamepad). Recently improved with success-state delay, platform-aware hints, gamepad cache. | 🟡 Single static minigame |
-| `LoadoutUI.client.lua` | Always-visible left-side panel listing Weapons / Kits / Bags from inventory. Equip/unequip with rarity colors and tooltips. | 🟡 (Bag-equip broken — see bugs) |
+| `LoadoutUI.client.lua` | Left-side panel listing Weapons / Kits / Bags from inventory, hidden by default and toggled with `Tab` / DPad-Down. Equip/unequip with rarity colors and tooltips. | ✅ Real |
+| `SurvivalHUD.client.lua` | Survival-only. Health/Hunger/Thirst bars (bottom-left), Day N + phase countdown (top-center), Day 150 banner. | ✅ Real (Phase 1.3) |
 | `PortalController.client.lua` | Lobby-only. Listens for `EnterSurvival` prompt → fires `JoinQueue`. Toast on queue update. | ✅ Real |
 
 ## 2.4 Shared modules (`src/shared/`)
 
 ### `GameConfig.lua`
 
-Constants: `GAME_VERSION`, `IS_SURVIVAL_MODE`, `MAX_LOBBY_PLAYERS = 20`, `MAX_SESSION_PLAYERS = 4`, `INVENTORY_CAPACITY = 5`, `MAX_BUILD_DISTANCE = 20`, `PLACE_IDS`, `StructureCosts {Wall, Tower}`, `StructureProperties` (Wall and Tower share identical 4×8×1 brown-Part geometry — clear bug), `Rarity` (Common→Mythic with Color3 + Chance), `Resources {Tree, Rock, Lake}`, `NodeTypeMapping`.
-
-> Note: vision says **6 players per run**. Code currently says `MAX_SESSION_PLAYERS = 4`. **Decision needed** — see [Decision log](#5-decision-log).
+Constants: `GAME_VERSION`, `IS_SURVIVAL_MODE`, `MAX_LOBBY_PLAYERS = 20`, `MAX_SESSION_PLAYERS = 6`, `INVENTORY_CAPACITY = 5`, `MAX_BUILD_DISTANCE = 20`, `PLACE_IDS`, `StructureCosts {Wall, Tower, Plot}`, `StructureProperties` (Wall 4×8×1, Tower 4×16×4, Plot 4×0.4×4 non-persistent), `Rarity` (Common→Mythic with Color3 + Chance), `Resources {Tree, Rock, Lake}`, `NodeTypeMapping`.
 
 ### `ItemDatabase.lua`
 
@@ -340,7 +335,7 @@ Weapons declare `Damage`, `Range`, `Cooldown` (used by `CombatSystem`). Foods/Dr
 
 Three crops to start: `wheat` (8 min, 2-4 yield), `carrot` (6 min, 1-3 yield), `berries` (10 min, 3-6 yield). Each declares `SeedItemId`, `CropItemId`, `GrowthSeconds`, `WaterRequirement`, `Yield`, `Stages` (last must be "ready"), and optional `PreferredBiomes` (metadata only for now).
 
-**Missing categories** for the vision: Food (with Hunger value), Seed, Crop, Furniture, LightSource, Trap, Resident-bonus item, Quest item.
+**Still missing** for the vision: Furniture, Trap, Resident-bonus item, Quest item.
 
 ## 2.5 Cross-cutting feature scorecard
 
@@ -348,15 +343,15 @@ Legend: ✅ implemented · 🟡 partial · ❌ missing
 
 | Feature | Status | Notes |
 |---|---|---|
-| Day/Night cycle | 🟡 | Basic; Day 150 milestone event fires; no countdown HUD _(wait, HUD landed in Phase 1.3 — see below)_ |
+| Day/Night cycle | 🟡 | Basic; Day 150 milestone event fires; countdown shown in `SurvivalHUD` |
 | Resource gathering (wood/stone/fish) | ✅ | Solid security model; nodes respawn 60–120s after gather (Phase 2.2) |
 | Building system | 🟡 | Wall/Tower placements with collision check + persistence; client-side ghost preview with green/red feedback before clicking. Tagged `TwilightStronghold_PlayerStructure` for future raid AI. Still missing: health/damage, destruction. |
 | Inventory | ✅ | O(1) lookup, bag capacity, swap-remove |
-| Loadout | 🟡 | Weapon/Kit work; **Bag-equip broken** end-to-end |
+| Loadout | ✅ | Weapon, Kit, and Bag slots all work (Bag fixed in Phase 0, BUG-1) |
 | Combat | ✅ | Server-authoritative `CombatSystem`: weapon-equipped check, range + cooldown, damage application, proportional Ruby/XP rewards on kill |
 | Enemies / waves | 🟡 | One enemy type, deals touch damage, despawns at dawn, drops rewards. Still missing: ranged enemies, multiple types, despawn at >150 stud distance, AI attack animations |
-| Matchmaking | ✅ | 4-player queue; ghost cleanup |
-| DataStore persistence | ✅ | Solid retries; **no `BindToClose`, no cross-server session lock** |
+| Matchmaking | ✅ | 6-player queue; ghost cleanup |
+| DataStore persistence | ✅ | Retries with backoff, `BindToClose` flush, cross-server session lock (Phase 0, BUG-4/BUG-5) |
 | HUD | ✅ | `SurvivalHUD.client.lua`: Health/Hunger/Thirst bars (bottom-left) + Day/Night phase label + countdown timer (top-center) + Day 150 milestone banner |
 | Hunger / Thirst / Cold | ✅ | `Stats.Hunger` and `Stats.Thirst` in DEFAULT_DATA; `VitalsSystem` decays both every 5s; starvation/dehydration damage when either hits 0; `EatItem`/`DrinkItem` RemoteEvents |
 | Hotbar | ❌ | Loadout panel exists; no number-key hotbar |
@@ -390,10 +385,11 @@ All under `ReplicatedStorage.Remotes`:
 | `WaterCrop` | RemoteEvent | `FarmingSystem` (Survival only) | C→S | Water a planted plot (increments WateringCount) |
 | `HarvestCrop` | RemoteEvent | `FarmingSystem` (Survival only) | C→S | Harvest a ready plot (awards crop yield, resets to tilled) |
 | `BeastNearby` | RemoteEvent | `BeastSystem` (Survival only) | S→C | Per-player distance tier (`growl` / `breathing` / `footstep` / `far` / `none`); throttled to ≤2/s |
-| `SetLoadout` | RemoteEvent | `LoadoutManager` | C→S | Equip/unequip Weapon or BaseKit |
+| `SetLoadout` | RemoteEvent | `LoadoutManager` | C→S | Equip/unequip Weapon, BaseKit, or Bag |
 | `JoinQueue` | RemoteEvent | `MatchmakingService` (Lobby only) | C→S | Enter matchmaking queue |
 | `QueueUpdate` | RemoteEvent | `MatchmakingService` (Lobby only) | S→C | Notify queue join/leave + size |
 | `PhaseChanged` | RemoteEvent | `DayNightCycle` (Survival only) | S→All | `(phase, dayCount, timeRemaining)` |
+| `Day150Reached` | RemoteEvent | `DayNightCycle` (Survival only) | S→All | Fires once when the run reaches Day 150; client shows the milestone banner |
 
 **Conventions used:** per-user `os.clock` cooldown; silent rate-limit failures (no `warn` to prevent log-flood DoS); type-check itemId against `ItemDatabase` to prevent type-confusion exploits; cleanup in `Players.PlayerRemoving`.
 

@@ -8,7 +8,7 @@ tests/
   lune/               # CI tests — pure-Lua modules, run via Lune
     runner.luau       #   - entry point
     *.test.luau       #   - one file per module under test
-  unit/               # Studio integration tests (placeholder for now)
+  unit/               # Studio integration tests (not created yet; add when needed)
   TestFramework.lua   # TestEZ-style harness used by Studio specs
   TestRunner.server.lua  # Studio entry point — auto-discovers tests/unit/*.spec.lua
 ```
