@@ -17,7 +17,7 @@ local ItemDatabase = require(ReplicatedStorage.Shared.ItemDatabase)
 
 local CombatSystem = {}
 
--- ── Internal state ────────────────────────────────────────────────────────
+-- Internal state
 -- [Model] = { difficulty = number, killCredit = { [UserId] = damage } }
 local enemies = {}
 -- [UserId] = lastSwingClock (os.clock())
@@ -36,13 +36,13 @@ local function rewardFor(difficulty)
     }
 end
 
--- ── Remotes ───────────────────────────────────────────────────────────────
+-- Remotes
 local Remotes = ReplicatedStorage:WaitForChild("Remotes")
 local AttackEvent = Instance.new("RemoteEvent")
 AttackEvent.Name = "Attack"
 AttackEvent.Parent = Remotes
 
--- ── Helpers ───────────────────────────────────────────────────────────────
+-- Helpers
 local function getEquippedWeapon(player)
     local data = PlayerDataHandler.Get(player)
     if not data or not data.Loadout or not data.Loadout.Weapon then
@@ -80,7 +80,7 @@ local function getEnemyHumanoid(target)
     return humanoid
 end
 
--- ── Public API ────────────────────────────────────────────────────────────
+-- Public API
 
 -- Called by WaveManager when an enemy is spawned.
 function CombatSystem.RegisterEnemy(model, difficulty)
@@ -138,7 +138,7 @@ function CombatSystem.IsEnemy(model)
     return enemies[model] ~= nil
 end
 
--- ── Init ──────────────────────────────────────────────────────────────────
+-- Init
 function CombatSystem.Init()
     AttackEvent.OnServerEvent:Connect(function(player, target)
         local weaponId, weaponDef = getEquippedWeapon(player)

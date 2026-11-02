@@ -18,7 +18,7 @@
 local SoundConfig = {}
 
 local sounds = {
-    -- ── Beast (Phase 4.2) ────────────────────────────────────────────────
+    -- Beast (Phase 4.2)
     -- Distance-bucketed cues that play under, breathing, and growl tiers
     -- as the beast closes on the player.
     ["Beast.Footstep"] = {

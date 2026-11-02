@@ -34,7 +34,7 @@ if not BeastNearbyEvent then
     return
 end
 
--- ── Probe parts ───────────────────────────────────────────────────────────
+-- Probe parts
 -- A small invisible part that holds 3D-positioned sounds. We update its
 -- CFrame each tier change so the panning roughly matches the beast's
 -- direction without giving away exact location.
@@ -61,7 +61,7 @@ local probes = {
     ambient = newProbe("Ambient"),
 }
 
--- ── Build sounds from SoundConfig ─────────────────────────────────────────
+-- Build sounds from SoundConfig
 local function attachSound(parent, key)
     local def = SoundConfig.Get(key)
     if not def then
@@ -89,7 +89,7 @@ local sounds = {
     growl = attachSound(probes.growl, "Beast.Growl"),
 }
 
--- ── Probe positioning ─────────────────────────────────────────────────────
+-- Probe positioning
 -- We don't know the beast's exact position client-side (kept hidden by
 -- design). Approximate by pushing each probe in a random direction
 -- around the player at the tier's nominal radius. This still gives
@@ -116,7 +116,7 @@ local function reposition(tier)
     end
 end
 
--- ── Tier behaviour ────────────────────────────────────────────────────────
+-- Tier behaviour
 local function stopAll()
     for _, sound in pairs(sounds) do
         if sound and sound.IsPlaying then

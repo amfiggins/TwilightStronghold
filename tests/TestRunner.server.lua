@@ -3,9 +3,8 @@
     Studio-only entry point. Iterates every *.spec.lua module under tests/
     and runs it with TestFramework.
 
-    This file lives outside the synced project tree (the production Rojo
-    project does not reference tests/), so it ships nowhere. It runs only
-    when you opt-in via a tests.project.json (TODO: Phase 0 follow-up).
+    The production Rojo project does not reference tests/, so this ships
+    nowhere. It runs only in a place built from tests.project.json.
 ]]
 local RunService = game:GetService("RunService")
 if not RunService:IsStudio() then

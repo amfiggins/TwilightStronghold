@@ -30,7 +30,7 @@ end
 local PhaseChangedEvent = Remotes:WaitForChild("PhaseChanged", 5)
 local Day150ReachedEvent = Remotes:WaitForChild("Day150Reached", 5)
 
--- ── Colours ───────────────────────────────────────────────────────────────
+-- Colours
 local COLOR_HEALTH = Color3.fromRGB(220, 60, 60)
 local COLOR_HUNGER = Color3.fromRGB(210, 140, 50)
 local COLOR_THIRST = Color3.fromRGB(60, 140, 220)
@@ -39,11 +39,11 @@ local COLOR_NIGHT = Color3.fromRGB(100, 120, 220)
 local COLOR_BAR_BG = Color3.fromRGB(30, 30, 30)
 local COLOR_TEXT = Color3.fromRGB(255, 255, 255)
 
--- ── State ─────────────────────────────────────────────────────────────────
+-- State
 local vitals = { Hunger = 100, Thirst = 100, MaxHunger = 100, MaxThirst = 100 }
 local phaseState = { phase = "Day", dayCount = 1, timeRemaining = 300 }
 
--- ── Build UI ──────────────────────────────────────────────────────────────
+-- Build UI
 local gui = Instance.new("ScreenGui")
 gui.Name = "SurvivalHUD"
 gui.ResetOnSpawn = false
@@ -51,7 +51,7 @@ gui.IgnoreGuiInset = false
 gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 gui.Parent = player:WaitForChild("PlayerGui")
 
--- ── Helper: create a labelled bar ─────────────────────────────────────────
+-- Helper: create a labelled bar
 local function makeBar(parent, icon, color, yOffset)
     local container = Instance.new("Frame")
     container.Size = UDim2.fromOffset(180, 18)
@@ -94,12 +94,12 @@ local function makeBar(parent, icon, color, yOffset)
     return fill
 end
 
--- ── Bottom-left bars ──────────────────────────────────────────────────────
+-- Bottom-left bars
 local healthFill = makeBar(gui, "❤", COLOR_HEALTH, -8)
 local hungerFill = makeBar(gui, "🍖", COLOR_HUNGER, -32)
 local thirstFill = makeBar(gui, "💧", COLOR_THIRST, -56)
 
--- ── Top-center phase / day / timer ────────────────────────────────────────
+-- Top-center phase / day / timer
 local topFrame = Instance.new("Frame")
 topFrame.Size = UDim2.fromOffset(260, 36)
 topFrame.Position = UDim2.new(0.5, -130, 0, 8)
@@ -144,7 +144,7 @@ timerLabel.TextSize = 13
 timerLabel.Text = "5:00"
 timerLabel.Parent = topFrame
 
--- ── Update helpers ────────────────────────────────────────────────────────
+-- Update helpers
 local function setBarFill(fill, ratio)
     local clamped = math.clamp(ratio, 0, 1)
     TweenService:Create(fill, TweenInfo.new(0.2, Enum.EasingStyle.Quad), {
@@ -169,7 +169,7 @@ local function updatePhaseLabel()
     timerLabel.Text = formatTime(phaseState.timeRemaining)
 end
 
--- ── Day 150 milestone banner ──────────────────────────────────────────────
+-- Day 150 milestone banner
 local function showMilestoneBanner()
     local banner = Instance.new("Frame")
     banner.Size = UDim2.fromOffset(400, 80)
@@ -208,7 +208,7 @@ local function showMilestoneBanner()
     end)
 end
 
--- ── Event listeners ───────────────────────────────────────────────────────
+-- Event listeners
 VitalsUpdateEvent.OnClientEvent:Connect(function(newVitals)
     vitals = newVitals
     setBarFill(hungerFill, vitals.Hunger / vitals.MaxHunger)
@@ -228,7 +228,7 @@ if Day150ReachedEvent then
     Day150ReachedEvent.OnClientEvent:Connect(showMilestoneBanner)
 end
 
--- ── RenderStepped: health bar + timer countdown ───────────────────────────
+-- RenderStepped: health bar + timer countdown
 RunService.RenderStepped:Connect(function(dt)
     -- Health bar
     local character = player.Character

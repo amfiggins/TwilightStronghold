@@ -20,7 +20,7 @@ local ServerStorage = game:GetService("ServerStorage")
 
 local MapManager = {}
 
--- ── Config ────────────────────────────────────────────────────────────────
+-- Config
 local DEFAULT_MAP_NAME = "ForestKingdom"
 
 -- Where the loaded map lives once it's instantiated. Other systems
@@ -28,10 +28,10 @@ local DEFAULT_MAP_NAME = "ForestKingdom"
 -- this so the world has a tidy hierarchy.
 local LOADED_MAP_NAME = "Map"
 
--- ── State ─────────────────────────────────────────────────────────────────
+-- State
 MapManager.LoadedMap = nil
 
--- ── Helpers ───────────────────────────────────────────────────────────────
+-- Helpers
 local function findSourceMap(mapName)
     local mapsFolder = ServerStorage:FindFirstChild("Maps")
     if not mapsFolder then
@@ -44,7 +44,7 @@ local function findSourceMap(mapName)
     return source
 end
 
--- ── Public API ────────────────────────────────────────────────────────────
+-- Public API
 function MapManager.Init(mapName)
     mapName = mapName or DEFAULT_MAP_NAME
 

@@ -33,7 +33,7 @@ local BeastDatabase = require(ReplicatedStorage.Shared.BeastDatabase)
 
 local BeastSystem = {}
 
--- ── Config ────────────────────────────────────────────────────────────────
+-- Config
 -- Default beast key when MapManager doesn't tell us a biome (e.g., the
 -- default flat baseplate playtest setup). Phase 4 ships with Wendigo only.
 local DEFAULT_BEAST_KEY = "wendigo"
@@ -55,7 +55,7 @@ local GLIMPSE_INTERVAL_MAX = 35
 local GLIMPSE_VISIBLE_SECONDS = 0.4
 local GLIMPSE_TRANSPARENCY = 0.7
 
--- ── BeastNearby distance tiers ────────────────────────────────────────────
+-- BeastNearby distance tiers
 -- The server fires BeastNearby:FireClient(player, tier) at most once per
 -- BEAST_NEARBY_THROTTLE_SECONDS so the client can layer audio cues without
 -- being spammed. Tiers map to the audio buckets in vision §1.6:
@@ -80,7 +80,7 @@ local function tierForDistance(d)
     end
 end
 
--- ── State ─────────────────────────────────────────────────────────────────
+-- State
 BeastSystem.Active = nil :: Model? -- the current beast instance, if any
 local stateMachineThread = nil
 local nextGlimpseAt = 0
@@ -88,7 +88,7 @@ local currentState = "Stalk" -- "Stalk" | "Glimpse"
 -- [UserId] = { tier = "growl" | ..., lastFireAt = number }
 local playerTierState = {}
 
--- ── Remotes ───────────────────────────────────────────────────────────────
+-- Remotes
 local Remotes = ReplicatedStorage:WaitForChild("Remotes")
 local BeastNearbyEvent = Remotes:FindFirstChild("BeastNearby")
 if not BeastNearbyEvent then
@@ -97,7 +97,7 @@ if not BeastNearbyEvent then
     BeastNearbyEvent.Parent = Remotes
 end
 
--- ── Helpers ───────────────────────────────────────────────────────────────
+-- Helpers
 local function rgbColor(rgb)
     return Color3.fromRGB(rgb[1], rgb[2], rgb[3])
 end
@@ -250,7 +250,7 @@ local function pickGlimpseTarget(towardPlayer, def)
     return center + Vector3.new(math.cos(angle) * def.GlimpseRange, 0, math.sin(angle) * def.GlimpseRange)
 end
 
--- ── Glimpse behaviour ─────────────────────────────────────────────────────
+-- Glimpse behaviour
 local function performGlimpse(beast, def)
     if currentState ~= "Stalk" then
         return
@@ -288,7 +288,7 @@ local function performGlimpse(beast, def)
     nextGlimpseAt = os.clock() + math.random(GLIMPSE_INTERVAL_MIN, GLIMPSE_INTERVAL_MAX)
 end
 
--- ── State machine tick ────────────────────────────────────────────────────
+-- State machine tick
 local function tick(beast, def)
     if not beast.Parent then
         return
@@ -346,7 +346,7 @@ local function tick(beast, def)
     broadcastNearbyTiers(rootPart.Position)
 end
 
--- ── Spawn / despawn ───────────────────────────────────────────────────────
+-- Spawn / despawn
 function BeastSystem.spawn(def)
     if BeastSystem.Active then
         return
@@ -400,7 +400,7 @@ function BeastSystem.despawn()
     active:Destroy()
 end
 
--- ── Init ──────────────────────────────────────────────────────────────────
+-- Init
 function BeastSystem.Init()
     -- Subscribe to phase transitions via the server-side bindable on
     -- DayNightCycle. Spawn at night, despawn at day.

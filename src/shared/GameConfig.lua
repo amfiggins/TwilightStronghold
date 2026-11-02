@@ -87,8 +87,4 @@ Shared.NodeTypeMapping = {
     ["River"] = "Lake",
 }
 
--- Item Database (Mock-up)
--- Item Database moved to ItemDatabase.lua
--- Shared.Items = require(script.Parent.ItemDatabase) -- Optional: If needed for back-compat
-
 return Shared

@@ -29,20 +29,20 @@ local GameConfig = require(ReplicatedStorage.Shared.GameConfig)
 
 local StructurePersistence = {}
 
--- ── Config ────────────────────────────────────────────────────────────────
+-- Config
 local SAVE_DEBOUNCE_SECONDS = 5
 local DATASTORE_NAME = "Structures_v" .. GameConfig.GAME_VERSION
 local KEY = "Place_" .. tostring(game.PlaceId)
 
 local store = DataStoreService:GetDataStore(DATASTORE_NAME)
 
--- ── Internal state ────────────────────────────────────────────────────────
+-- Internal state
 local records = {} -- { record, ... }
 local dirty = false
 local pendingSave = nil
 local rendererCallback -- (record) -> Instance | nil
 
--- ── Helpers ───────────────────────────────────────────────────────────────
+-- Helpers
 local function packCFrame(cf)
     return { cf:GetComponents() }
 end
@@ -80,7 +80,7 @@ local function scheduleSave()
     pendingSave = task.delay(SAVE_DEBOUNCE_SECONDS, performSave)
 end
 
--- ── Public API ────────────────────────────────────────────────────────────
+-- Public API
 
 -- Register the function the persistence layer will call to actually
 -- materialise a saved structure (BuildingSystem provides this so we don't

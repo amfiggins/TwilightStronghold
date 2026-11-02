@@ -27,7 +27,7 @@ local frame = Instance.new("Frame")
 frame.Size = UDim2.fromOffset(220, 350) -- Adjusted width for scrollbar
 frame.Position = UDim2.new(0.05, 0, 0.5, -175)
 frame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-frame.Visible = false -- BUG-17 fix: start hidden
+frame.Visible = false -- start hidden
 frame.Parent = gui
 
 -- Title
@@ -414,7 +414,7 @@ refreshBtn.MouseButton1Click:Connect(function()
     populateLoadout()
 end)
 
--- Toggle visibility with Tab (keyboard) or DPad-Down (gamepad). BUG-17 fix.
+-- Toggle visibility with Tab (keyboard) or DPad-Down (gamepad).
 UserInputService.InputBegan:Connect(function(input, gameProcessedEvent)
     if gameProcessedEvent then
         return

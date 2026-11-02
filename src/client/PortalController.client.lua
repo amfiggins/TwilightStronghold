@@ -73,8 +73,5 @@ ProximityPromptService.PromptTriggered:Connect(function(promptObject, triggerPla
     if promptObject.Name == "EnterSurvival" then
         print("[PortalController] Requesting to join queue...")
         JoinQueueEvent:FireServer()
-
-        -- Optional: Show Queue UI
-        -- QueueUI.Show()
     end
 end)

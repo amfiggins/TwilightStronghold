@@ -33,7 +33,7 @@ local function getStructuresFolder()
 end
 
 -- Helper: Validate CFrame for NaNs and Inf
--- Optimization: Unpack components directly to avoid table allocation
+-- Unpack components directly to avoid table allocation
 local function isValidCFrame(cf)
     if typeof(cf) ~= "CFrame" then
         return false
@@ -126,8 +126,8 @@ local function renderStructure(record)
         structure:SetAttribute("OwnerUserId", record.ownerUserId)
     end
 
-    -- Plot-specific initial state. Future PlotManager (Phase 3.3) will flip
-    -- these as the player plants/waters/harvests. Setting them at render
+    -- Plot-specific initial state. PlotManager flips these as the player
+    -- plants/waters/harvests. Setting them at render
     -- time means newly-placed plots are immediately ready to plant on.
     if record.structureType == "Plot" then
         structure:SetAttribute("PlotState", "tilled")

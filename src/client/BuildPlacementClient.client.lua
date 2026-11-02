@@ -34,7 +34,7 @@ if not PlaceStructureEvent then
     return
 end
 
--- ── Config ────────────────────────────────────────────────────────────────
+-- Config
 -- Default ordering for the 1/2 keys. When we add more structure types
 -- (Phase 5+), this will become a longer list and the UI hint string
 -- below will be regenerated.
@@ -46,7 +46,7 @@ local COLOR_VALID = Color3.fromRGB(80, 255, 120)
 local COLOR_INVALID = Color3.fromRGB(255, 80, 80)
 local GHOST_TRANSPARENCY = 0.55
 
--- ── State ─────────────────────────────────────────────────────────────────
+-- State
 local active = false
 local selected = STRUCTURE_ORDER[1]
 local ghost = nil :: Part?
@@ -60,7 +60,7 @@ rayParams.FilterType = Enum.RaycastFilterType.Exclude
 local overlapParams = OverlapParams.new()
 overlapParams.FilterType = Enum.RaycastFilterType.Exclude
 
--- ── UI hint ───────────────────────────────────────────────────────────────
+-- UI hint
 local function buildHintGui()
     local gui = Instance.new("ScreenGui")
     gui.Name = "BuildHint"
@@ -109,7 +109,7 @@ local function updateHint()
     hintLabel.Text = string.format("%s   |   Click to place   |   B / Esc to exit", table.concat(parts, "  "))
 end
 
--- ── Ghost helpers ─────────────────────────────────────────────────────────
+-- Ghost helpers
 local function ensureGhost()
     if ghost then
         ghost:Destroy()
@@ -189,7 +189,7 @@ local function computePlacement()
     return cf, inRange and not collides
 end
 
--- ── Build mode lifecycle ──────────────────────────────────────────────────
+-- Build mode lifecycle
 local function exitBuildMode()
     if not active then
         return
@@ -263,7 +263,7 @@ local function selectStructure(name)
     end
 end
 
--- ── Toggle binding ────────────────────────────────────────────────────────
+-- Toggle binding
 UserInputService.InputBegan:Connect(function(input, gameProcessed)
     if gameProcessed then
         return

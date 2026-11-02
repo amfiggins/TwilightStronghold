@@ -50,7 +50,7 @@ local DEFAULT_DATA = {
 -- Runtime session cache
 local sessionData = {}
 -- Runtime inventory lookup cache: [UserId] = { [ItemId] = slotIndex }
--- Optimization: Maps ItemId to the *first* index in inventory for O(1) checks.
+-- Maps ItemId to the *first* index in inventory for O(1) checks.
 local sessionInventoryLookup = {}
 
 local GET_DATA_COOLDOWN = 1.0
@@ -104,7 +104,7 @@ local function rebuildLookup(userId)
     sessionInventoryLookup[userId] = lookup
 end
 
--- ── Cross-server session locking ──────────────────────────────────────────
+-- Cross-server session locking
 -- Prevents two Roblox servers from loading + writing the same player key
 -- concurrently (e.g., during a Lobby → Survival teleport handoff).
 --
@@ -472,7 +472,7 @@ function PlayerDataHandler.AddItem(player, itemId, quantity)
 
     if isStackable then
         -- Check if item exists (Stacking logic for "Materials")
-        -- Optimization: Use GetItem (which uses Lookup O(1))
+        -- Use GetItem (which uses Lookup O(1))
         local slot = PlayerDataHandler.GetItem(player, itemId)
 
         if slot then
@@ -540,7 +540,7 @@ function PlayerDataHandler.GetItem(player, itemId)
         return nil
     end
 
-    -- Optimization: Use Lookup Table (O(1))
+    -- Use Lookup Table (O(1))
     local lookup = sessionInventoryLookup[userId]
     if lookup and lookup[itemId] then
         return data.Inventory[lookup[itemId]]
@@ -562,7 +562,7 @@ function PlayerDataHandler.RemoveItem(player, itemId, quantity)
         return false
     end
 
-    -- Optimization: Use Lookup Table to find slot (O(1))
+    -- Use Lookup Table to find slot (O(1))
     local lookup = sessionInventoryLookup[userId]
     local slotIndex = lookup and lookup[itemId]
 

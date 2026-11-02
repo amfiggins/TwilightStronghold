@@ -36,7 +36,7 @@ local WaterCropEvent = Remotes:WaitForChild("WaterCrop", 5)
 local HarvestCropEvent = Remotes:WaitForChild("HarvestCrop", 5)
 local GetPlayerData = Remotes:WaitForChild("GetPlayerData", 5)
 
--- ── Seed selector UI ──────────────────────────────────────────────────────
+-- Seed selector UI
 local selectorGui = nil :: ScreenGui?
 local selectorOpen = false
 
@@ -196,7 +196,7 @@ local function openSelector(plot)
     end
 end
 
--- ── Prompt routing ────────────────────────────────────────────────────────
+-- Prompt routing
 ProximityPromptService.PromptTriggered:Connect(function(prompt, triggerPlayer)
     if triggerPlayer ~= player then
         return
@@ -221,7 +221,7 @@ ProximityPromptService.PromptTriggered:Connect(function(prompt, triggerPlayer)
     end
 end)
 
--- ── Hover tooltip ─────────────────────────────────────────────────────────
+-- Hover tooltip
 local tooltipGui = Instance.new("ScreenGui")
 tooltipGui.Name = "FarmingTooltip"
 tooltipGui.ResetOnSpawn = false

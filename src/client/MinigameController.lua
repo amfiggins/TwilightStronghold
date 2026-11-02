@@ -24,7 +24,7 @@ local successCallback = nil
 local instructionLabel = nil
 local activeTouches = 0
 
--- ⚡ Bolt: Cache connected gamepads to prevent array allocation on every RenderStepped frame
+-- Cache connected gamepads to prevent array allocation on every RenderStepped frame
 local connectedGamepads = UserInputService:GetConnectedGamepads()
 
 UserInputService.GamepadConnected:Connect(function(gamepad)
@@ -168,7 +168,7 @@ function MinigameController.Start(callback)
 
     frame.Visible = true
     if progressFill then
-        -- Optimization: Use fromScale instead of new
+        -- Use fromScale instead of new
         progressFill.Size = UDim2.fromScale(0, 1)
     end
 
@@ -215,7 +215,7 @@ function MinigameController.Start(callback)
         targetPosition = TARGET_CENTER + TARGET_AMPLITUDE * math.sin(angle)
 
         -- Update UI
-        -- Optimization: Use UDim2.fromScale in hot paths to skip unused property parsing
+        -- Use UDim2.fromScale in hot paths to skip unused property parsing
         bar.Position = UDim2.fromScale(barPosition, 0)
         target.Position = UDim2.fromScale(targetPosition, 0)
         if progressFill then

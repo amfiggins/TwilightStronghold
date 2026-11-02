@@ -37,7 +37,7 @@ local CropDatabase = require(ReplicatedStorage.Shared.CropDatabase)
 
 local FarmingSystem = {}
 
--- ── Config ────────────────────────────────────────────────────────────────
+-- Config
 local ACTION_COOLDOWN = 0.5
 local FARMING_RANGE_STUDS = 12 -- max distance from player root to plot
 
@@ -45,7 +45,7 @@ local FARMING_RANGE_STUDS = 12 -- max distance from player root to plot
 -- subset; we additionally check Name == "Plot".
 local STRUCTURE_TAG = "TwilightStronghold_PlayerStructure"
 
--- ── Per-player rate limiting ──────────────────────────────────────────────
+-- Per-player rate limiting
 local lastActionAt = {} -- [UserId] = os.clock()
 
 local function checkRateLimit(player)
@@ -58,7 +58,7 @@ local function checkRateLimit(player)
     return true
 end
 
--- ── Plot validation ───────────────────────────────────────────────────────
+-- Plot validation
 -- Returns the plot Part if `target` is a valid in-range plot, else nil.
 local function validatePlot(player, target)
     if typeof(target) ~= "Instance" or not target:IsDescendantOf(workspace) then
@@ -89,7 +89,7 @@ local function validatePlot(player, target)
     return target
 end
 
--- ── Action handlers ───────────────────────────────────────────────────────
+-- Action handlers
 local function onPlantSeed(player, target, seedItemId)
     if not checkRateLimit(player) then
         return
@@ -206,7 +206,7 @@ local function onHarvestCrop(player, target)
     print(string.format("[FarmingSystem] %s harvested %d %s", player.Name, qty, tostring(cropDef.CropItemId)))
 end
 
--- ── Init ──────────────────────────────────────────────────────────────────
+-- Init
 function FarmingSystem.Init()
     local Remotes = ReplicatedStorage:WaitForChild("Remotes")
 

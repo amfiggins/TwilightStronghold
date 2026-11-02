@@ -25,7 +25,7 @@ local CropDatabase = require(ReplicatedStorage.Shared.CropDatabase)
 
 local PlotManager = {}
 
--- ── Config ────────────────────────────────────────────────────────────────
+-- Config
 local STRUCTURE_TAG = "TwilightStronghold_PlayerStructure"
 local TICK_INTERVAL_SECONDS = 5
 -- Prompt sit-distance (matches FarmingSystem's 12-stud range loosely;
@@ -43,11 +43,11 @@ local COLOR_BY_STAGE = {
     ready = Color3.fromRGB(220, 180, 50), -- gold
 }
 
--- ── Internal state ────────────────────────────────────────────────────────
+-- Internal state
 -- [Plot] = { connections = { ... } } so we can disconnect on removal.
 local managed = {}
 
--- ── Prompt helpers ────────────────────────────────────────────────────────
+-- Prompt helpers
 local PROMPT_NAMES = { "Plant", "Water", "Harvest" }
 
 local function ensurePrompt(plot, name)
@@ -98,7 +98,7 @@ local function refreshPrompts(plot)
     end
 end
 
--- ── Visual stage / colour ─────────────────────────────────────────────────
+-- Visual stage / colour
 local function refreshVisuals(plot)
     local state = plot:GetAttribute("PlotState") or "tilled"
     local stage = plot:GetAttribute("Stage")
@@ -118,7 +118,7 @@ local function refreshVisuals(plot)
     end
 end
 
--- ── Plot lifecycle ────────────────────────────────────────────────────────
+-- Plot lifecycle
 local function attachPlot(plot)
     if managed[plot] then
         return
@@ -171,7 +171,7 @@ local function attachPlot(plot)
     refreshVisuals(plot)
 end
 
--- ── Growth tick ───────────────────────────────────────────────────────────
+-- Growth tick
 local function tick()
     for plot, _ in pairs(managed) do
         if plot.Parent and plot:GetAttribute("PlotState") == "planted" then
@@ -210,7 +210,7 @@ local function tick()
     end
 end
 
--- ── Init ──────────────────────────────────────────────────────────────────
+-- Init
 function PlotManager.Init()
     -- Attach to existing tagged instances and to anything that gets the
     -- tag in the future. CollectionService handles both cases via

@@ -17,7 +17,7 @@ local PlayerDataHandler = require(script.Parent.PlayerDataHandler)
 
 local VitalsSystem = {}
 
--- ── Config ────────────────────────────────────────────────────────────────
+-- Config
 local DECAY_INTERVAL = 5 -- seconds between decay ticks
 local HUNGER_DECAY = 1 -- hunger lost per tick
 local THIRST_DECAY = 2 -- thirst lost per tick (thirst drains faster)
@@ -25,7 +25,7 @@ local STARVATION_DAMAGE = 1 -- HP lost per tick when Hunger == 0
 local DEHYDRATION_DAMAGE = 2 -- HP lost per tick when Thirst == 0
 local CONSUME_COOLDOWN = 0.5 -- seconds between consume requests (anti-spam)
 
--- ── Remotes ───────────────────────────────────────────────────────────────
+-- Remotes
 local Remotes = ReplicatedStorage:WaitForChild("Remotes")
 
 local EatItemEvent = Instance.new("RemoteEvent")
@@ -41,10 +41,10 @@ local VitalsUpdateEvent = Instance.new("RemoteEvent")
 VitalsUpdateEvent.Name = "VitalsUpdate"
 VitalsUpdateEvent.Parent = Remotes
 
--- ── Internal state ────────────────────────────────────────────────────────
+-- Internal state
 local lastConsumeAt = {} -- [UserId] = os.clock()
 
--- ── Helpers ───────────────────────────────────────────────────────────────
+-- Helpers
 local function fireVitalsUpdate(player)
     local vitals = PlayerDataHandler.GetVitals(player)
     if vitals then
@@ -104,7 +104,7 @@ local function handleConsume(player, itemId)
     end
 end
 
--- ── Public API ────────────────────────────────────────────────────────────
+-- Public API
 function VitalsSystem.Init()
     -- EatItem and DrinkItem both route through the same handler since
     -- PlayerDataHandler.ConsumeItem accepts both Food and Drink types.

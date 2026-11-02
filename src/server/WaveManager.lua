@@ -12,14 +12,14 @@ local WaveManager = {}
 
 local CombatSystem -- lazy-required to avoid require cycle on init order
 
--- ── Config ────────────────────────────────────────────────────────────────
+-- Config
 local SPAWN_RATE = 5 -- seconds between spawns during a wave
 local PHASE_CHECK_INTERVAL = 0.5 -- granularity for phase-end detection (BUG-11)
 local TOUCH_DAMAGE = 8 -- base damage per touch hit
 local TOUCH_DAMAGE_PER_DIFFICULTY = 2
 local TOUCH_DAMAGE_COOLDOWN_SECONDS = 1.0 -- per (enemy, player) pair
 
--- ── Active player cache (perf: avoid Players:GetPlayers() per AI tick) ────
+-- Active player cache (perf: avoid Players:GetPlayers() per AI tick)
 local activePlayers = {}
 Players.PlayerAdded:Connect(function(player)
     table.insert(activePlayers, player)
@@ -34,10 +34,10 @@ for _, player in ipairs(Players:GetPlayers()) do
     table.insert(activePlayers, player)
 end
 
--- ── Active enemy registry (so we can clean up at dawn) ────────────────────
+-- Active enemy registry (so we can clean up at dawn)
 local activeEnemies = {} -- [Model] = true
 
--- ── Template (cloned per spawn) ───────────────────────────────────────────
+-- Template (cloned per spawn)
 local enemyTemplate
 
 local function buildEnemyTemplate()
@@ -108,7 +108,7 @@ local function findNearestPlayer(position)
     return nearestPlayer
 end
 
--- ── Touch damage ──────────────────────────────────────────────────────────
+-- Touch damage
 -- Per (enemy, player) cooldown so a single touch event doesn't drain a
 -- player's HP from continuous Touched fires.
 local function attachTouchDamage(enemy, humanoid, difficulty)
@@ -147,7 +147,7 @@ local function attachTouchDamage(enemy, humanoid, difficulty)
     end)
 end
 
--- ── Public API ────────────────────────────────────────────────────────────
+-- Public API
 function WaveManager.Init()
     print("[WaveManager] Initializing...")
     enemyTemplate = buildEnemyTemplate()

@@ -24,11 +24,11 @@ local ServerStorage = game:GetService("ServerStorage")
 
 local ResourceRespawn = {}
 
--- ── Config ────────────────────────────────────────────────────────────────
+-- Config
 local RESPAWN_MIN_SECONDS = 60
 local RESPAWN_MAX_SECONDS = 120
 
--- ── Holding folder ────────────────────────────────────────────────────────
+-- Holding folder
 local function getHoldingFolder()
     local existing = ServerStorage:FindFirstChild("ResourceRespawnPool")
     if existing then
@@ -40,7 +40,7 @@ local function getHoldingFolder()
     return folder
 end
 
--- ── Internal ──────────────────────────────────────────────────────────────
+-- Internal
 -- Resolve a node's pivot. Models and BaseParts both work; anything else
 -- is unsupported and we bail rather than silently lose the node.
 local function getPivot(node)
@@ -60,7 +60,7 @@ local function setPivot(node, cframe)
     end
 end
 
--- ── Public API ────────────────────────────────────────────────────────────
+-- Public API
 
 -- Schedule a node for respawn. Call this *instead of* node:Destroy() when a
 -- gather succeeds. Returns true if scheduled, false if the node is invalid.

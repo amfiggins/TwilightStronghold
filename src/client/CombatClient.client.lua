@@ -48,8 +48,8 @@ local function tryAttack()
     end
 end
 
--- Mouse click + gamepad right trigger. Touch input intentionally omitted —
--- a mobile attack button will arrive with the HUD in Phase 1.3.
+-- Mouse click + gamepad right trigger. Touch input is not handled yet;
+-- mobile needs its own attack button.
 UserInputService.InputBegan:Connect(function(input, gameProcessedEvent)
     if gameProcessedEvent then
         return -- UI absorbed the click

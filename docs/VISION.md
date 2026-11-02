@@ -481,7 +481,7 @@ This plan sequences work so each phase produces a **playable, demonstrable build
 
 - [x] `DayNightCycle` fires a `Day150Reached` RemoteEvent when `DayCount == 150` for the first time in a run. Client shows a celebratory banner that fades after 5s (run continues).
 - [ ] After Day 150, flag the run as `EndlessMode = true` in match state and write the player's surviving-day count to a leaderboard DataStore on death or disconnect. _(Phase 5/7)_
-- [ ] Difficulty curve in `WaveManager` keeps scaling past Day 150 with no cap. _(already true — difficulty = DayCount with no ceiling)_
+- [x] Difficulty curve in `WaveManager` keeps scaling past Day 150 with no cap. _(difficulty = DayCount with no ceiling)_
 
 ## Phase 2 — World content (so the world isn't empty)
 
@@ -528,7 +528,7 @@ This plan sequences work so each phase produces a **playable, demonstrable build
 
 - [x] **Plot placement.** Extended `BuildingSystem` to support a third structure type via two new optional `StructureProperties` flags: `Persistent` (defaults true; `false` opts out of `StructurePersistence` saves) and `CanCollide`. `Plot` is the first ephemeral structure: 4×0.4×4 stud brown soil tile, costs 1 wood log, walkable, **not persisted across server restarts** per the §5 design decision. Plots ship with attributes `PlotState = "tilled"`, `CropKey = ""`, `WateringCount = 0`, `PlantedAt = 0` so the upcoming `PlotManager` (Phase 3.3) doesn't need an init step.
 - [x] `BuildPlacementClient.client.lua` already handles the new structure type via `STRUCTURE_ORDER`. Press `B`, then `3` to select Plot.
-- [ ] `src/server/PlotManager.lua` (Phase 3.3) — adds `ProximityPrompt`s (`Plant` / `Water` / `Harvest`) to each plot based on its current `PlotState` attribute; runs the server-wide growth tick.
+- [x] `src/server/PlotManager.lua` (landed in Phase 3.3) — adds `ProximityPrompt`s (`Plant` / `Water` / `Harvest`) to each plot based on its current `PlotState` attribute; runs the server-wide growth tick.
 
 ### 3.3 Farming actions
 
@@ -564,7 +564,7 @@ This plan sequences work so each phase produces a **playable, demonstrable build
 ### 4.3 Jump-scare encounter
 
 - [ ] When beast enters Hunt state on a specific player: server fires `BeastJumpScare` to that player. Client triggers camera shake (~0.6s), boosts ambient music, drops fog density temporarily. Beast moves to within 15 studs and lunges; player takes 30 damage if not behind cover.
-- [ ] Portable light item: add `torch` (Tool with `BeastRepel = true`). Holding it active stuns the beast for 3s if it's within 20 studs.
+- [ ] Portable light stun: holding the `torch` (already in `ItemDatabase` with `BeastRepel = true`) stuns the beast for 3s if it's within 20 studs. Needs the held-tool system.
 
 ## Phase 5 — Stronghold light, raids, residents
 

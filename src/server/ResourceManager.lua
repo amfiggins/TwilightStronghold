@@ -79,7 +79,7 @@ function ResourceManager.OnGatherRequest(player, resourceNode)
         return -- Invalid resource node type
     end
 
-    -- ⚡ Bolt: Fast squared distance calculation to avoid math.sqrt
+    -- Fast squared distance calculation to avoid math.sqrt
     local delta = rootPart.Position - nodePos
     local distSq = delta.X * delta.X + delta.Y * delta.Y + delta.Z * delta.Z
     if not (distSq <= MAX_GATHER_DISTANCE * MAX_GATHER_DISTANCE) then
