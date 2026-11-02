@@ -3,6 +3,8 @@
 *.rbxlx
 *.rbxm
 *.rbxmx
+# Hand-authored maps are source, not build output
+!assets/maps/*.rbxm
 
 # Rojo / build artifacts
 *.lock.json

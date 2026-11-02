@@ -280,7 +280,7 @@ This section reflects what is **actually in the repo** as of the last update. Up
 | Place IDs | Lobby `140360553864312`, Survival `114856846700519` (in `GameConfig.PLACE_IDS`). |
 | CI | `.github/workflows/publish.yml` builds one `.rbxl` with Rojo on push to `main`, then POSTs it to both Lobby and Survival places via the Roblox Open Cloud Places API using `secrets.ROBLOX_API_KEY` and the GitHub repo vars `UNIVERSE_ID`, `LOBBY_PLACE_ID`, `SURVIVAL_PLACE_ID`. `.github/workflows/lint.yml` runs `stylua --check`, `selene` (no warnings), and `lune run tests/lune/runner.luau` on every PR and push to `main`. |
 | `.luau-analyze.json` | Globals list for local Luau analysis only; not in CI. |
-| `.Jules/*.md` | Three personality journals (`bolt`, `palette`, `sentinel`) used by an external agent system to log perf/UX/security learnings. Treat as a changelog of "why this code looks the way it does." |
+| `.jules/*.md` | Three personality journals (`bolt`, `palette`, `sentinel`) used by an external agent system to log perf/UX/security learnings. Treat as a changelog of "why this code looks the way it does." |
 
 ## 2.2 Server systems (`src/server/`)
 
@@ -651,7 +651,7 @@ When we make a tradeoff that locks something in, record it here so future-us doe
 | Date | Decision | Why | Status |
 |---|---|---|---|
 | 2026-05-29 | **Plots are run-scoped, not persisted.** Walls and Towers stay in `StructurePersistence`'s per-Place DataStore; `Plot` opts out via `StructureProperties.Plot.Persistent = false`. When the server restarts, plots disappear with the run. | A run is the meaningful unit for farming — saving plots cross-run would mix state between unrelated parties. Walls/towers stay persistent because they represent the stronghold investment that persists between server lifetimes (until per-MatchId persistence lands in Phase 5+). | Done (Phase 3.2) |
-| 2026-05-29 | This document is the source of truth. Existing `optimization_notes.md` and `.Jules/*.md` stay as historical journals. | Single place to look for "what is the game and where are we." | Active |
+| 2026-05-29 | This document is the source of truth. Existing `optimization_notes.md` and `.jules/*.md` stay as historical journals. | Single place to look for "what is the game and where are we." | Active |
 | 2026-05-28 | **Squad size = 6.** Bumped `MAX_SESSION_PLAYERS` from 4 to 6 to match the vision. | Reserved-slot/invite-only joins are easier with headroom; matches design doc; trivial config change. | Done |
 | 2026-05-28 | **Day 150 is a milestone, not a win.** The run does not end at Day 150. Players unlock endless leaderboard ranking and keep going. Difficulty continues scaling past 150 with no cap. | Maintains replayability and avoids a hard "you won, game over" off-ramp. Differentiates from the "Survive 99" pattern. | Done |
 | 2026-05-28 | **Delete `survival.project.json`.** It was byte-identical to `default.project.json`. CI now builds once and publishes the same `.rbxl` to both Place IDs. We'll reintroduce a differentiated project at Phase 2.1 when there's actual place-specific content (e.g., a Forest Kingdom map shipped only to Survival). | YAGNI — solve the duplication when there's a real difference to encode. | Done (BUG-9) |

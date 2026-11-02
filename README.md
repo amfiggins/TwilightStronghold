@@ -1,37 +1,30 @@
 # Twilight Stronghold
 
-A cooperative Roblox survival adventure: gather and prepare by day, survive terrifying beasts by night, defend the stronghold across many nights, and grow your run with farming and progression.
+A cooperative Roblox survival game. Gather and build by day, survive the biome beast by night, defend the stronghold across many nights, and grow the run with farming and progression.
 
-## Start here
+- [`docs/OVERVIEW.md`](./docs/OVERVIEW.md): what it is and how the code fits together
+- [`docs/DEVELOPMENT.md`](./docs/DEVELOPMENT.md): tools, build, tests, deploy
+- [`docs/VISION.md`](./docs/VISION.md): the full game design, current build state, and phase plan
+- [`spec/CONTRIBUTING.md`](./spec/CONTRIBUTING.md): how to work in the repo
 
-- 📜 **[`docs/VISION.md`](./docs/VISION.md)** — the living vision and build plan. What the game is, what's built, what's next.
-- 🛠 [`aftman.toml`](./aftman.toml) — toolchain (Rojo).
-- 🚀 [`.github/workflows/publish.yml`](./.github/workflows/publish.yml) — CI builds the `.rbxl` files and publishes to Roblox via the Open Cloud API.
-
-## Project layout
+## Layout
 
 ```
-src/
-  shared/   # ReplicatedStorage.Shared — GameConfig, ItemDatabase, etc.
-  server/   # ServerScriptService.Server — game logic, datastores, security
-  client/   # StarterPlayer.StarterPlayerScripts.Client — UI, input, VFX
-assets/
-  maps/     # ServerStorage.Maps — hand-authored .rbxm map files
-docs/
-  VISION.md # Vision, current state, phased plan, backlog, decision log
-tests/      # Studio-only TestEZ-style harness
-.Jules/     # Agent journals (perf, UX, security learnings)
+src/shared/   ReplicatedStorage.Shared: GameConfig and data tables
+src/server/   ServerScriptService.Server: game logic, datastores, remotes
+src/client/   StarterPlayerScripts.Client: UI, input, audio
+assets/maps/  ServerStorage.Maps: hand-authored .rbxm maps
+dev/          benchmarks and verify scripts (not shipped)
+tests/        Lune unit tests (CI) and a Studio-only harness
+docs/, spec/  documentation
+.jules/       bot journals (perf, UX, security notes)
 ```
 
-## Local build
+## Quick build
 
 ```bash
 aftman install
 rojo build default.project.json --output build/twilight-stronghold.rbxl
 ```
 
-The same `.rbxl` is published to both the Lobby and Survival places. Runtime branching happens in `ServerMain.server.lua` based on `game.PlaceId`. Place-specific content will get its own project file again at Phase 2.1 (see [`docs/VISION.md`](./docs/VISION.md)).
-
-## Updating the vision doc
-
-Every PR that adds, removes, or meaningfully changes a system should update the **Current state** section in [`docs/VISION.md`](./docs/VISION.md). Rules are at the bottom of that file.
+Every push to `main` builds this and publishes it to both the Lobby and Survival places.
